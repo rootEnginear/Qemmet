@@ -145,7 +145,7 @@ function getQiskitString(gate_string) {
 			if (gate_name === 'm') {
 				return `${gate_registers_all
 					.map((register) => `qc.measure(${register}, ${register})`)
-					.join(';\n')}\n`
+					.join('\n')}\n`
 			}
 
 			// check if it's barrier gate then it's different instruction
