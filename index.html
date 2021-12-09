@@ -19,7 +19,7 @@
       <code>quantum_register_num?&lt;int&gt;<kbd>;</kbd>classical_register_num?&lt;int&gt;<kbd>;</kbd>gate_string&lt;string&gt;</code>
     </p>
     <p>The <code>gate_string</code> is a string in the
-      form of <code>(c*?[zyxhm][\d\s]*)+</code>.
+      form of <code>(c*?[zyxhmb][\d\s]*)+</code>.
     </p>
     <details>
       <summary>If you cannot read a regular expression, click here.</summary>
@@ -60,8 +60,8 @@
       <li>For ease of human counting, <b>the register starts from 1</b>, not 0.</li>
       <li>Currently this is only parser not syntax checker, so please check the syntax
         again by yourself.</li>
-      <li>This is a prototype right now. It only supports x, y, z, Hadamard (h), and
-        Measurement (m).</li>
+      <li>This is a prototype right now. It only supports x, y, z, Hadamard (h),
+        Measurement (m), and Barrier (b).</li>
       <li>
         The code itself is super spaghetti, but if you can stand them and
         want to add something just open a pull request!

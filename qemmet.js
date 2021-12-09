@@ -1,6 +1,4 @@
 // Help me my code is terrible :(
-const example = '4;4;x4hccx134h123x123ccz123x123h123ccx134h123x123ccz123x123h123m123'
-
 function getMetadata(string) {
 	const [quantum_register_string, classical_register_string, raw_gates_string, ..._] =
 		string.split(';')
@@ -28,9 +26,8 @@ function getMetadata(string) {
 	return { quantum_register, classical_register, gates_string }
 }
 
-// Grammar of gate string is /c*?[zyxhm][\d\s]*/
 function gateStringTokenizer(gates_string) {
-	return [...gates_string.matchAll(/(c*?)([zyxhm])([\d\s]*)/g)]
+	return [...gates_string.matchAll(/(c*?)([zyxhmb])([\d\s]*)/g)]
 }
 
 function getRegister(register_string) {
@@ -89,12 +86,19 @@ function getOpenQASMString(gate_string) {
 					.join(';\n')};\n`
 			}
 
+			// check if it's barrier gate then it's different instruction
+			if (gate_name === 'b') {
+				return `${gate_registers_all.map((register) => `barrier qr[${register}]`).join(';\n')};\n`
+			}
+
+			// normal gate
 			if (control_count === 0) {
 				return `${gate_registers_all
 					.map((register) => `${gate_name} qr[${register}]`)
 					.join(';\n')};\n`
 			}
 
+			// controlled gate
 			const control_operation_string =
 				control_count === 1 ? 'control @' : `control(${control_count}) @`
 
@@ -140,6 +144,11 @@ function getQiskitString(gate_string) {
 					.join(';\n')}\n`
 			}
 
+			// check if it's barrier gate then it's different instruction
+			if (gate_name === 'b') {
+				return `${gate_registers_all.map((register) => `qc.barrier(${register})`).join('\n')}\n`
+			}
+
 			// normal gate
 			if (control_count === 0) {
 				return `${gate_registers_all
@@ -147,6 +156,7 @@ function getQiskitString(gate_string) {
 					.join('\n')}\n`
 			}
 
+			// controlled gate
 			return `qc.append(${gate_name.toUpperCase()}Gate().control(${control_count}), [${gate_registers_all.join(
 				', '
 			)}])\n`
