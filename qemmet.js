@@ -34,8 +34,11 @@ function gateStringTokenizer(gates_string) {
 }
 
 function getRegister(register_string) {
-	const [single_digit, ...multiple_digits] = register_string.replace(/\s+/g, ' ').split(' ')
-	return [...single_digit.split(''), ...multiple_digits].map(Number)
+	const normalized_register_string = register_string.trim().replace(/\s+/g, ' ').split(' ')
+	if (normalized_register_string.length === 0) return [] // The register will get normalized in `normalizeGateRegisters`
+	if (normalized_register_string.length === 1)
+		return normalized_register_string[0].split('').map(Number)
+	return normalized_register_string.map(Number)
 }
 
 function gateTokenParser(gate_token) {

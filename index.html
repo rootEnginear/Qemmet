@@ -39,9 +39,11 @@
         and 2 are the controls and 3 is the target.</li>
       <li><code>cccccx123456</code>: Apply a CCCCCX gate to quantum register 1, 2, 3, 4,
         5, and 6 where 1, 2, 3, 4, 5 are the controls and 6 is the target.</li>
-      <li><code>cccx12 10 11</code>: Apply a CCCX gate to quantum register 1, 2, 10 and 11
-        where 1, 2, and 10 are the controls and 11 is the target. Basically, one-digit
-        registers go first, then separate multi-digit registers with space.</li>
+      <li><code>cccx12 1 11 9</code>: Apply a CCCX gate to quantum register 12, 1, 11 and
+        9 where 12, 1, and 11 are the controls and 9 is the target. Please keep in mind
+        that if you separate the numbers, you have to separate <b>all of them</b>. If not,
+        it will be treated as a single digit packed together (and will get separated later
+        digit by digit).</li>
     </ul>
     <b>Example circuits:</b>
     <ul>
