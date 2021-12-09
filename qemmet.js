@@ -1,7 +1,6 @@
-// Help me my code is terrible :(
-function getMetadata(string) {
+function getMetadata(qemmet_string) {
 	const [quantum_register_string, classical_register_string, raw_gates_string, ..._] =
-		string.split(';')
+		qemmet_string.split(';')
 
 	const quantum_register = quantum_register_string.trim() === '' ? 1 : +quantum_register_string
 	const classical_register = +classical_register_string
