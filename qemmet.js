@@ -52,14 +52,14 @@ function gateTokenParser(gate_token) {
 
 function normalizeGateRegisters(quantum_register, control_count, gate_registers) {
 	if (gate_registers.length === 0) {
+		// if it is a controled gate: fill the registers as much as the gate requires
 		if (control_count) {
-			// hold on it is a control gate
 			return new Array(control_count + 1).fill(0).map((_, i) => i + 1)
 		}
-		// no specify qr but qr available: expand to all qr
+		// if it's not a controlled gate: fill the gate into all registers
 		return new Array(quantum_register).fill(0).map((_, i) => i + 1)
 	}
-	// specified qr
+	// if the qr is specified: return back qr
 	return gate_registers
 }
 
