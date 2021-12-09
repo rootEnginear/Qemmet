@@ -110,7 +110,12 @@ function getOpenQASMString(gate_string) {
 	const bit_declaration_string = classical_register > 0 ? `bit[${classical_register}] cr;\n` : ''
 
 	return `OPENQASM 3.0;
-include "stdgates.qasm";
+
+// From \`stdgates.inc\` in https://github.com/Qiskit/openqasm
+gate x a { U(π, 0, π) a; }
+gate y a { U(π, π/2, π/2) a; }
+gate z a { p(π) a; }
+gate h a { U(π/2, 0, π) a; }
 
 qubit[${quantum_register}] qr;
 ${bit_declaration_string}
