@@ -1,6 +1,8 @@
 # Qemmet
 A way to generate a Qiskit 0.3 or OpenQASM 3.0 code with a shorthand notation.
 
+## A shorthand notation?
+Well, I was creating some random circuit in Qiskit and I'm kinda lazy. So I thought, "it would be cool if we have something like Emmet, but in Quantum". So I invent a new syntax that can keep enough information about a circuit and, yeah, this is it. Now I can write a simple Bell's state in a syntax of `h1cx12` instead of dreading `qc.h(0)` and `qc.cx(0,1)`.
 ## How does this work?
 The syntax consists mainly of 3 parts:
 
@@ -32,11 +34,11 @@ So, how do I start to input my gates?
 
     *   If no number is entered and it is **a single-qubit gate**, it will apply that gate to **all** of specified qubits.
     *   If no number is entered and it is **a multiple-qubit gate** (maybe with a control modifier or it's a swap gate), it will apply to qubit 1 2 (3 4 ... if there are a lot of controls).
-    
+
     **Case 2:** A number **without any spaces** is entered
 
     *   If a number is entered with no spaces, it will be treated as a single digit packed together. For example: `123` means qubit 1, 2, and 3.
-    
+
     **Case 3:** Some spaces is entered
 
     *   If there are some spaces present **at the first or between** the numbers. It will considered as "seperated qubits". For example: `12 3` means qubit 12 and 3, ` 12` means qubit 12 (you see the tiny space in front of the number, right?
