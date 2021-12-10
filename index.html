@@ -65,6 +65,9 @@
           them</strong>. If not,
         it will be treated as a single digit packed together (and will get separated later
         digit by digit).</li>
+      <li><code>m</code>: Measure all qubits</li>
+      <li><code>m12</code>: Measure qubit 1 and 2</li>
+      <li><code>m 12</code>: Measure qubit 12</li>
     </ul>
     <b>Example circuits:</b>
     <ul>
@@ -94,7 +97,7 @@
   <hr>
   <section id="app">
     <label for="raw_string">Input Qemmet string:</label>
-    <input id="raw_string" type="text" v-model="raw_string"
+    <input id="raw_string" type="text" v-model.trim="raw_string"
       style="width:100%;box-sizing:border-box">
     <pre><code style="overflow-y:scroll;height:40vh">{{transpiled_code}}</code></pre>
     <div style="display:flex;align-items:flex-end">
@@ -125,8 +128,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/vue@2" defer></script>
-  <script src="qemmet.js" defer></script>
-  <script src="vueapp.js" defer></script>
+  <script src="js/vueapp.js" type="module" defer></script>
 </body>
 
 </html>

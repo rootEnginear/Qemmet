@@ -1,20 +1,26 @@
-new Vue({
+import Qemmet from './qemmet.js'
+
+const app = new Vue({
 	el: '#app',
 	data: {
 		raw_string: '2;;h1cx',
 		target_lang: 'qiskit03',
 	},
 	computed: {
-		transpiled_code: function () {
+		qemmet_info: function () {
 			try {
-				switch (this.target_lang) {
-					case 'qiskit03':
-						return getQiskitString(this.raw_string || ';;')
-					default:
-						return getOpenQASMString(this.raw_string || ';;')
-				}
+				return Qemmet.parseQemmetString(this.raw_string || ';;')
 			} catch (e) {
 				return `Hmm there are some errors: ${e.message}`
+			}
+		},
+		transpiled_code: function () {
+			if (typeof this.qemmet_info === 'string') return this.qemmet_info
+			switch (this.target_lang) {
+				case 'qiskit03':
+					return this.qemmet_info.toQiskitString()
+				default:
+					return this.qemmet_info.toQASMString()
 			}
 		},
 	},
