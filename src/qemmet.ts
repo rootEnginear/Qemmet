@@ -88,12 +88,17 @@ const parseGateParams = (gate_params: string) => {
 	return gate_params.replace(/ /g, '').replace(/,,/g, ',0,').replace(/,$/, ',0').replace(/^,/, '0,')
 }
 
+const normalizeAliasGateName = (gate_name: string) => {
+	if (gate_name === '/x') return 'sx'
+	return gate_name
+}
+
 const parseGateToken = (qubit_count: number, gate_token: RegExpMatchArray[]): GateInfoType[] => {
 	return gate_token.map(([, control_string, gate_name, gate_params, gate_registers_string]) => {
 		const control_count = control_string.length
 		return {
 			control_count,
-			gate_name,
+			gate_name: normalizeAliasGateName(gate_name),
 			gate_params: parseGateParams(gate_params ?? ''),
 			gate_registers: parseRegister(qubit_count, control_count, gate_registers_string),
 		}

@@ -48,12 +48,17 @@ const parseRegister = (qubit_count, control_count, gate_register_string) => {
 const parseGateParams = (gate_params) => {
     return gate_params.replace(/ /g, '').replace(/,,/g, ',0,').replace(/,$/, ',0').replace(/^,/, '0,');
 };
+const normalizeAliasGateName = (gate_name) => {
+    if (gate_name === '/x')
+        return 'sx';
+    return gate_name;
+};
 const parseGateToken = (qubit_count, gate_token) => {
     return gate_token.map(([, control_string, gate_name, gate_params, gate_registers_string]) => {
         const control_count = control_string.length;
         return {
             control_count,
-            gate_name,
+            gate_name: normalizeAliasGateName(gate_name),
             gate_params: parseGateParams(gate_params ?? ''),
             gate_registers: parseRegister(qubit_count, control_count, gate_registers_string),
         };
