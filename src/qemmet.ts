@@ -97,19 +97,12 @@ const parseGateParams = (gate_params: string | undefined) => {
 	return ''
 }
 
-const normalizeAliasGateName = (gate_name: string) => {
-	if (gate_name === '/x') return 'sx'
-	if (gate_name === 'sw') return 'swap'
-	if (gate_name === 'i') return 'id'
-	return gate_name
-}
-
 const parseGateToken = (qubit_count: number, gate_token: RegExpMatchArray[]): GateInfoType[] => {
 	return gate_token.map(([, control_string, gate_name, gate_params, gate_registers_string]) => {
 		const control_count = control_string.length + +(gate_name === 'sw')
 		return {
 			control_count,
-			gate_name: normalizeAliasGateName(gate_name),
+			gate_name,
 			gate_params: parseGateParams(gate_params),
 			gate_registers: parseRegister(qubit_count, control_count, gate_registers_string),
 		}
@@ -134,11 +127,22 @@ const parseQemmetString = (qemmet_string: string): ParserOutput => {
 	}
 }
 
+const getQASMGateName = (gate_name: string) => {
+	if (gate_name === '/x') return 'sx'
+	if (gate_name === 'sw') return 'swap'
+	if (gate_name === 'p') return 'phase'
+	if (gate_name === 'i') return 'id'
+	return gate_name
+}
+
 const getQASMString = ({ qubit_count, bit_count, gate_info }: ParsedQemmetData) => {
 	const qasm_string = gate_info
-		.map(({ control_count, gate_name, gate_params, gate_registers }) => {
+		.map(({ control_count, gate_name: original_gate_name, gate_params, gate_registers }) => {
 			// decrement gate since for easier to write register i start from 1
 			const gate_registers_all = gate_registers.map((register) => register - 1)
+
+			// translate gate name
+			const gate_name = getQASMGateName(original_gate_name)
 
 			// special measure instruction
 			if (gate_name === 'm')
