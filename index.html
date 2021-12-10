@@ -40,7 +40,7 @@
         the classical register. It is optional and defaults to 0.
       </li>
       <li>The <code>gate_string</code> is a string in the form of
-        <code>(c*?[zyxhmb][\d\s]*)+</code>.
+        <code>(?:c*?(?:[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstmi])(?:\(.*?\))*[\d\s]*)+</code>.
       </li>
     </ul>
     <b>Examples and outputs:</b>
