@@ -211,7 +211,9 @@ const getQiskitString = ({ qubit_count, bit_count, gate_info }) => {
         return `qc.append(${getQiskitLibGateName(gate_name)}Gate().control(${control_count}), [${gate_registers_all.join(', ')}])\n`;
     })
         .join('');
-    return `from qiskit import QuantumCircuit
+    return `from numpy import pi, e as euler
+tau = pi*2
+from qiskit import QuantumCircuit
 from qiskit.circuit.library.standard_gates import SdgGate, TdgGate, SXGate, RXGate, RYGate, RZGate, U1Gate, U2Gate, U3Gate, SwapGate, XGate, YGate, ZGate, HGate, PhaseGate, SGate, TGate
 
 qc = QuantumCircuit(${qubit_count}${bit_count ? `, ${bit_count}` : ''})
