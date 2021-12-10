@@ -17,10 +17,10 @@ const app = new Vue({
 		transpiled_code: function () {
 			if (typeof this.qemmet_info === 'string') return this.qemmet_info
 			switch (this.target_lang) {
-				case 'qiskit03':
-					return this.qemmet_info.toQiskitString()
-				default:
+				case 'openqasm3':
 					return this.qemmet_info.toQASMString()
+				default:
+					return this.qemmet_info.toQiskitString()
 			}
 		},
 	},
