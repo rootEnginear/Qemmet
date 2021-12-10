@@ -15,39 +15,51 @@
   <details>
     <summary>How does this work?</summary>
     <p>
-      The syntax consists mainly of 3 parts:<br>
-      <code>quantum_register_num?&lt;int&gt;<kbd>;</kbd>classical_register_num?&lt;int&gt;<kbd>;</kbd>gate_string&lt;string&gt;</code>
+      The syntax consists mainly of 3 parts:
     </p>
-    <p>The <code>gate_string</code> is a string in the
-      form of <code>(c*?[zyxhmb][\d\s]*)+</code>.
+    <p>
+      <code
+        style="display:block">quantum_register_num?&lt;int&gt;<mark>;</mark>classical_register_num?&lt;int&gt;<mark>;</mark>gate_string&lt;string&gt;</code>
     </p>
-    <details>
-      <summary>If you cannot read a regular expression, click here.</summary>
-      <p>
-        Go here: <a href="https://regex101.com/">https://regex101.com/</a>
-      </p>
-    </details>
-    <b>Examples and outputs, in no particular order:</b>
     <ul>
-      <li><code>x</code>: Apply an X gate to all quantum registers.</li>
-      <li><code>x12</code>: Apply an X gate to quantum register 1 and 2.</li>
-      <li><code>cx</code>: Apply a CX gate to quantum register 1 and 2, where 1 is the
-        control and 2 is the target.</li>
-      <li><code>cx34</code>: Apply a CX gate to quantum register 3 and 4, where 3 is the
+      <li>
+        The <code>quantum_register_num</code> is used to specify the number of qubits in
+        the quantum register. It is optional and defaults to 1.
+      </li>
+      <li>
+        The <code>classical_register_num</code> is used to specify the number of bits in
+        the classical register. It is optional and defaults to 0.
+      </li>
+      <li>The <code>gate_string</code> is a string in the form of
+        <code>(c*?[zyxhmb][\d\s]*)+</code>.
+      </li>
+    </ul>
+    <b>Examples and outputs:</b>
+    <ul>
+      <li><code>x</code>: Apply the X gate to all quantum registers.</li>
+      <li><code>x12</code>: Apply the X gate to quantum register 1 and 2.</li>
+      <li><code>hx12</code>: Apply the H gate to all quantum registers, then apply the X
+        gate to quantum register 1 and 2.</li>
+      <li><code>cx</code>: Apply the CX gate to quantum register 1 and 2, where 1 is the
+        control and 2 is the target. When there aren't any qubits specify for a controlled
+        gate, it will default to 1 2 (3 4 ... if it has a lot of controls).</li>
+      <li><code>cx34</code>: Apply the CX gate to quantum register 3 and 4, where 3 is the
         control and 4 is the target.</li>
-      <li><code>ccx123</code>: Apply a CCX gate to quantum register 1, 2, and 3, where 1
+      <li><code>ccx123</code>: Apply the CCX gate to quantum register 1, 2, and 3, where 1
         and 2 are the controls and 3 is the target.</li>
-      <li><code>cccccx123456</code>: Apply a CCCCCX gate to quantum register 1, 2, 3, 4,
+      <li><code>cccccx123456</code>: Apply the CCCCCX gate to quantum register 1, 2, 3, 4,
         5, and 6 where 1, 2, 3, 4, 5 are the controls and 6 is the target.</li>
-      <li><code>cccx12 1 11 9</code>: Apply a CCCX gate to quantum register 12, 1, 11 and
+      <li><code>cccx12 1 11 9</code>: Apply the CCCX gate to quantum register 12, 1, 11
+        and
         9 where 12, 1, and 11 are the controls and 9 is the target. Please keep in mind
-        that if you separate the numbers, you have to separate <b>all of them</b>. If not,
+        that if you separate the numbers, you have to separate <strong>all of
+          them</strong>. If not,
         it will be treated as a single digit packed together (and will get separated later
         digit by digit).</li>
     </ul>
     <b>Example circuits:</b>
     <ul>
-      <li><code>2;;h1cx12</code>: Bell's state.</li>
+      <li><code>2;;h1cx</code>: Bell's state.</li>
       <li><code>;1;hm</code>: 1-bit randomizer.</li>
       <li>
         <code>4;3;x4hccx134h123x123ccz123x123h123ccx134h123x123ccz123x123h123m123</code>:
@@ -57,8 +69,10 @@
     </ul>
     <b>Notes:</b>
     <ul>
-      <li>For ease of human counting, <b>the register starts from 1</b>, not 0.</li>
-      <li>Currently this is only parser not syntax checker, so please check the syntax
+      <li>For ease of human counting, <strong>the register starts from 1</strong>, not 0.
+      </li>
+      <li>Currently this is only a parser, <strong>not a syntax checker</strong>, so
+        please check the syntax
         again by yourself.</li>
       <li>This is a prototype right now. It only supports x, y, z, Hadamard (h),
         Measurement (m), and Barrier (b).</li>
