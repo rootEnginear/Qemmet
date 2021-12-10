@@ -114,42 +114,11 @@
     </small>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
-  <script src="qemmet.js"></script>
-  <script>
-    new Vue({
-      el: '#app',
-      data: {
-        raw_string: '2;;h1cx12',
-        target_lang: 'qiskit03',
-      },
-      computed: {
-        transpiled_code: function () {
-          try {
-            switch (this.target_lang) {
-              case 'qiskit03':
-                return getQiskitString(this.raw_string || ';;');
-              default:
-                return getOpenQASMString(this.raw_string || ';;');
-            }
-          } catch (e) {
-            return `Hmm there are some errors: ${e.message}`;
-          }
-        }
-      },
-      methods: {
-        copyTranspiledCode: function () {
-          navigator.clipboard.writeText(this.transpiled_code).then(function () {
-            console.log('Async: Copying to clipboard was successful!');
-          }, function (err) {
-            console.error('Async: Could not copy text: ', err.message);
-          });
-        }
-      }
-    })
-  </script>
   <link rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2" defer></script>
+  <script src="qemmet.js" defer></script>
+  <script src="vueapp.js" defer></script>
 </body>
 
 </html>
