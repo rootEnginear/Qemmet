@@ -152,7 +152,7 @@ const getQASMString = ({ qubit_count, bit_count, gate_info }: ParsedQemmetData) 
 
 			// special barrier instruction
 			if (gate_name === 'b')
-				return `${gate_registers_all.map((register) => `barrier qr[${register}]`).join(';\n')};\n`
+				return `barrier ${gate_registers_all.map((register) => `qr[${register}]`).join(', ')};\n`
 
 			// parameterized gate
 			if (gate_params) {
