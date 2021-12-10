@@ -1,4 +1,4 @@
-const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstm]', 'g');
+const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstmi]', 'g');
 const parseMetadata = (qemmet_string) => {
     const [qr_string, cr_string, gate_string] = qemmet_string
         .trim()
@@ -46,20 +46,30 @@ const parseRegister = (qubit_count, control_count, gate_register_string) => {
     return gate_register_array.filter(Boolean).map(Number);
 };
 const parseGateParams = (gate_params) => {
-    return gate_params.replace(/ /g, '').replace(/,,/g, ',0,').replace(/,$/, ',0').replace(/^,/, '0,');
+    if (typeof gate_params === 'string') {
+        const trimmed_gate_params = gate_params.replace(/ /g, '');
+        if (trimmed_gate_params === '')
+            return '0';
+        return trimmed_gate_params.replace(/,,/g, ',0,').replace(/,$/, ',0').replace(/^,/, '0,');
+    }
+    return '';
 };
 const normalizeAliasGateName = (gate_name) => {
     if (gate_name === '/x')
         return 'sx';
+    if (gate_name === 'sw')
+        return 'swap';
+    if (gate_name === 'i')
+        return 'id';
     return gate_name;
 };
 const parseGateToken = (qubit_count, gate_token) => {
     return gate_token.map(([, control_string, gate_name, gate_params, gate_registers_string]) => {
-        const control_count = control_string.length;
+        const control_count = control_string.length + +(gate_name === 'sw');
         return {
             control_count,
             gate_name: normalizeAliasGateName(gate_name),
-            gate_params: parseGateParams(gate_params ?? ''),
+            gate_params: parseGateParams(gate_params),
             gate_registers: parseRegister(qubit_count, control_count, gate_registers_string),
         };
     });
@@ -81,17 +91,40 @@ const parseQemmetString = (qemmet_string) => {
 };
 const getQASMString = ({ qubit_count, bit_count, gate_info }) => {
     const qasm_string = gate_info
-        .map(({ control_count, gate_name, gate_registers }) => {
+        .map(({ control_count, gate_name, gate_params, gate_registers }) => {
         // decrement gate since for easier to write register i start from 1
         const gate_registers_all = gate_registers.map((register) => register - 1);
-        // check if it's measure gate then it's different instruction
+        // special measure instruction
         if (gate_name === 'm')
             return `${gate_registers_all
                 .map((register) => `cr[${register}] = measure qr[${register}]`)
                 .join(';\n')};\n`;
-        // check if it's barrier gate then it's different instruction
+        // special barrier instruction
         if (gate_name === 'b')
             return `${gate_registers_all.map((register) => `barrier qr[${register}]`).join(';\n')};\n`;
+        // parameterized gate
+        if (gate_params) {
+            if (control_count === 0)
+                return `${gate_registers_all
+                    .map((register) => `${gate_name}(${gate_params}) qr[${register}]`)
+                    .join(';\n')};\n`;
+            // controlled gate
+            const control_operation_string = control_count === 1 ? 'control @' : `control(${control_count}) @`;
+            return `${control_operation_string} ${gate_name}(${gate_params}) ${gate_registers_all
+                .map((register) => `qr[${register}]`)
+                .join(', ')};\n`;
+        }
+        // swap gate
+        if (gate_name === 'swap') {
+            const control_operation_string = control_count === 1
+                ? ''
+                : control_count === 2
+                    ? 'control @ '
+                    : `control(${control_count - 1}) @ `;
+            return `${control_operation_string}${gate_name} ${gate_registers_all
+                .map((register) => `qr[${register}]`)
+                .join(', ')};\n`;
+        }
         // normal gate
         if (control_count === 0)
             return `${gate_registers_all
@@ -107,6 +140,7 @@ const getQASMString = ({ qubit_count, bit_count, gate_info }) => {
     const bit_declaration_string = bit_count > 0 ? `bit[${bit_count}] cr;\n` : '';
     return `OPENQASM 3.0;
 include "stdgates.inc";
+
 // You can get \`stdgates.inc\` file from in https://github.com/Qiskit/openqasm
 
 qubit[${qubit_count}] qr;
@@ -118,12 +152,12 @@ const getQiskitString = ({ qubit_count, bit_count, gate_info }) => {
         .map(({ control_count, gate_name, gate_registers }) => {
         // decrement gate since for easier to write register i start from 1
         const gate_registers_all = gate_registers.map((register) => register - 1);
-        // check if it's measure gate then it's different instruction
+        // special measure instruction
         if (gate_name === 'm')
             return `${gate_registers_all
                 .map((register) => `qc.measure(${register}, ${register})`)
                 .join('\n')}\n`;
-        // check if it's barrier gate then it's different instruction
+        // special barrier instruction
         if (gate_name === 'b')
             return `${gate_registers_all.map((register) => `qc.barrier(${register})`).join('\n')}\n`;
         // normal gate
@@ -147,3 +181,4 @@ export default {
     getQASMString,
     getQiskitString,
 };
+// Debug String: 2;;sdgtdgsx/xrx()ry()rz()u1()u2(,)u3(,,)swcswccswbxyzhp()stim
