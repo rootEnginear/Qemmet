@@ -1,8 +1,7 @@
-export type GateType = 'x' | 'y' | 'z' | 'h' | 'm' | 'b'
-
 export type GateInfoType = {
 	control_count: number
-	gate_name: GateType | string
+	gate_name: string
+	gate_params: string
 	gate_registers: number[]
 }
 
@@ -16,6 +15,8 @@ export type ParserOutput = ParsedQemmetData & {
 	toQASMString: () => string
 	toQiskitString: () => string
 }
+
+const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstm]', 'g')
 
 const parseMetadata = (qemmet_string: string) => {
 	const [qr_string, cr_string, gate_string] = qemmet_string
@@ -45,7 +46,12 @@ const parseMetadata = (qemmet_string: string) => {
 }
 
 const tokenizeGateString = (gate_string: string) => {
-	return [...gate_string.matchAll(/(c*?)([zyxhmb])([\d\s]*)/g)]
+	// (c*?)([st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstm])(?:\((.*?)\))*([\d\s]*)
+	const tokenize_regexp = new RegExp(
+		`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\((.*?)\\))*([\\d\\s]*)`,
+		'g'
+	)
+	return [...gate_string.matchAll(tokenize_regexp)]
 }
 
 const parseRegister = (
@@ -78,13 +84,17 @@ const parseRegister = (
 	return gate_register_array.filter(Boolean).map(Number)
 }
 
-const parseGateToken = (qubit_count: number, gate_token: RegExpMatchArray[]): GateInfoType[] => {
-	return gate_token.map(([, control_string, gate_name, gate_registers_string]) => {
-		const control_count = control_string.length
+const parseGateParams = (gate_params: string) => {
+	return gate_params.replace(/ /g, '').replace(/,,/g, ',0,').replace(/,$/, ',0').replace(/^,/, '0,')
+}
 
+const parseGateToken = (qubit_count: number, gate_token: RegExpMatchArray[]): GateInfoType[] => {
+	return gate_token.map(([, control_string, gate_name, gate_params, gate_registers_string]) => {
+		const control_count = control_string.length
 		return {
 			control_count,
 			gate_name,
+			gate_params: parseGateParams(gate_params ?? ''),
 			gate_registers: parseRegister(qubit_count, control_count, gate_registers_string),
 		}
 	})
@@ -143,13 +153,8 @@ const getQASMString = ({ qubit_count, bit_count, gate_info }: ParsedQemmetData) 
 	const bit_declaration_string = bit_count > 0 ? `bit[${bit_count}] cr;\n` : ''
 
 	return `OPENQASM 3.0;
-
-// From \`stdgates.inc\` in https://github.com/Qiskit/openqasm
-gate p(λ) a { ctrl @ gphase(λ) a; }
-gate x a { U(π, 0, π) a; }
-gate y a { U(π, π/2, π/2) a; }
-gate z a { p(π) a; }
-gate h a { U(π/2, 0, π) a; }
+include "stdgates.inc";
+// You can get \`stdgates.inc\` file from in https://github.com/Qiskit/openqasm
 
 qubit[${qubit_count}] qr;
 ${bit_declaration_string}
