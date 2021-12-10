@@ -46,7 +46,6 @@ const parseMetadata = (qemmet_string: string) => {
 }
 
 const tokenizeGateString = (gate_string: string) => {
-	// (c*?)([st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstm])(?:\((.*?)\))*([\d\s]*)
 	const tokenize_regexp = new RegExp(
 		`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\((.*?)\\))*([\\d\\s]*)`,
 		'g'

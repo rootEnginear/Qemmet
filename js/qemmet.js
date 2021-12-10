@@ -15,7 +15,6 @@ const parseMetadata = (qemmet_string) => {
     return { qubit_count, bit_count, gate_string };
 };
 const tokenizeGateString = (gate_string) => {
-    // (c*?)([st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstm])(?:\((.*?)\))*([\d\s]*)
     const tokenize_regexp = new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\((.*?)\\))*([\\d\\s]*)`, 'g');
     return [...gate_string.matchAll(tokenize_regexp)];
 };
