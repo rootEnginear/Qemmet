@@ -212,11 +212,31 @@ ${bit_declaration_string}
 ${qasm_string}`
 }
 
+const getQiskitGateName = (gate_name: string) => {
+	if (gate_name === '/x') return 'sx'
+	if (gate_name === 'sw') return 'swap'
+	return gate_name
+}
+
+const capitalize = (string: string) => {
+	const [first, ...rest] = string
+	return first.toUpperCase() + rest.join('')
+}
+
+const getQiskitLibGateName = (gate_name: string) => {
+	if (gate_name === 'p') return 'Phase'
+	if (['sx', 'rx', 'ry', 'rz'].includes(gate_name)) return gate_name.toUpperCase()
+	return capitalize(gate_name)
+}
+
 const getQiskitString = ({ qubit_count, bit_count, gate_info }: ParsedQemmetData) => {
 	const qiskit_string = gate_info
-		.map(({ control_count, gate_name, gate_registers }) => {
+		.map(({ control_count, gate_name: original_gate_name, gate_params, gate_registers }) => {
 			// decrement gate since for easier to write register i start from 1
 			const gate_registers_all = gate_registers.map((register) => register - 1)
+
+			// translate gate name
+			const gate_name = getQiskitGateName(original_gate_name)
 
 			// special measure instruction
 			if (gate_name === 'm')
@@ -225,8 +245,28 @@ const getQiskitString = ({ qubit_count, bit_count, gate_info }: ParsedQemmetData
 					.join('\n')}\n`
 
 			// special barrier instruction
-			if (gate_name === 'b')
-				return `${gate_registers_all.map((register) => `qc.barrier(${register})`).join('\n')}\n`
+			if (gate_name === 'b') return `qc.barrier(${gate_registers_all.join(', ')})\n`
+
+			// parameterized gate
+			if (gate_params) {
+				if (control_count === 0)
+					return `${gate_registers_all
+						.map((register) => `qc.${gate_name}(${gate_params}, [${register}])`)
+						.join('\n')}\n`
+
+				// controlled gate
+				return `qc.append(${getQiskitLibGateName(
+					gate_name
+				)}Gate(${gate_params}).control(${control_count}), [${gate_registers_all.join(', ')}])\n`
+			}
+
+			// swap gate
+			if (gate_name === 'swap') {
+				if (control_count === 1) return `qc.swap(${gate_registers_all.join(', ')})\n`
+				return `qc.append(${getQiskitLibGateName(gate_name)}Gate().control(${
+					control_count - 1
+				}), [${gate_registers_all.join(', ')}])\n`
+			}
 
 			// normal gate
 			if (control_count === 0)
@@ -235,14 +275,14 @@ const getQiskitString = ({ qubit_count, bit_count, gate_info }: ParsedQemmetData
 					.join('\n')}\n`
 
 			// controlled gate
-			return `qc.append(${gate_name.toUpperCase()}Gate().control(${control_count}), [${gate_registers_all.join(
-				', '
-			)}])\n`
+			return `qc.append(${getQiskitLibGateName(
+				gate_name
+			)}Gate().control(${control_count}), [${gate_registers_all.join(', ')}])\n`
 		})
 		.join('')
 
 	return `from qiskit import QuantumCircuit
-from qiskit.circuit.library.standard_gates import XGate, YGate, ZGate, HGate
+from qiskit.circuit.library.standard_gates import SdgGate, TdgGate, SXGate, RXGate, RYGate, RZGate, U1Gate, U2Gate, U3Gate, SwapGate, XGate, YGate, ZGate, HGate, PhaseGate, SGate, TGate
 
 qc = QuantumCircuit(${qubit_count}${bit_count ? `, ${bit_count}` : ''})
 
@@ -255,4 +295,4 @@ export default {
 	getQiskitString,
 }
 
-// Debug String: 2;;sdgtdgsx/xrx()ry()rz()u1()u2(,)u3(,,)swcswccswbxyzhp()stim
+// Debug String: 2;2;sdgtdg csdgctdg sx/x csxc/x rx()ry()rz() crx()cry()crz() u1()u2(,)u3(,,) cu1()cu2(,)cu3(,,) sw csw ccsw b xyz cxcycz h ch p() cp() st csct i m
