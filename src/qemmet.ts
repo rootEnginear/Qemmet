@@ -1,21 +1,21 @@
-export type QemmetStringOptions = {
-	startFromZero: boolean
+export interface QemmetStringOptions {
+	startFromOne: boolean
 }
 
-export type GateInfoType = {
+export interface GateInfoType {
 	control_count: number
 	gate_name: string
 	gate_params: string
 	gate_registers: number[]
 }
 
-export type ParsedQemmetData = {
+export interface ParsedQemmetData {
 	qubit_count: number
 	bit_count: number
 	gate_info: GateInfoType[]
 }
 
-export type ParserOutput = ParsedQemmetData & {
+export interface ParserOutput extends ParsedQemmetData {
 	toQASMString: () => string
 	toQiskitString: () => string
 }
