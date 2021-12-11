@@ -1,4 +1,4 @@
-import Qemmet from './qemmet.js'
+import Qemmet from './build/qemmet.js'
 
 const app = new Vue({
 	el: '#app',

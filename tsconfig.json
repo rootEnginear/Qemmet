@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		"outDir": "./js",
+		"outDir": "build",
 
 		"target": "esnext",
 		"module": "esnext",

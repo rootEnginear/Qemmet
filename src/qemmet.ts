@@ -2,7 +2,7 @@ export interface QemmetStringOptions {
 	startFromOne: boolean
 }
 
-export interface GateInfoType {
+export interface QemmetGateInfo {
 	control_count: number
 	gate_name: string
 	gate_params: string
@@ -12,10 +12,10 @@ export interface GateInfoType {
 export interface ParsedQemmetData {
 	qubit_count: number
 	bit_count: number
-	gate_info: GateInfoType[]
+	gate_info: QemmetGateInfo[]
 }
 
-export interface ParserOutput extends ParsedQemmetData {
+export interface QemmetParserOutput extends ParsedQemmetData {
 	toQASMString: () => string
 	toQiskitString: () => string
 }
@@ -131,7 +131,7 @@ const parseGateToken = (
 	gate_token: RegExpMatchArray[],
 	qubit_count: number,
 	options: QemmetStringOptions
-): GateInfoType[] => {
+): QemmetGateInfo[] => {
 	return gate_token.map(([, control_string, gate_name, gate_params, gate_register_string]) => {
 		const control_count = control_string.length + +(gate_name === 'sw')
 		return {
@@ -143,7 +143,7 @@ const parseGateToken = (
 	})
 }
 
-const parseQemmetString = (qemmet_string: string): ParserOutput => {
+const parseQemmetString = (qemmet_string: string): QemmetParserOutput => {
 	const { qubit_count, bit_count, gate_string, options } = parseMetadata(qemmet_string)
 	const gate_token = tokenizeGateString(gate_string)
 	const gate_info = parseGateToken(gate_token, qubit_count, options)
