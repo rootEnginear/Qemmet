@@ -1,11 +1,11 @@
 const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstmi]', 'g');
 // Expand repeat syntax
 // Examples:
-// - "(x)*3" -> "xxx"
-// - "((x)*2)*3" -> "xxxxxx"
-// - "((x)*2y)*3" -> "xxyxxyxxy"
+// - "[x]*3" -> "xxx"
+// - "[[x]*2]*3" -> "xxxxxx"
+// - "[[x]*2y]*3" -> "xxyxxyxxy"
 const expandRepeatSyntax = (repeat_string) => {
-    const expanded_text = repeat_string.replace(/\(([^()]+?)\)\*(\d+)/g, (_, inner_text, repeat_count) => inner_text.repeat(+repeat_count));
+    const expanded_text = repeat_string.replace(/\[([^()]+?)\]\*(\d+)/g, (_, inner_text, repeat_count) => inner_text.repeat(+repeat_count));
     return expanded_text !== repeat_string ? expandRepeatSyntax(expanded_text) : expanded_text;
 };
 const transformOptionString = (option_string) => {
@@ -34,7 +34,7 @@ const parseMetadata = (qemmet_string) => {
     return { qubit_count, bit_count, gate_string, options };
 };
 const tokenizeGateString = (gate_string) => {
-    const tokenize_regexp = new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\((.*?)\\))*([\\d\\s]*)`, 'g');
+    const tokenize_regexp = new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[(.*?)\\])*([\\d\\s]*)`, 'g');
     return [...gate_string.matchAll(tokenize_regexp)];
 };
 const parseRegister = (gate_register_string, qubit_count, control_count, options) => {

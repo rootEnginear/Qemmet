@@ -24,12 +24,12 @@ const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhp
 
 // Expand repeat syntax
 // Examples:
-// - "(x)*3" -> "xxx"
-// - "((x)*2)*3" -> "xxxxxx"
-// - "((x)*2y)*3" -> "xxyxxyxxy"
+// - "[x]*3" -> "xxx"
+// - "[[x]*2]*3" -> "xxxxxx"
+// - "[[x]*2y]*3" -> "xxyxxyxxy"
 const expandRepeatSyntax = (repeat_string: string): string => {
 	const expanded_text = repeat_string.replace(
-		/\(([^()]+?)\)\*(\d+)/g,
+		/\[([^()]+?)\]\*(\d+)/g,
 		(_, inner_text, repeat_count) => inner_text.repeat(+repeat_count)
 	)
 	return expanded_text !== repeat_string ? expandRepeatSyntax(expanded_text) : expanded_text
@@ -76,7 +76,7 @@ const parseMetadata = (qemmet_string: string) => {
 
 const tokenizeGateString = (gate_string: string) => {
 	const tokenize_regexp = new RegExp(
-		`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\((.*?)\\))*([\\d\\s]*)`,
+		`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[(.*?)\\])*([\\d\\s]*)`,
 		'g'
 	)
 	return [...gate_string.matchAll(tokenize_regexp)]
