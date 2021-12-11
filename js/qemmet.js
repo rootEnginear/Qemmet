@@ -27,10 +27,10 @@ const expandRepeatSyntax = (repeat_string) => {
 };
 const transformOptionString = (option_string) => {
     if (!option_string)
-        return { startFromZero: false };
+        return { startFromOne: true };
     const option_array = [...option_string].map(Number);
     return {
-        startFromZero: !!option_array[0],
+        startFromOne: !!option_array[0],
     };
 };
 const parseMetadata = (qemmet_string) => {
@@ -54,10 +54,11 @@ const tokenizeGateString = (gate_string) => {
     const tokenize_regexp = new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\((.*?)\\))*([\\d\\s]*)`, 'g');
     return [...gate_string.matchAll(tokenize_regexp)];
 };
-const parseRegister = (qubit_count, control_count, gate_register_string) => {
+const parseRegister = (gate_register_string, qubit_count, control_count, options) => {
+    const { startFromOne: isStartFromOne } = options;
     const gate_register_array = gate_register_string.trimEnd().replace(/\s+/g, ' ').split(' ');
     /*
-        After the operation, you will these as an output:
+        Cases:
         1. "" -> [""] -> Expand to qubits
         2. "123" -> ["123"] -> Split
         3. " 123" -> ["", "123"] -> Apply to 123
@@ -70,15 +71,15 @@ const parseRegister = (qubit_count, control_count, gate_register_string) => {
         if (gate_register_array[0].length === 0) {
             // if it is a controled gate: fill the registers as much as the gate requires
             if (control_count)
-                return new Array(control_count + 1).fill(0).map((_, i) => i + 1);
+                return new Array(control_count + 1).fill(0).map((_, i) => i);
             // if it's not a controlled gate: fill the gate into all registers
-            return new Array(qubit_count).fill(0).map((_, i) => i + 1);
+            return new Array(qubit_count).fill(0).map((_, i) => i);
         }
         // Case 2
-        return [...gate_register_array[0]].map(Number);
+        return [...gate_register_array[0]].map((n) => (isStartFromOne ? +n - 1 : +n));
     }
     // Case 3 & 4 & 5
-    return gate_register_array.filter(Boolean).map(Number);
+    return gate_register_array.filter(Boolean).map((n) => (isStartFromOne ? +n - 1 : +n));
 };
 const parseGateParams = (gate_params) => {
     if (typeof gate_params === 'string') {
@@ -93,30 +94,21 @@ const parseGateParams = (gate_params) => {
     }
     return '';
 };
-const parseGateToken = (qubit_count, gate_token) => {
+const parseGateToken = (gate_token, qubit_count, options) => {
     return gate_token.map(([, control_string, gate_name, gate_params, gate_registers_string]) => {
         const control_count = control_string.length + +(gate_name === 'sw');
         return {
             control_count,
             gate_name,
             gate_params: parseGateParams(gate_params),
-            gate_registers: parseRegister(qubit_count, control_count, gate_registers_string),
+            gate_registers: parseRegister(gate_registers_string, qubit_count, control_count, options),
         };
     });
-};
-const transformGateRegisters = (gate_info, options) => {
-    if (!options.startFromZero)
-        return gate_info.map(({ gate_registers, ...gate_info_rest }) => ({
-            ...gate_info_rest,
-            gate_registers: gate_registers.map((register) => register - 1),
-        }));
-    return gate_info;
 };
 const parseQemmetString = (qemmet_string) => {
     const { qubit_count, bit_count, gate_string, options } = parseMetadata(qemmet_string);
     const tokenized_gates = tokenizeGateString(gate_string);
-    const raw_gate_info = parseGateToken(qubit_count, tokenized_gates);
-    const gate_info = transformGateRegisters(raw_gate_info, options);
+    const gate_info = parseGateToken(tokenized_gates, qubit_count, options);
     const parsed_qemmet_data = {
         qubit_count,
         bit_count,
