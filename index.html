@@ -41,7 +41,7 @@
       </li>
       <li>The <code>gate_string</code> is a <strong>required</strong> string in the form
         of: <code
-          style="display:block;margin:.5rem 0">&lt;[control_string]&lt;gate_name&gt;[([params][,[params]]...)][qubits]&gt;...</code>
+          style="display:block;margin:.5rem 0">&lt;[control_string]&lt;gate_name&gt;[<mark>[</mark>[params][,[params]]...<mark>]</mark>][qubits]&gt;...</code>
       </li>
       <li>The <code>options</code> is a string of integers. It is optional and defaults to
         <code>;1</code>. Please see the <a href="#options">available options</a> section
@@ -61,13 +61,12 @@
       <li>Then, you type your gate name which can be found <a href="#gates">below</a>.
       </li>
       <li>After that, if your gate requires a parameter, you enter that by surrounding
-        it with a pair of parentheses (Well, if it's not required,
-        you just skip this step without entering any parentheses). If your gate requires
-        more than one parameter, you
+        it with a pair of brackets (Well, if it's not required, you just skip this step
+        without entering any brackets). If your gate requires more than one parameter, you
         separate them with a comma. If a comma is adjacent to the other one, being the
-        first, or the last, the 0 will be filled accordingly. For example: <code>()</code>
-        is equal to <code>(0)</code>, <code>(,)</code> is equal to <code>(0,0)</code>,
-        <code>(,,)</code> is equal to <code>(0,0,0)</code>. There are 2 constants
+        first, or the last, the 0 will be filled accordingly. For example: <code>[]</code>
+        is equal to <code>[0]</code>, <code>[,]</code> is equal to <code>[0,0]</code>,
+        <code>[,,]</code> is equal to <code>[0,0,0]</code>. There are 2 constants
         supported: <code>pi</code> and <code>euler</code> (I imported them from numpy).
       </li>
       <li>
@@ -103,24 +102,24 @@
       by this syntax:
       <code
         style="display:block;margin:.5rem 0">
-          (&lt;string&gt;)*&lt;repeat_number&gt;
+          <mark>[</mark>&lt;string&gt;<mark>]*</mark>&lt;repeat_number&gt;
         </code>
       For example:
       <code
         style="display:block;margin:.5rem 0">
-        Ba(s)*2(o)*2n // Bassoon
+        Ba[s]*2[o]*2n // Bassoon
       </code>
       The repeat syntax itself can be wrapped inside of another repeat syntax. For
       example:
       <code
         style="display:block;margin:.5rem 0">
-        (l(o)*3l )*2 // loool loool
+        [l[o]*3l ]*2 // loool loool
       </code>
       This can be very useful with several quantum circuit that required you to repeat a
       chuck of the circuit. For example: A Grover's search circuit:
       <code
         style="display:block;margin:.5rem 0">
-        4;3;x4h(ccx134h123x123ccz123x123h123)*2m123
+        4;3;x4h[ccx134h123x123ccz123x123h123]*2m123
       </code>
     </p>
     <b>Notes:</b>
@@ -178,24 +177,24 @@
       </li>
       <li><code>cccx12 1 11 9</code>: Apply the CCCX gate to qubit 12, 1, 11
         and 9 where 12, 1, and 11 are the controls and 9 is the target.</li>
-      <li><code>rz(pi)1</code>: Apply rotation about Z gate to qubit 1 with a
+      <li><code>rz[pi]1</code>: Apply rotation about Z gate to qubit 1 with a
         theta of pi
       </li>
-      <li><code>crz(pi)12</code>: Apply controlled rotation about Z gate to quantum
+      <li><code>crz[pi]12</code>: Apply controlled rotation about Z gate to quantum
         register 1 and 2, where 1 is the control and 2 is the target with a theta of pi.
       </li>
-      <li><code>cu3(pi,,)34</code>: Apply controlled U3 gate to qubit 3 and 4,
+      <li><code>cu3[pi,,]34</code>: Apply controlled U3 gate to qubit 3 and 4,
         where 3 is the control and 4 is the target with values of theta, phi, and lambda
         of pi, 0, and 0. </li>
-      <li><code>u2(,tau)</code>: Apply U2 gate to all qubits with a theta and
+      <li><code>u2[,tau]</code>: Apply U2 gate to all qubits with a theta and
         pi of 0 and tau</li>
       <li><code>x12h</code>: Apply the X gate to qubit 1 and 2, then apply the
         H gate to all qubits.</li>
       <li><code>hx12</code>: Apply the H gate to all qubits, then apply the X
         gate to qubit 1 and 2.</li>
-      <li><code>(h(x)*2)*3</code>: Expand into <code>hxxhxxhxx</code>. You knew the drill.
+      <li><code>[h[x]*2]*3</code>: Expand into <code>hxxhxxhxx</code>. You knew the drill.
       </li>
-      <li><code>(c)*10x</code>: Expand into <code>ccccccccccx</code>. That was absurdly
+      <li><code>[c]*10x</code>: Expand into <code>ccccccccccx</code>. That was absurdly
         large multi-control X gate.</li>
     </ul>
     <strong>Example circuits:</strong>
@@ -203,12 +202,12 @@
       <li><code>2;;h1cx</code>: Bell's state.</li>
       <li><code>;1;hm</code>: 1-bit randomizer.</li>
       <li>
-        <code>4;3;x4h(ccx134h123x123ccz123x123h123)*2m123</code>:
+        <code>4;3;x4h[ccx134h123x123ccz123x123h123]*2m123</code>:
         Grover's search.
       </li>
       <li><code>3;;h2cx23cxh1m12cx23cz13</code>: Quantum teleportation.</li>
       <li>
-        <code>4;4;h4cp(pi/8)14cp(pi/4)24cp(pi/2)34h3cp(pi/4)13cp(pi/2)23h2cp(pi/2)h1sw14sw23</code>:
+        <code>4;4;h4cp[pi/8]14cp[pi/4]24cp[pi/2]34h3cp[pi/4]13cp[pi/2]23h2cp[pi/2]h1sw14sw23</code>:
         Quantum Fourier transform
       </li>
     </ul>
