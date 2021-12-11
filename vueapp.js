@@ -3,9 +3,7 @@ import Qemmet from './build/qemmet.js'
 const app = new Vue({
 	el: '#app',
 	data: {
-		raw_string: '3;;h2cx23cxh1m12cx23cz13',
-		// raw_string:
-		// 	'2;;sdgtdg csdgctdg sx/x csxc/x rx()ry()rz() crx()cry()crz() u1()u2(,)u3(,,) cu1()cu2(,)cu3(,,) sw csw ccsw b xyz cxcycz h ch p() cp() st csct i m',
+		raw_string: '4;3;x4h[ccx134h1-3x1-3ccz1-3x1-3h1-3]*2m1-3',
 		target_lang: 'qiskit03',
 		// target_lang: 'openqasm3',
 	},
@@ -19,6 +17,7 @@ const app = new Vue({
 		},
 		transpiled_code: function () {
 			if (typeof this.qemmet_info === 'string') return this.qemmet_info
+			console.log('Expanded string:', this.qemmet_info.expanded_string)
 			switch (this.target_lang) {
 				case 'openqasm3':
 					return this.qemmet_info.toQASMString()

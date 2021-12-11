@@ -12,6 +12,7 @@ export interface QemmetGateInfo {
 export interface ParsedQemmetData {
 	qubit_count: number
 	bit_count: number
+	expanded_string: string
 	gate_info: QemmetGateInfo[]
 }
 
@@ -34,6 +35,15 @@ const expandRepeatSyntax = (repeat_string: string): string => {
 	)
 	return expanded_text !== repeat_string ? expandRepeatSyntax(expanded_text) : expanded_text
 }
+
+const expandRangeSyntax = (range_string: string): string =>
+	range_string.replace(/(\d+)-(\d+)/g, (_, start, end) => {
+		const max = Math.max(+start, +end)
+		const min = Math.min(+start, +end)
+		const range = Array.from({ length: max - min + 1 }, (_, i) => min + i)
+		const range_string = +start === min ? range.join(' ') : range.reverse().join(' ')
+		return range_string
+	})
 
 const transformOptionString = (option_string: string | undefined): QemmetStringOptions => {
 	if (!option_string) return { startFromOne: true }
@@ -67,20 +77,18 @@ const parseMetadata = (qemmet_string: string) => {
 			'`gates_string` not found. The required format is `quantum_register?;classical_register?;gates_string`'
 		)
 
-	const gate_string = expandRepeatSyntax(raw_gate_string)
+	const gate_string = expandRepeatSyntax(expandRangeSyntax(raw_gate_string))
 
 	const options = transformOptionString(option_string)
 
 	return { qubit_count, bit_count, gate_string, options }
 }
 
-const tokenizeGateString = (gate_string: string) => {
-	const tokenize_regexp = new RegExp(
-		`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[(.*?)\\])*([\\d\\s]*)`,
-		'g'
-	)
-	return [...gate_string.matchAll(tokenize_regexp)]
-}
+const tokenizeGateString = (gate_string: string) => [
+	...gate_string.matchAll(
+		new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[(.*?)\\])*([\\d\\s]*)`, 'g')
+	),
+]
 
 const parseRegister = (
 	gate_register_string: string,
@@ -151,6 +159,7 @@ const parseQemmetString = (qemmet_string: string): QemmetParserOutput => {
 	const parsed_qemmet_data: ParsedQemmetData = {
 		qubit_count,
 		bit_count,
+		expanded_string: gate_string,
 		gate_info,
 	}
 
@@ -319,5 +328,3 @@ export default {
 	getQASMString,
 	getQiskitString,
 }
-
-// Debug String: 2;2;sdgtdg csdgctdg sx/x csxc/x rx()ry()rz() crx()cry()crz() u1()u2(,)u3(,,) cu1()cu2(,)cu3(,,) sw csw ccsw b xyz cxcycz h ch p() cp() st csct i m

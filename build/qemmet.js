@@ -8,6 +8,13 @@ const expandRepeatSyntax = (repeat_string) => {
     const expanded_text = repeat_string.replace(/\[([^()]+?)\]\*(\d+)/g, (_, inner_text, repeat_count) => inner_text.repeat(+repeat_count));
     return expanded_text !== repeat_string ? expandRepeatSyntax(expanded_text) : expanded_text;
 };
+const expandRangeSyntax = (range_string) => range_string.replace(/(\d+)-(\d+)/g, (_, start, end) => {
+    const max = Math.max(+start, +end);
+    const min = Math.min(+start, +end);
+    const range = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+    const range_string = +start === min ? range.join(' ') : range.reverse().join(' ');
+    return range_string;
+});
 const transformOptionString = (option_string) => {
     if (!option_string)
         return { startFromOne: true };
@@ -29,14 +36,13 @@ const parseMetadata = (qemmet_string) => {
         throw new Error('Classical register is not a number. Must be a number or leave it blank for no classical register.');
     if (!raw_gate_string)
         throw new Error('`gates_string` not found. The required format is `quantum_register?;classical_register?;gates_string`');
-    const gate_string = expandRepeatSyntax(raw_gate_string);
+    const gate_string = expandRepeatSyntax(expandRangeSyntax(raw_gate_string));
     const options = transformOptionString(option_string);
     return { qubit_count, bit_count, gate_string, options };
 };
-const tokenizeGateString = (gate_string) => {
-    const tokenize_regexp = new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[(.*?)\\])*([\\d\\s]*)`, 'g');
-    return [...gate_string.matchAll(tokenize_regexp)];
-};
+const tokenizeGateString = (gate_string) => [
+    ...gate_string.matchAll(new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[(.*?)\\])*([\\d\\s]*)`, 'g')),
+];
 const parseRegister = (gate_register_string, qubit_count, control_count, options) => {
     const { startFromOne: isStartFromOne } = options;
     const gate_register_array = gate_register_string.trimEnd().replace(/\s+/g, ' ').split(' ');
@@ -95,6 +101,7 @@ const parseQemmetString = (qemmet_string) => {
     const parsed_qemmet_data = {
         qubit_count,
         bit_count,
+        expanded_string: gate_string,
         gate_info,
     };
     return {
@@ -236,4 +243,3 @@ export default {
     getQASMString,
     getQiskitString,
 };
-// Debug String: 2;2;sdgtdg csdgctdg sx/x csxc/x rx()ry()rz() crx()cry()crz() u1()u2(,)u3(,,) cu1()cu2(,)cu3(,,) sw csw ccsw b xyz cxcycz h ch p() cp() st csct i m
