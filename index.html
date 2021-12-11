@@ -96,10 +96,23 @@
     <p>There you have it! Now you repeat these steps for the next gate and keep entering
       them one by one without any spaces. If you're still not understand it, that's fine!
       You can see more examples below to grasp more concept around the syntax.</p>
+    <b>Notes:</b>
+    <ul>
+      <li>For ease of human counting, by default, <strong>the register starts from
+          1</strong>, not 0. However, you can change them by using <a
+          href="#options">option arguments</a>.</li>
+      </li>
+      <li>Currently this is only a parser, <strong>not a syntax checker</strong>, so
+        please check the syntax
+        again by yourself.</li>
+      <li>This is a prototype right now. And the code itself is super spaghetti, but if
+        you can stand them and want to add something just open a pull request!
+      </li>
+    </ul>
     <strong>Repeat syntax</strong>
     <p>
-      Repeat syntax is a preprocessor that let you repeat a chunk of your circuit string
-      by this syntax:
+      The repeat syntax is a preprocessor that let you repeat a chunk of your circuit
+      string by this syntax:
       <code
         style="display:block;margin:.5rem 0">
           <mark>[</mark>&lt;string&gt;<mark>]*</mark>&lt;repeat_number&gt;
@@ -122,19 +135,24 @@
         4;3;x4h[ccx134h1-3x1-3ccz1-3x1-3h1-3]*2m1-3
       </code>
     </p>
-    <b>Notes:</b>
-    <ul>
-      <li>For ease of human counting, by default, <strong>the register starts from
-          1</strong>, not 0. However, you can change them by using <a
-          href="#options">option arguments</a>.</li>
-      </li>
-      <li>Currently this is only a parser, <strong>not a syntax checker</strong>, so
-        please check the syntax
-        again by yourself.</li>
-      <li>This is a prototype right now. And the code itself is super spaghetti, but if
-        you can stand them and want to add something just open a pull request!
-      </li>
-    </ul>
+    <strong>Range syntax</strong>
+    <p>
+      The range syntax is a preprocessor that transform a substring in a format of
+      <code
+        style="display:block;margin:.5rem 0">
+        &lt;start&gt;<mark>-</mark>&lt;end&gt;
+      </code>
+      into a space-separated number list string. For example:
+      <code
+        style="display:block;margin:.5rem 0">
+        1-5 // 1 2 3 4 5<br>
+        5-1 // 5 4 3 2 1<br>
+        9-12 // 9 10 11 12<br>
+        12-9 // 12 11 10 9<br>
+      </code>
+      This is really useful to span numbers of qubits in the circuit without having to
+      type them all by yourself.
+    </p>
     <strong id="gates">Available gates/instructions:</strong>
     <ul style="column-count:2;">
       <li><code>x</code>: Pauli-X gate</li>
@@ -172,8 +190,8 @@
         control and 4 is the target.</li>
       <li><code>cx 10 1</code>: Apply the CX gate to qubit 10 and 1, where 10
         is the control and 1 is the target.</li>
-      <li><code>cccccx123456</code>: Apply the CCCCCX gate to qubit 1, 2, 3, 4,
-        5, and 6 where 1, 2, 3, 4, 5 are the controls and 6 is the target.
+      <li><code>cccccx1-6</code>: Apply the CCCCCX gate from qubit 1 to 6 where qubit 1 to
+        5 are the controls and 6 is the target.
       </li>
       <li><code>cccx12 1 11 9</code>: Apply the CCCX gate to qubit 12, 1, 11
         and 9 where 12, 1, and 11 are the controls and 9 is the target.</li>
@@ -196,6 +214,9 @@
       </li>
       <li><code>[c]*10x</code>: Expand into <code>ccccccccccx</code>. That was absurdly
         large multi-control X gate.</li>
+      <li><code>x2-5</code>: Apply the X gate from qubit 2 to 5.</li>
+      <li><code>cccx7-4</code>: Apply the CCCX gate from qubit 7 to 4 where qubit 7 to 5
+        are the controls and qubit 4 is the target.</li>
     </ul>
     <strong>Example circuits:</strong>
     <ul>
