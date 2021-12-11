@@ -95,20 +95,20 @@ const parseGateParams = (gate_params) => {
     return '';
 };
 const parseGateToken = (gate_token, qubit_count, options) => {
-    return gate_token.map(([, control_string, gate_name, gate_params, gate_registers_string]) => {
+    return gate_token.map(([, control_string, gate_name, gate_params, gate_register_string]) => {
         const control_count = control_string.length + +(gate_name === 'sw');
         return {
             control_count,
             gate_name,
             gate_params: parseGateParams(gate_params),
-            gate_registers: parseRegister(gate_registers_string, qubit_count, control_count, options),
+            gate_registers: parseRegister(gate_register_string, qubit_count, control_count, options),
         };
     });
 };
 const parseQemmetString = (qemmet_string) => {
     const { qubit_count, bit_count, gate_string, options } = parseMetadata(qemmet_string);
-    const tokenized_gates = tokenizeGateString(gate_string);
-    const gate_info = parseGateToken(tokenized_gates, qubit_count, options);
+    const gate_token = tokenizeGateString(gate_string);
+    const gate_info = parseGateToken(gate_token, qubit_count, options);
     const parsed_qemmet_data = {
         qubit_count,
         bit_count,
