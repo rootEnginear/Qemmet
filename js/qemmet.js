@@ -1,6 +1,14 @@
 const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstmi]', 'g');
+const transformOptionString = (option_string) => {
+    if (!option_string)
+        return { startFromZero: false };
+    const option_array = [...option_string].map(Number);
+    return {
+        startFromZero: !!option_array[0],
+    };
+};
 const parseMetadata = (qemmet_string) => {
-    const [qr_string, cr_string, gate_string] = qemmet_string
+    const [qr_string, cr_string, gate_string, option_string] = qemmet_string
         .trim()
         .split(';')
         .map((s) => s.trim().toLowerCase());
@@ -12,7 +20,8 @@ const parseMetadata = (qemmet_string) => {
         throw new Error('Classical register is not a number. Must be a number or leave it blank for no classical register.');
     if (!gate_string)
         throw new Error('`gates_string` not found. The required format is `quantum_register?;classical_register?;gates_string`');
-    return { qubit_count, bit_count, gate_string };
+    const options = transformOptionString(option_string);
+    return { qubit_count, bit_count, gate_string, options };
 };
 const tokenizeGateString = (gate_string) => {
     const tokenize_regexp = new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\((.*?)\\))*([\\d\\s]*)`, 'g');
@@ -68,10 +77,19 @@ const parseGateToken = (qubit_count, gate_token) => {
         };
     });
 };
+const transformGateRegisters = (gate_info, options) => {
+    if (!options.startFromZero)
+        return gate_info.map(({ gate_registers, ...gate_info_rest }) => ({
+            ...gate_info_rest,
+            gate_registers: gate_registers.map((register) => register - 1),
+        }));
+    return gate_info;
+};
 const parseQemmetString = (qemmet_string) => {
-    const { qubit_count, bit_count, gate_string } = parseMetadata(qemmet_string);
+    const { qubit_count, bit_count, gate_string, options } = parseMetadata(qemmet_string);
     const tokenized_gates = tokenizeGateString(gate_string);
-    const gate_info = parseGateToken(qubit_count, tokenized_gates);
+    const raw_gate_info = parseGateToken(qubit_count, tokenized_gates);
+    const gate_info = transformGateRegisters(raw_gate_info, options);
     const parsed_qemmet_data = {
         qubit_count,
         bit_count,
@@ -97,27 +115,25 @@ const getQASMGateName = (gate_name) => {
 const getQASMString = ({ qubit_count, bit_count, gate_info }) => {
     const qasm_string = gate_info
         .map(({ control_count, gate_name: original_gate_name, gate_params, gate_registers }) => {
-        // decrement gate since for easier to write register i start from 1
-        const gate_registers_all = gate_registers.map((register) => register - 1);
         // translate gate name
         const gate_name = getQASMGateName(original_gate_name);
         // special measure instruction
         if (gate_name === 'm')
-            return `${gate_registers_all
+            return `${gate_registers
                 .map((register) => `cr[${register}] = measure qr[${register}]`)
                 .join(';\n')};\n`;
         // special barrier instruction
         if (gate_name === 'b')
-            return `barrier ${gate_registers_all.map((register) => `qr[${register}]`).join(', ')};\n`;
+            return `barrier ${gate_registers.map((register) => `qr[${register}]`).join(', ')};\n`;
         // parameterized gate
         if (gate_params) {
             if (control_count === 0)
-                return `${gate_registers_all
+                return `${gate_registers
                     .map((register) => `${gate_name}(${gate_params}) qr[${register}]`)
                     .join(';\n')};\n`;
             // controlled gate
             const control_operation_string = control_count === 1 ? 'control @' : `control(${control_count}) @`;
-            return `${control_operation_string} ${gate_name}(${gate_params}) ${gate_registers_all
+            return `${control_operation_string} ${gate_name}(${gate_params}) ${gate_registers
                 .map((register) => `qr[${register}]`)
                 .join(', ')};\n`;
         }
@@ -128,18 +144,16 @@ const getQASMString = ({ qubit_count, bit_count, gate_info }) => {
                 : control_count === 2
                     ? 'control @ '
                     : `control(${control_count - 1}) @ `;
-            return `${control_operation_string}${gate_name} ${gate_registers_all
+            return `${control_operation_string}${gate_name} ${gate_registers
                 .map((register) => `qr[${register}]`)
                 .join(', ')};\n`;
         }
         // normal gate
         if (control_count === 0)
-            return `${gate_registers_all
-                .map((register) => `${gate_name} qr[${register}]`)
-                .join(';\n')};\n`;
+            return `${gate_registers.map((register) => `${gate_name} qr[${register}]`).join(';\n')};\n`;
         // controlled gate
         const control_operation_string = control_count === 1 ? 'control @' : `control(${control_count}) @`;
-        return `${control_operation_string} ${gate_name} ${gate_registers_all
+        return `${control_operation_string} ${gate_name} ${gate_registers
             .map((register) => `qr[${register}]`)
             .join(', ')};\n`;
     })
@@ -175,40 +189,36 @@ const getQiskitLibGateName = (gate_name) => {
 const getQiskitString = ({ qubit_count, bit_count, gate_info }) => {
     const qiskit_string = gate_info
         .map(({ control_count, gate_name: original_gate_name, gate_params, gate_registers }) => {
-        // decrement gate since for easier to write register i start from 1
-        const gate_registers_all = gate_registers.map((register) => register - 1);
         // translate gate name
         const gate_name = getQiskitGateName(original_gate_name);
         // special measure instruction
         if (gate_name === 'm')
-            return `${gate_registers_all
+            return `${gate_registers
                 .map((register) => `qc.measure(${register}, ${register})`)
                 .join('\n')}\n`;
         // special barrier instruction
         if (gate_name === 'b')
-            return `qc.barrier(${gate_registers_all.join(', ')})\n`;
+            return `qc.barrier(${gate_registers.join(', ')})\n`;
         // parameterized gate
         if (gate_params) {
             if (control_count === 0)
-                return `${gate_registers_all
+                return `${gate_registers
                     .map((register) => `qc.${gate_name}(${gate_params}, [${register}])`)
                     .join('\n')}\n`;
             // controlled gate
-            return `qc.append(${getQiskitLibGateName(gate_name)}Gate(${gate_params}).control(${control_count}), [${gate_registers_all.join(', ')}])\n`;
+            return `qc.append(${getQiskitLibGateName(gate_name)}Gate(${gate_params}).control(${control_count}), [${gate_registers.join(', ')}])\n`;
         }
         // swap gate
         if (gate_name === 'swap') {
             if (control_count === 1)
-                return `qc.swap(${gate_registers_all.join(', ')})\n`;
-            return `qc.append(${getQiskitLibGateName(gate_name)}Gate().control(${control_count - 1}), [${gate_registers_all.join(', ')}])\n`;
+                return `qc.swap(${gate_registers.join(', ')})\n`;
+            return `qc.append(${getQiskitLibGateName(gate_name)}Gate().control(${control_count - 1}), [${gate_registers.join(', ')}])\n`;
         }
         // normal gate
         if (control_count === 0)
-            return `${gate_registers_all
-                .map((register) => `qc.${gate_name}(${register})`)
-                .join('\n')}\n`;
+            return `${gate_registers.map((register) => `qc.${gate_name}(${register})`).join('\n')}\n`;
         // controlled gate
-        return `qc.append(${getQiskitLibGateName(gate_name)}Gate().control(${control_count}), [${gate_registers_all.join(', ')}])\n`;
+        return `qc.append(${getQiskitLibGateName(gate_name)}Gate().control(${control_count}), [${gate_registers.join(', ')}])\n`;
     })
         .join('');
     return `from numpy import pi, e as euler
