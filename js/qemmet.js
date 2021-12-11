@@ -1,4 +1,30 @@
 const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstmi]', 'g');
+// Expand repeat syntax
+// Examples:
+// - "(x)*3" -> "xxx"
+// - "((x)*2)*3" -> "xxxxxx"
+// - "((x)*2y)*3" -> "xxyxxyxxy"
+const expandRepeatSyntax = (repeat_string) => {
+    // Extract the inner-most repeat syntax and transform them to process later
+    const extracted_repeats = [...repeat_string.matchAll(/\(([^()]+?)\)\*(\d+)/g)].map((matchStr) => ({
+        str: matchStr[1].repeat(+matchStr[2]),
+        pos: matchStr.index ?? 0,
+        original_len: matchStr[0].length,
+    }));
+    // If there is no repeat syntax, return the original string
+    if (extracted_repeats.length === 0)
+        return repeat_string;
+    // Insert the transformed string into the original string
+    let transformed_string = '';
+    let start = 0;
+    extracted_repeats.forEach(({ str, pos, original_len }) => {
+        transformed_string += repeat_string.slice(start, pos) + str;
+        start = pos + original_len;
+    });
+    transformed_string += repeat_string.slice(start);
+    // Process the string again to check if there are any repeat syntax
+    return expandRepeatSyntax(transformed_string);
+};
 const transformOptionString = (option_string) => {
     if (!option_string)
         return { startFromZero: false };
@@ -8,7 +34,7 @@ const transformOptionString = (option_string) => {
     };
 };
 const parseMetadata = (qemmet_string) => {
-    const [qr_string, cr_string, gate_string, option_string] = qemmet_string
+    const [qr_string, cr_string, raw_gate_string, option_string] = qemmet_string
         .trim()
         .split(';')
         .map((s) => s.trim().toLowerCase());
@@ -18,8 +44,9 @@ const parseMetadata = (qemmet_string) => {
         throw new Error('Quantum register is not a number. Must be a number or leave it blank for a quantum register.');
     if (Number.isNaN(bit_count))
         throw new Error('Classical register is not a number. Must be a number or leave it blank for no classical register.');
-    if (!gate_string)
+    if (!raw_gate_string)
         throw new Error('`gates_string` not found. The required format is `quantum_register?;classical_register?;gates_string`');
+    const gate_string = expandRepeatSyntax(raw_gate_string);
     const options = transformOptionString(option_string);
     return { qubit_count, bit_count, gate_string, options };
 };
