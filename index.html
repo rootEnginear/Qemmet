@@ -13,58 +13,54 @@
     href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.min.css">
 
   <title>Qemmet</title>
-  <meta name="description" content="A way to generate a Qiskit 0.3 or OpenQASM 3.0 code with a shorthand
+  <meta name="description" content="A way to generate a Qiskit 0.3X or OpenQASM 3.0 code with a shorthand
   notation.">
 </head>
 
 <body style="overflow-y:scroll">
   <h1>Qemmet</h1>
-  <p>Qemmet is a way to generate a Qiskit 0.3 or OpenQASM 3.0 code with a shorthand
+  <p>Qemmet is a way to generate a Qiskit 0.3X or OpenQASM 3.0 code with a shorthand
     notation.</p>
-  <details>
+  <details open>
     <summary>How does this work?</summary>
     <p>
-      The syntax consists mainly of 3 parts:
+      The syntax consists of 4 parts:
     </p>
     <p>
       <code
-        style="display:block">&lt;quantum_register_num&gt;<mark>;</mark>&lt;classical_register_num&gt;<mark>;</mark>&lt;gate_string&gt;</code>
+        style="display:block">[quantum_register_num]<mark>;</mark>[classical_register_num]<mark>;</mark>&lt;gate_string&gt;[<mark>;</mark>[options]...]</code>
     </p>
     <ul>
       <li>
         The <code>quantum_register_num</code> is an integer used to specify the number of
-        qubits in the quantum register. It is optional and defaults to 1.
+        qubits in the quantum register. It is optional and defaults to <code>1</code>.
       </li>
       <li>
         The <code>classical_register_num</code> is an integer used to specify the number
-        of bits in the classical register. It is optional and defaults to 0.
+        of bits in the classical register. It is optional and defaults to <code>0</code>.
       </li>
-      <li>The <code>gate_string</code> is a string in the form of:
-        <code
-          style="display:block">(?:c*?(?:[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstmi])(?:\(.*?\))*[\d\s]*)+</code>
-        <small>
-          <a
-            target="_blank"
-            rel="noopener nofollow noreferrer"
-            href="https://regexper.com/#%28%3F%3Ac*%3F%28%3F%3A%5Bst%5Ddg%7C%5Bs%2F%5Dx%7Cr%5Bxyz%5D%7Cu%5B123%5D%7Csw%7C%5Bbxyzhpstmi%5D%29%28%3F%3A%5C%28.*%3F%5C%29%29*%5B%5Cd%5Cs%5D*%29%2B">See
-            the visualization</a>
-        </small>
+      <li>The <code>gate_string</code> is a <strong>required</strong> string in the form
+        of: <code
+          style="display:block;margin:.5rem 0">&lt;[control_string]&lt;gate_name&gt;[([params][,[params]]...)][qubits]&gt;...</code>
+      </li>
+      <li>The <code>options</code> is a string of integers. It is optional and defaults to
+        <code>;1</code>. Please see the <a href="#options">available options</a> section
+        for more information.
       </li>
     </ul>
     <p>As you can see, the <code>quantum_register_num</code> and
-      <code>classical_register_num</code> is very simple. Now, the
-      <code>gate_string</code> part might look very complicated, but the real structure of
-      it is actually very simple:
-      <code
-        style="display:block;margin:.5rem 0">&lt;control_string&gt;&lt;gate&gt;(&lt;params&gt;)&lt;qubits&gt;</code>
-      So, how do I start to input my gates?
+      <code>classical_register_num</code> parts are very simple. Now, the
+      <code>gate_string</code> part might look very complicated, but it is actually very
+      simple. &mdash; So, how do I start to input my gates?
     </p>
     <ol>
-      <li>First, you have to think if your gate you're going to enter will have any
-        controls. If yes, enter the character <code>c</code> as much as you want. If not,
-        just skip this part.</li>
-      <li>Then, you type your gate name which can be found below.</li>
-      <li>After that, if your gate requires for a parameter, you enter that by surrounding
+      <li>First, a <code>control_string</code> is a string of letter <code>c</code>. You
+        just have to think if your gate you're entering will have any controls. If
+        yes, enter the character <code>c</code> as much as you want. If not, just skip
+        this part.</li>
+      <li>Then, you type your gate name which can be found <a href="#gates">below</a>.
+      </li>
+      <li>After that, if your gate requires a parameter, you enter that by surrounding
         it with a pair of parentheses (Well, if it's not required,
         you just skip this step without entering any parentheses). If your gate requires
         more than one parameter, you
@@ -101,9 +97,37 @@
     <p>There you have it! Now you repeat these steps for the next gate and keep entering
       them one by one without any spaces. If you're still not understand it, that's fine!
       You can see more examples below to grasp more concept around the syntax.</p>
-    <span>Notes:</span>
+    <strong>Repeat syntax</strong>
+    <p>
+      Repeat syntax is a preprocessor that let you repeat a chunk of your circuit string
+      by this syntax:
+      <code
+        style="display:block;margin:.5rem 0">
+          (&lt;string&gt;)*&lt;repeat_number&gt;
+        </code>
+      For example:
+      <code
+        style="display:block;margin:.5rem 0">
+        Ba(s)*2(o)*2n // Bassoon
+      </code>
+      The repeat syntax itself can be wrapped inside of another repeat syntax. For
+      example:
+      <code
+        style="display:block;margin:.5rem 0">
+        (l(o)*3l )*2 // loool loool
+      </code>
+      This can be very useful with several quantum circuit that required you to repeat a
+      chuck of the circuit. For example: A Grover's search circuit:
+      <code
+        style="display:block;margin:.5rem 0">
+        4;3;x4h(ccx134h123x123ccz123x123h123)*2m123
+      </code>
+    </p>
+    <b>Notes:</b>
     <ul>
-      <li>For ease of human counting, <strong>the register starts from 1</strong>, not 0.
+      <li>For ease of human counting, by default, <strong>the register starts from
+          1</strong>, not 0. However, you can change them by using <a
+          href="#options">option arguments</a>.</li>
       </li>
       <li>Currently this is only a parser, <strong>not a syntax checker</strong>, so
         please check the syntax
@@ -112,7 +136,7 @@
         you can stand them and want to add something just open a pull request!
       </li>
     </ul>
-    <strong>Available gates/instructions:</strong>
+    <strong id="gates">Available gates/instructions:</strong>
     <ul style="column-count:2;">
       <li><code>x</code>: Pauli-X gate</li>
       <li><code>y</code>: Pauli-Y gate</li>
@@ -135,8 +159,7 @@
       <li><code>b</code>: Barrier instruction</li>
       <li><code>m</code>: Measure instruction</li>
     </ul>
-    <strong>Single gate input with/without modifier and its
-      outputs:</strong>
+    <strong><code>gate_string</code> examples and its outputs:</strong>
     <ul>
       <li><code>x</code>: Apply the X gate to all qubits.</li>
       <li><code>x12</code>: Apply the X gate to qubit 1 and 2.</li>
@@ -170,13 +193,17 @@
         H gate to all qubits.</li>
       <li><code>hx12</code>: Apply the H gate to all qubits, then apply the X
         gate to qubit 1 and 2.</li>
+      <li><code>(h(x)*2)*3</code>: Expand into <code>hxxhxxhxx</code>. You knew the drill.
+      </li>
+      <li><code>(c)*10x</code>: Expand into <code>ccccccccccx</code>. That was absurdly
+        large multi-control X gate.</li>
     </ul>
     <strong>Example circuits:</strong>
     <ul>
       <li><code>2;;h1cx</code>: Bell's state.</li>
       <li><code>;1;hm</code>: 1-bit randomizer.</li>
       <li>
-        <code>4;3;x4hccx134h123x123ccz123x123h123ccx134h123x123ccz123x123h123m123</code>:
+        <code>4;3;x4h(ccx134h123x123ccz123x123h123)*2m123</code>:
         Grover's search.
       </li>
       <li><code>3;;h2cx23cxh1m12cx23cz13</code>: Quantum teleportation.</li>
@@ -185,6 +212,15 @@
         Quantum Fourier transform
       </li>
     </ul>
+    <strong id="options">Available options:</strong>
+    <p>Currently, there is only one option available which is <code>startFromOne</code>
+      which defaults to 1. However, if you're entering your circuit start from 0, you can
+      change this to 0. For example:
+      <code
+        style="display:block;margin:.5rem 0">
+        2;;h0cx;0 // H gate at qubit 0, CX at qubit 0 and 1
+      </code>
+    </p>
   </details>
   <hr>
   <section id="app">
@@ -197,7 +233,7 @@
         <label for="target_lang">Target Language:</label>
         <select id="target_lang" v-model="target_lang"
           style="width:100%;box-sizing:border-box">
-          <option value="qiskit03">Qiskit 0.3</option>
+          <option value="qiskit03">Qiskit 0.3X</option>
           <option value="openqasm3">OpenQASM 3.0</option>
         </select>
       </div>
