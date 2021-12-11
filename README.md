@@ -27,7 +27,7 @@ So, how do I start to input my gates?
 
 1.  First, you have to think if your gate you're going to enter will have any controls. If yes, enter the character `c` as much as you want. If not, just skip this part.
 2.  Then, you type your gate name which can be found below.
-3.  After that, if your gate requires for a parameter, you enter that by surrounding it with a pair of parentheses (Well, if it's not required, you just skip this step without entering any parentheses). If your gate requires more than one parameter, you separate them with a comma. If a comma is adjacent to the other one, being the first, or the last, the 0 will be filled accordingly. For example: `()` is equal to `(0)`, `(,)` is equal to `(0,0)`, `(,,)` is equal to `(0,0,0)`. There are 3 constants supported: `pi`, `tau`, and `euler`. I imported them from numpy.
+3.  After that, if your gate requires for a parameter, you enter that by surrounding it with a pair of parentheses (Well, if it's not required, you just skip this step without entering any parentheses). If your gate requires more than one parameter, you separate them with a comma. If a comma is adjacent to the other one, being the first, or the last, the 0 will be filled accordingly. For example: `()` is equal to `(0)`, `(,)` is equal to `(0,0)`, `(,,)` is equal to `(0,0,0)`. There are 2 constants supported: `pi` and `euler` (I imported them from numpy).
 4.  Finally, you enter the qubit(s) you want to apply. There are some rules apply for shorthand-ness:
 
     **Case 1:** No number is entered
