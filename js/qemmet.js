@@ -5,25 +5,8 @@ const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhp
 // - "((x)*2)*3" -> "xxxxxx"
 // - "((x)*2y)*3" -> "xxyxxyxxy"
 const expandRepeatSyntax = (repeat_string) => {
-    // Extract the inner-most repeat syntax and transform them to process later
-    const extracted_repeats = [...repeat_string.matchAll(/\(([^()]+?)\)\*(\d+)/g)].map((matchStr) => ({
-        str: matchStr[1].repeat(+matchStr[2]),
-        pos: matchStr.index ?? 0,
-        original_len: matchStr[0].length,
-    }));
-    // If there is no repeat syntax, return the original string
-    if (extracted_repeats.length === 0)
-        return repeat_string;
-    // Insert the transformed string into the original string
-    let transformed_string = '';
-    let start = 0;
-    extracted_repeats.forEach(({ str, pos, original_len }) => {
-        transformed_string += repeat_string.slice(start, pos) + str;
-        start = pos + original_len;
-    });
-    transformed_string += repeat_string.slice(start);
-    // Process the string again to check if there are any repeat syntax
-    return expandRepeatSyntax(transformed_string);
+    const expanded_text = repeat_string.replace(/\(([^()]+?)\)\*(\d+)/g, (_, inner_text, repeat_count) => inner_text.repeat(+repeat_count));
+    return expanded_text !== repeat_string ? expandRepeatSyntax(expanded_text) : expanded_text;
 };
 const transformOptionString = (option_string) => {
     if (!option_string)
