@@ -24,11 +24,11 @@
   <details>
     <summary>How does this work?</summary>
     <p>
-      The syntax consists of 4 parts:
+      The syntax consists of 5 parts:
     </p>
     <p>
       <code
-        style="display:block">[quantum_register_num]<mark>;</mark>[classical_register_num]<mark>;</mark>&lt;gate_string&gt;[<mark>;</mark>[options]...]</code>
+        style="display:block">[quantum_register_num]<mark>;</mark>[classical_register_num]<mark>;</mark>&lt;gate_string&gt;[<mark>;</mark>[definition_string][<mark>;</mark>[options]...]]</code>
     </p>
     <ul>
       <li>
@@ -39,9 +39,15 @@
         The <code>classical_register_num</code> is an integer used to specify the number
         of bits in the classical register. It is optional and defaults to <code>0</code>.
       </li>
-      <li>The <code>gate_string</code> is a <strong>required</strong> string in the form
-        of: <code
+      <li>
+        The <code>gate_string</code> is a <strong>required</strong> string in the form of:
+        <code
           style="display:block;margin:.5rem 0">&lt;[control_string]&lt;gate_name&gt;[<mark>[</mark>[params][,[params]]...<mark>]</mark>][qubits]&gt;...</code>
+      </li>
+      <li>
+        The <code>definition_string</code> is an optional string defaults to
+        <code>''</code>. Please see the <a
+          href="#define">definition string</a> section for more information.
       </li>
       <li>The <code>options</code> is a string of integers. It is optional and defaults to
         <code>;1</code>. Please see the <a href="#options">available options</a> section
@@ -109,6 +115,48 @@
         you can stand them and want to add something just open a pull request!
       </li>
     </ul>
+    <strong id="define">Definition string</strong>
+    <p>
+      The definition string is a string in a syntax of:
+      <code
+        style="display:block;margin:.5rem 0">[&lt;name&gt;<mark>=</mark>&lt;meaning&gt;[<mark>,</mark>&lt;name&gt;<mark>=</mark>&lt;meaning&gt;]...]</code>
+      It is a preprocessor that will substitute the <code>meaning</code> into the
+      defined <code>name</code> founded in <code>gate_string</code>. For example:
+      <code
+        style="display:block;margin:.5rem 0">
+        ;;a;a=xhx // ;;xhx<br>
+        ;;htesty;test=zz // ;;hzzy<br>
+        ;;p82;p8=p[pi/8] // ;;p[pi/8]2
+      </code>
+      It can be used with repeat and/or range syntax:
+      <code
+        style="display:block;margin:.5rem 0">
+        ;;[ht]*3;t=ccx // ;;hccxhccxhccx<br>
+        ;;fhf;f=x1-4 // ;;x1-4hx1-4
+      </code>
+      The <code>name</code> can be the same as the available gates as it gets substitute
+      before gate evaluation.
+      <code
+        style="display:block;margin:.5rem 0">
+        ;;x;x=xxx // ;;xxx
+      </code>
+      The <code>definition_string</code> can consist of multiple definitions. It evaluates
+      from left to right, so it can be used as a kind of a repeat syntax too.
+      <code
+        style="display:block;margin:.5rem 0">
+      ;;a;a=bb,b=xxx // ;;xxxxxx<br>
+      ;;a[b]*2a;a=xb,b=hx // ;;xhxhxhxxhx
+      </code>
+      Please note that the definition string will be <strong>evaluated before a repeat and
+        range syntax</strong>. This can affect the range syntax if the <code>name</code>
+      includes a number after it.
+      <code
+        style="display:block;margin:.5rem 0">
+      ;;b321;b3=ccx1 // ccx121<br>
+      ;;b3-1;b3=ccx1 // ccx1-1 -> ccx1 (1-1 evaluates to 1)
+      </code>
+    </p>
+
     <strong>Repeat syntax</strong>
     <p>
       The repeat syntax is a preprocessor that let you repeat a chunk of your circuit
@@ -228,7 +276,7 @@
       </li>
       <li><code>3;;h2cx23cxh1m12cx23cz13</code>: Quantum teleportation.</li>
       <li>
-        <code>4;4;h4cp[pi/8]14cp[pi/4]24cp[pi/2]34h3cp[pi/4]13cp[pi/2]23h2cp[pi/2]h1sw14sw23</code>:
+        <code>4;4;h4p814p424p234h3p413p223h2p2h1sw14sw23;p8=cp[pi/8],p4=cp[pi/4],p2=cp[pi/2]</code>:
         Quantum Fourier transform
       </li>
     </ul>
