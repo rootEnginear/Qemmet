@@ -1,4 +1,12 @@
 const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstmi]', 'g');
+// substituteDefinition("[a]*2ha", "a[xx]") -> "[xx]*2hxx"
+const substituteDefinition = (raw_string, definition_string) => {
+    if (definition_string === '')
+        return raw_string;
+    const definition = [...definition_string.matchAll(/(.+?)\[(.+?)\]/g)].map(([, name, meaning]) => ({ name, meaning }));
+    const processed_raw_string = definition.reduce((string, { name, meaning }) => string.replace(new RegExp(name, 'g'), meaning), raw_string);
+    return processed_raw_string;
+};
 // Expand repeat syntax
 // Examples:
 // - "[x]*3" -> "xxx"
@@ -11,8 +19,9 @@ const expandRepeatSyntax = (repeat_string) => {
 const expandRangeSyntax = (range_string) => range_string.replace(/(\d+)-(\d+)/g, (_, start, end) => {
     const max = Math.max(+start, +end);
     const min = Math.min(+start, +end);
-    const range = Array.from({ length: max - min + 1 }, (_, i) => min + i);
-    const range_string = +start === min ? range.join(' ') : range.reverse().join(' ');
+    const sorted_range = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+    const range_arr = +start === min ? sorted_range : sorted_range.reverse();
+    const range_string = range_arr.join(' ');
     return range_string;
 });
 const transformOptionString = (option_string) => {
@@ -24,7 +33,7 @@ const transformOptionString = (option_string) => {
     };
 };
 const parseMetadata = (qemmet_string) => {
-    const [qr_string, cr_string, raw_gate_string, option_string] = qemmet_string
+    const [qr_string, cr_string, raw_gate_string, raw_definition_string = '', option_string = ''] = qemmet_string
         .trim()
         .split(';')
         .map((s) => s.trim().toLowerCase());
@@ -36,16 +45,18 @@ const parseMetadata = (qemmet_string) => {
         throw new Error('Classical register is not a number. Must be a number or leave it blank for no classical register.');
     if (!raw_gate_string)
         throw new Error('`gates_string` not found. The required format is `quantum_register?;classical_register?;gates_string`');
-    const gate_string = expandRepeatSyntax(expandRangeSyntax(raw_gate_string));
+    const definition_string = raw_definition_string.replace(/\s+?/g, '');
+    const substituted_gate_string = substituteDefinition(raw_gate_string, definition_string);
+    const gate_string = expandRepeatSyntax(expandRangeSyntax(substituted_gate_string));
     const options = transformOptionString(option_string);
-    return { qubit_count, bit_count, gate_string, options };
+    return { qubit_count, bit_count, gate_string, definition_string, options };
 };
 const tokenizeGateString = (gate_string) => [
     ...gate_string.matchAll(new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[(.*?)\\])*([\\d\\s]*)`, 'g')),
 ];
 const parseRegister = (gate_register_string, qubit_count, control_count, options) => {
     const { startFromOne: isStartFromOne } = options;
-    const gate_register_array = gate_register_string.trimEnd().replace(/\s+/g, ' ').split(' ');
+    const gate_register_array = gate_register_string.trimEnd().replace(/\s+?/g, ' ').split(' ');
     /*
         Cases:
         1. "" -> [""] -> Expand to qubits
@@ -95,7 +106,7 @@ const parseGateToken = (gate_token, qubit_count, options) => {
     });
 };
 const parseQemmetString = (qemmet_string) => {
-    const { qubit_count, bit_count, gate_string, options } = parseMetadata(qemmet_string);
+    const { qubit_count, bit_count, gate_string, definition_string, options } = parseMetadata(qemmet_string);
     const gate_token = tokenizeGateString(gate_string);
     const gate_info = parseGateToken(gate_token, qubit_count, options);
     const parsed_qemmet_data = {
@@ -103,6 +114,8 @@ const parseQemmetString = (qemmet_string) => {
         bit_count,
         expanded_string: gate_string,
         gate_info,
+        definition_string,
+        options,
     };
     return {
         ...parsed_qemmet_data,

@@ -14,6 +14,8 @@ export interface ParsedQemmetData {
 	bit_count: number
 	expanded_string: string
 	gate_info: QemmetGateInfo[]
+	definition_string: string
+	options: QemmetStringOptions
 }
 
 export interface QemmetParserOutput extends ParsedQemmetData {
@@ -22,6 +24,19 @@ export interface QemmetParserOutput extends ParsedQemmetData {
 }
 
 const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstmi]', 'g')
+
+// substituteDefinition("[a]*2ha", "a[xx]") -> "[xx]*2hxx"
+const substituteDefinition = (raw_string: string, definition_string: string) => {
+	if (definition_string === '') return raw_string
+	const definition = [...definition_string.matchAll(/(.+?)\[(.+?)\]/g)].map(
+		([, name, meaning]) => ({ name, meaning })
+	)
+	const processed_raw_string = definition.reduce(
+		(string, { name, meaning }) => string.replace(new RegExp(name, 'g'), meaning),
+		raw_string
+	)
+	return processed_raw_string
+}
 
 // Expand repeat syntax
 // Examples:
@@ -46,7 +61,7 @@ const expandRangeSyntax = (range_string: string): string =>
 		return range_string
 	})
 
-const transformOptionString = (option_string: string | undefined): QemmetStringOptions => {
+const transformOptionString = (option_string: string): QemmetStringOptions => {
 	if (!option_string) return { startFromOne: true }
 	const option_array = [...option_string].map(Number)
 	return {
@@ -55,10 +70,11 @@ const transformOptionString = (option_string: string | undefined): QemmetStringO
 }
 
 const parseMetadata = (qemmet_string: string) => {
-	const [qr_string, cr_string, raw_gate_string, option_string] = qemmet_string
-		.trim()
-		.split(';')
-		.map((s) => s.trim().toLowerCase())
+	const [qr_string, cr_string, raw_gate_string, raw_definition_string = '', option_string = ''] =
+		qemmet_string
+			.trim()
+			.split(';')
+			.map((s) => s.trim().toLowerCase())
 
 	const qubit_count = qr_string === '' ? 1 : +qr_string
 	const bit_count = +cr_string
@@ -78,11 +94,15 @@ const parseMetadata = (qemmet_string: string) => {
 			'`gates_string` not found. The required format is `quantum_register?;classical_register?;gates_string`'
 		)
 
-	const gate_string = expandRepeatSyntax(expandRangeSyntax(raw_gate_string))
+	const definition_string = raw_definition_string.replace(/\s+?/g, '')
+
+	const substituted_gate_string = substituteDefinition(raw_gate_string, definition_string)
+
+	const gate_string = expandRepeatSyntax(expandRangeSyntax(substituted_gate_string))
 
 	const options = transformOptionString(option_string)
 
-	return { qubit_count, bit_count, gate_string, options }
+	return { qubit_count, bit_count, gate_string, definition_string, options }
 }
 
 const tokenizeGateString = (gate_string: string) => [
@@ -98,7 +118,7 @@ const parseRegister = (
 	options: QemmetStringOptions
 ) => {
 	const { startFromOne: isStartFromOne } = options
-	const gate_register_array = gate_register_string.trimEnd().replace(/\s+/g, ' ').split(' ')
+	const gate_register_array = gate_register_string.trimEnd().replace(/\s+?/g, ' ').split(' ')
 	/*
 		Cases:
 		1. "" -> [""] -> Expand to qubits
@@ -153,7 +173,8 @@ const parseGateToken = (
 }
 
 const parseQemmetString = (qemmet_string: string): QemmetParserOutput => {
-	const { qubit_count, bit_count, gate_string, options } = parseMetadata(qemmet_string)
+	const { qubit_count, bit_count, gate_string, definition_string, options } =
+		parseMetadata(qemmet_string)
 	const gate_token = tokenizeGateString(gate_string)
 	const gate_info = parseGateToken(gate_token, qubit_count, options)
 
@@ -162,6 +183,8 @@ const parseQemmetString = (qemmet_string: string): QemmetParserOutput => {
 		bit_count,
 		expanded_string: gate_string,
 		gate_info,
+		definition_string,
+		options,
 	}
 
 	return {
