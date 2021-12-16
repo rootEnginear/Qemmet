@@ -1,9 +1,11 @@
 const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstmi]', 'g');
-// substituteDefinition("[a]*2ha", "a[xx]") -> "[xx]*2hxx"
 const substituteDefinition = (raw_string, definition_string) => {
     if (definition_string === '')
         return raw_string;
-    const definition = [...definition_string.matchAll(/(.+?)\[(.+?)\]/g)].map(([, name, meaning]) => ({ name, meaning }));
+    const definition = definition_string
+        .split(',')
+        .map((def) => def.split('='))
+        .map(([name, meaning]) => ({ name, meaning }));
     const processed_raw_string = definition.reduce((string, { name, meaning }) => string.replace(new RegExp(name, 'g'), meaning), raw_string);
     return processed_raw_string;
 };
