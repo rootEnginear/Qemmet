@@ -40,8 +40,9 @@ const expandRangeSyntax = (range_string: string): string =>
 	range_string.replace(/(\d+)-(\d+)/g, (_, start, end) => {
 		const max = Math.max(+start, +end)
 		const min = Math.min(+start, +end)
-		const range = Array.from({ length: max - min + 1 }, (_, i) => min + i)
-		const range_string = +start === min ? range.join(' ') : range.reverse().join(' ')
+		const sorted_range = Array.from({ length: max - min + 1 }, (_, i) => min + i)
+		const range_arr = +start === min ? sorted_range : sorted_range.reverse()
+		const range_string = range_arr.join(' ')
 		return range_string
 	})
 
