@@ -17,7 +17,7 @@ const getQiskitLibGateName = (gate_name: string) => {
 	return capitalize(gate_name)
 }
 
-const getQiskitString = ({ qubit_count, bit_count, gate_info }: QemmetParserOutput) => {
+export const getQiskitString = ({ qubit_count, bit_count, gate_info }: QemmetParserOutput) => {
 	const qiskit_string = gate_info
 		.map(({ control_count, gate_name: original_gate_name, gate_params, gate_registers }) => {
 			// translate gate name
@@ -72,5 +72,3 @@ qc = QuantumCircuit(${qubit_count}${bit_count ? `, ${bit_count}` : ''})
 
 ${qiskit_string}`
 }
-
-export default { getQiskitString }

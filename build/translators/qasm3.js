@@ -9,7 +9,7 @@ const getQASMGateName = (gate_name) => {
         return 'id';
     return gate_name;
 };
-const getQASMString = ({ qubit_count, bit_count, gate_info }) => {
+export const getQASMString = ({ qubit_count, bit_count, gate_info }) => {
     const qasm_string = gate_info
         .map(({ control_count, gate_name: original_gate_name, gate_params, gate_registers }) => {
         // translate gate name
@@ -65,4 +65,3 @@ qubit[${qubit_count}] qr;
 ${bit_declaration_string}
 ${qasm_string}`;
 };
-export default { getQASMString };

@@ -1,7 +1,7 @@
-import Qemmet from './build/qemmet.js'
+import { parseQemmetString } from './build/qemmet.js'
 
-import QiskitTranslator from './build/translators/qiskit.js'
-import QASMTranslator from './build/translators/qasm3.js'
+import { getQiskitString } from './build/translators/qiskit.js'
+import { getQASMString } from './build/translators/qasm3.js'
 
 new Vue({
 	el: '#app',
@@ -13,7 +13,7 @@ new Vue({
 	computed: {
 		qemmet_info: function () {
 			try {
-				return Qemmet.parseQemmetString(this.raw_string || ';;')
+				return parseQemmetString(this.raw_string || ';;')
 			} catch (e) {
 				return `Hmm there are some errors: ${e.message}`
 			}
@@ -23,9 +23,9 @@ new Vue({
 			console.log('Expanded string:', this.qemmet_info.expanded_string)
 			switch (this.target_lang) {
 				case 'openqasm3':
-					return QASMTranslator.getQASMString(this.qemmet_info)
+					return getQASMString(this.qemmet_info)
 				default:
-					return QiskitTranslator.getQiskitString(this.qemmet_info)
+					return getQiskitString(this.qemmet_info)
 			}
 		},
 	},

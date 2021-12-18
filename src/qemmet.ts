@@ -189,7 +189,7 @@ const getMaxBitRegister = (bit_count: number, gate_info: QemmetGateInfo[]) =>
 		gate_info.filter(({ gate_name }) => gate_name === 'm')
 	)
 
-const parseQemmetString = (qemmet_string: string): QemmetParserOutput => {
+export const parseQemmetString = (qemmet_string: string): QemmetParserOutput => {
 	const {
 		qubit_count: raw_qubit_count,
 		bit_count: raw_bit_count,
@@ -213,5 +213,3 @@ const parseQemmetString = (qemmet_string: string): QemmetParserOutput => {
 		options,
 	}
 }
-
-export default { parseQemmetString }

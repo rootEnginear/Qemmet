@@ -135,7 +135,7 @@ const getMaxRegister = (register_count, gate_info) => gate_info.reduce((max, { g
     return Math.max(max, ...gate_registers);
 }, register_count - 1) + 1;
 const getMaxBitRegister = (bit_count, gate_info) => getMaxRegister(bit_count, gate_info.filter(({ gate_name }) => gate_name === 'm'));
-const parseQemmetString = (qemmet_string) => {
+export const parseQemmetString = (qemmet_string) => {
     const { qubit_count: raw_qubit_count, bit_count: raw_bit_count, gate_string, definition_string, options, } = parseMetadata(qemmet_string);
     const gate_token = tokenizeGateString(gate_string);
     const gate_info = parseGateToken(gate_token, raw_qubit_count, options);
@@ -151,4 +151,3 @@ const parseQemmetString = (qemmet_string) => {
         options,
     };
 };
-export default { parseQemmetString };
