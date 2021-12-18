@@ -3,10 +3,16 @@ import { QemmetGateInfo, QemmetParserOutput, QemmetStringOptions } from './types
 const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstmi]', 'g')
 
 const substituteDefinition = (raw_string: string, definition_string: string) => {
-	if (definition_string === '') return raw_string
-	const definition = definition_string
+	const formatted_definition_string = definition_string.trim().replace(/\s+/g, ' ')
+	if (formatted_definition_string === '') return raw_string
+	const definition = formatted_definition_string
 		.split(',')
-		.map((def) => def.split('='))
+		.map((def) =>
+			def
+				.trim()
+				.split('=')
+				.map((el) => el.trim())
+		)
 		.map(([name, meaning]) => ({ name, meaning }))
 	const processed_raw_string = definition.reduce(
 		(string, { name, meaning }) => string.replace(new RegExp(name, 'g'), meaning),
@@ -62,7 +68,7 @@ const transformOptionString = (option_string: string): QemmetStringOptions => {
 const parseMetadata = (qemmet_string: string) => {
 	const preprocessed_qemmet_string = preprocessString(qemmet_string.trim())
 
-	const [qr_string, cr_string, raw_gate_string, raw_definition_string = '', option_string = ''] =
+	const [qr_string, cr_string, raw_gate_string, definition_string = '', option_string = ''] =
 		preprocessed_qemmet_string.split(';').map((s) => s.trim().toLowerCase())
 
 	const qubit_count = qr_string === '' ? 1 : +qr_string
@@ -82,8 +88,6 @@ const parseMetadata = (qemmet_string: string) => {
 		throw new Error(
 			'`gates_string` not found. The required format is `quantum_register?;classical_register?;gates_string`'
 		)
-
-	const definition_string = raw_definition_string.replace(/\s+/g, '')
 
 	const gate_string = substituteDefinition(raw_gate_string, definition_string)
 

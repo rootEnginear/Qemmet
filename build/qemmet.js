@@ -1,10 +1,14 @@
 const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstmi]', 'g');
 const substituteDefinition = (raw_string, definition_string) => {
-    if (definition_string === '')
+    const formatted_definition_string = definition_string.trim().replace(/\s+/g, ' ');
+    if (formatted_definition_string === '')
         return raw_string;
-    const definition = definition_string
+    const definition = formatted_definition_string
         .split(',')
-        .map((def) => def.split('='))
+        .map((def) => def
+        .trim()
+        .split('=')
+        .map((el) => el.trim()))
         .map(([name, meaning]) => ({ name, meaning }));
     const processed_raw_string = definition.reduce((string, { name, meaning }) => string.replace(new RegExp(name, 'g'), meaning), raw_string);
     return processed_raw_string;
@@ -43,7 +47,7 @@ const transformOptionString = (option_string) => {
 };
 const parseMetadata = (qemmet_string) => {
     const preprocessed_qemmet_string = preprocessString(qemmet_string.trim());
-    const [qr_string, cr_string, raw_gate_string, raw_definition_string = '', option_string = ''] = preprocessed_qemmet_string.split(';').map((s) => s.trim().toLowerCase());
+    const [qr_string, cr_string, raw_gate_string, definition_string = '', option_string = ''] = preprocessed_qemmet_string.split(';').map((s) => s.trim().toLowerCase());
     const qubit_count = qr_string === '' ? 1 : +qr_string;
     const bit_count = +cr_string;
     if (Number.isNaN(qubit_count))
@@ -52,7 +56,6 @@ const parseMetadata = (qemmet_string) => {
         throw new Error('Classical register is not a number. Must be a number or leave it blank for no classical register.');
     if (!raw_gate_string)
         throw new Error('`gates_string` not found. The required format is `quantum_register?;classical_register?;gates_string`');
-    const definition_string = raw_definition_string.replace(/\s+/g, '');
     const gate_string = substituteDefinition(raw_gate_string, definition_string);
     const options = transformOptionString(option_string);
     return { qubit_count, bit_count, gate_string, definition_string, options };
