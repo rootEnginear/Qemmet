@@ -9,14 +9,20 @@ const substituteDefinition = (raw_string, definition_string) => {
     const processed_raw_string = definition.reduce((string, { name, meaning }) => string.replace(new RegExp(name, 'g'), meaning), raw_string);
     return processed_raw_string;
 };
+const _pipe = (a, b) => (arg) => b(a(arg));
+const pipe = (...ops) => ops.reduce(_pipe);
 // Expand repeat syntax
 // Examples:
 // - "[x]*3" -> "xxx"
 // - "[[x]*2]*3" -> "xxxxxx"
 // - "[[x]*2y]*3" -> "xxyxxyxxy"
-const expandRepeatSyntax = (repeat_string) => {
-    const expanded_text = repeat_string.replace(/\[([^()]+?)\]\*(\d+)/g, (_, inner_text, repeat_count) => inner_text.repeat(+repeat_count));
-    return expanded_text !== repeat_string ? expandRepeatSyntax(expanded_text) : expanded_text;
+const expandStringRepeatSyntax = (repeat_string) => {
+    const expanded_text = repeat_string.replace(/\[([^\[\]]+?)\]\*(\d+?)/g, (_, inner_text, repeat_count) => inner_text.repeat(+repeat_count));
+    return expanded_text !== repeat_string ? expandStringRepeatSyntax(expanded_text) : expanded_text;
+};
+const expandCharRepeatSyntax = (repeat_string) => {
+    const expanded_text = repeat_string.replace(/(.)\*(\d+?)/g, (_, inner_text, repeat_count) => inner_text.repeat(+repeat_count));
+    return expanded_text !== repeat_string ? expandStringRepeatSyntax(expanded_text) : expanded_text;
 };
 const expandRangeSyntax = (range_string) => range_string.replace(/(\d+)-(\d+)/g, (_, start, end) => {
     const max = Math.max(+start, +end);
@@ -49,7 +55,7 @@ const parseMetadata = (qemmet_string) => {
         throw new Error('`gates_string` not found. The required format is `quantum_register?;classical_register?;gates_string`');
     const definition_string = raw_definition_string.replace(/\s+?/g, '');
     const substituted_gate_string = substituteDefinition(raw_gate_string, definition_string);
-    const gate_string = expandRepeatSyntax(expandRangeSyntax(substituted_gate_string));
+    const gate_string = pipe(expandStringRepeatSyntax, expandCharRepeatSyntax, expandRangeSyntax)(substituted_gate_string);
     const options = transformOptionString(option_string);
     return { qubit_count, bit_count, gate_string, definition_string, options };
 };

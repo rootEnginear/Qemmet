@@ -15,17 +15,27 @@ const substituteDefinition = (raw_string: string, definition_string: string) => 
 	return processed_raw_string
 }
 
+const _pipe = (a: (fn_arg: any) => any, b: (fn_arg: any) => any) => (arg: any) => b(a(arg))
+const pipe = (...ops: ((fn_arg: any) => any)[]) => ops.reduce(_pipe)
+
 // Expand repeat syntax
 // Examples:
 // - "[x]*3" -> "xxx"
 // - "[[x]*2]*3" -> "xxxxxx"
 // - "[[x]*2y]*3" -> "xxyxxyxxy"
-const expandRepeatSyntax = (repeat_string: string): string => {
+const expandStringRepeatSyntax = (repeat_string: string): string => {
 	const expanded_text = repeat_string.replace(
-		/\[([^()]+?)\]\*(\d+)/g,
+		/\[([^\[\]]+?)\]\*(\d+?)/g,
 		(_, inner_text, repeat_count) => inner_text.repeat(+repeat_count)
 	)
-	return expanded_text !== repeat_string ? expandRepeatSyntax(expanded_text) : expanded_text
+	return expanded_text !== repeat_string ? expandStringRepeatSyntax(expanded_text) : expanded_text
+}
+
+const expandCharRepeatSyntax = (repeat_string: string): string => {
+	const expanded_text = repeat_string.replace(/(.)\*(\d+?)/g, (_, inner_text, repeat_count) =>
+		inner_text.repeat(+repeat_count)
+	)
+	return expanded_text !== repeat_string ? expandStringRepeatSyntax(expanded_text) : expanded_text
 }
 
 const expandRangeSyntax = (range_string: string): string =>
@@ -75,7 +85,11 @@ const parseMetadata = (qemmet_string: string) => {
 
 	const substituted_gate_string = substituteDefinition(raw_gate_string, definition_string)
 
-	const gate_string = expandRepeatSyntax(expandRangeSyntax(substituted_gate_string))
+	const gate_string = pipe(
+		expandStringRepeatSyntax,
+		expandCharRepeatSyntax,
+		expandRangeSyntax
+	)(substituted_gate_string)
 
 	const options = transformOptionString(option_string)
 
