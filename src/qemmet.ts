@@ -48,6 +48,9 @@ const expandRangeSyntax = (range_string: string): string =>
 		return range_string
 	})
 
+const preprocessString = (string: string): string =>
+	pipe(expandStringRepeatSyntax, expandCharRepeatSyntax, expandRangeSyntax)(string)
+
 const transformOptionString = (option_string: string): QemmetStringOptions => {
 	if (!option_string) return { startFromOne: true }
 	const option_array = [...option_string].map(Number)
@@ -57,11 +60,10 @@ const transformOptionString = (option_string: string): QemmetStringOptions => {
 }
 
 const parseMetadata = (qemmet_string: string) => {
+	const preprocessed_qemmet_string = preprocessString(qemmet_string.trim())
+
 	const [qr_string, cr_string, raw_gate_string, raw_definition_string = '', option_string = ''] =
-		qemmet_string
-			.trim()
-			.split(';')
-			.map((s) => s.trim().toLowerCase())
+		preprocessed_qemmet_string.split(';').map((s) => s.trim().toLowerCase())
 
 	const qubit_count = qr_string === '' ? 1 : +qr_string
 	const bit_count = +cr_string
@@ -83,13 +85,7 @@ const parseMetadata = (qemmet_string: string) => {
 
 	const definition_string = raw_definition_string.replace(/\s+?/g, '')
 
-	const substituted_gate_string = substituteDefinition(raw_gate_string, definition_string)
-
-	const gate_string = pipe(
-		expandStringRepeatSyntax,
-		expandCharRepeatSyntax,
-		expandRangeSyntax
-	)(substituted_gate_string)
+	const gate_string = substituteDefinition(raw_gate_string, definition_string)
 
 	const options = transformOptionString(option_string)
 

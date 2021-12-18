@@ -32,6 +32,7 @@ const expandRangeSyntax = (range_string) => range_string.replace(/(\d+)-(\d+)/g,
     const range_string = range_arr.join(' ');
     return range_string;
 });
+const preprocessString = (string) => pipe(expandStringRepeatSyntax, expandCharRepeatSyntax, expandRangeSyntax)(string);
 const transformOptionString = (option_string) => {
     if (!option_string)
         return { startFromOne: true };
@@ -41,10 +42,8 @@ const transformOptionString = (option_string) => {
     };
 };
 const parseMetadata = (qemmet_string) => {
-    const [qr_string, cr_string, raw_gate_string, raw_definition_string = '', option_string = ''] = qemmet_string
-        .trim()
-        .split(';')
-        .map((s) => s.trim().toLowerCase());
+    const preprocessed_qemmet_string = preprocessString(qemmet_string.trim());
+    const [qr_string, cr_string, raw_gate_string, raw_definition_string = '', option_string = ''] = preprocessed_qemmet_string.split(';').map((s) => s.trim().toLowerCase());
     const qubit_count = qr_string === '' ? 1 : +qr_string;
     const bit_count = +cr_string;
     if (Number.isNaN(qubit_count))
@@ -54,8 +53,7 @@ const parseMetadata = (qemmet_string) => {
     if (!raw_gate_string)
         throw new Error('`gates_string` not found. The required format is `quantum_register?;classical_register?;gates_string`');
     const definition_string = raw_definition_string.replace(/\s+?/g, '');
-    const substituted_gate_string = substituteDefinition(raw_gate_string, definition_string);
-    const gate_string = pipe(expandStringRepeatSyntax, expandCharRepeatSyntax, expandRangeSyntax)(substituted_gate_string);
+    const gate_string = substituteDefinition(raw_gate_string, definition_string);
     const options = transformOptionString(option_string);
     return { qubit_count, bit_count, gate_string, definition_string, options };
 };
