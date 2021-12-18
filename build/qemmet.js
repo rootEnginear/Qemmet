@@ -17,11 +17,11 @@ const pipe = (...ops) => ops.reduce(_pipe);
 // - "[[x]*2]*3" -> "xxxxxx"
 // - "[[x]*2y]*3" -> "xxyxxyxxy"
 const expandStringRepeatSyntax = (repeat_string) => {
-    const expanded_text = repeat_string.replace(/\[([^\[\]]+?)\]\*(\d+?)/g, (_, inner_text, repeat_count) => inner_text.repeat(+repeat_count));
+    const expanded_text = repeat_string.replace(/\[([^\[\]]+?)\]\*(\d+)/g, (_, inner_text, repeat_count) => inner_text.repeat(+repeat_count));
     return expanded_text !== repeat_string ? expandStringRepeatSyntax(expanded_text) : expanded_text;
 };
 const expandCharRepeatSyntax = (repeat_string) => {
-    const expanded_text = repeat_string.replace(/(.)\*(\d+?)/g, (_, inner_text, repeat_count) => inner_text.repeat(+repeat_count));
+    const expanded_text = repeat_string.replace(/(.)\*(\d+)/g, (_, inner_text, repeat_count) => inner_text.repeat(+repeat_count));
     return expanded_text !== repeat_string ? expandStringRepeatSyntax(expanded_text) : expanded_text;
 };
 const expandRangeSyntax = (range_string) => range_string.replace(/(\d+)-(\d+)/g, (_, start, end) => {
@@ -52,7 +52,7 @@ const parseMetadata = (qemmet_string) => {
         throw new Error('Classical register is not a number. Must be a number or leave it blank for no classical register.');
     if (!raw_gate_string)
         throw new Error('`gates_string` not found. The required format is `quantum_register?;classical_register?;gates_string`');
-    const definition_string = raw_definition_string.replace(/\s+?/g, '');
+    const definition_string = raw_definition_string.replace(/\s+/g, '');
     const gate_string = substituteDefinition(raw_gate_string, definition_string);
     const options = transformOptionString(option_string);
     return { qubit_count, bit_count, gate_string, definition_string, options };
@@ -62,7 +62,7 @@ const tokenizeGateString = (gate_string) => [
 ];
 const parseRegister = (gate_register_string, qubit_count, control_count, options) => {
     const { startFromOne: isStartFromOne } = options;
-    const gate_register_array = gate_register_string.trimEnd().replace(/\s+?/g, ' ').split(' ');
+    const gate_register_array = gate_register_string.trimEnd().replace(/\s+/g, ' ').split(' ');
     /*
         Cases:
         1. "" -> [""] -> Expand to qubits

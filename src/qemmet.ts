@@ -25,14 +25,14 @@ const pipe = (...ops: ((fn_arg: any) => any)[]) => ops.reduce(_pipe)
 // - "[[x]*2y]*3" -> "xxyxxyxxy"
 const expandStringRepeatSyntax = (repeat_string: string): string => {
 	const expanded_text = repeat_string.replace(
-		/\[([^\[\]]+?)\]\*(\d+?)/g,
+		/\[([^\[\]]+?)\]\*(\d+)/g,
 		(_, inner_text, repeat_count) => inner_text.repeat(+repeat_count)
 	)
 	return expanded_text !== repeat_string ? expandStringRepeatSyntax(expanded_text) : expanded_text
 }
 
 const expandCharRepeatSyntax = (repeat_string: string): string => {
-	const expanded_text = repeat_string.replace(/(.)\*(\d+?)/g, (_, inner_text, repeat_count) =>
+	const expanded_text = repeat_string.replace(/(.)\*(\d+)/g, (_, inner_text, repeat_count) =>
 		inner_text.repeat(+repeat_count)
 	)
 	return expanded_text !== repeat_string ? expandStringRepeatSyntax(expanded_text) : expanded_text
@@ -83,7 +83,7 @@ const parseMetadata = (qemmet_string: string) => {
 			'`gates_string` not found. The required format is `quantum_register?;classical_register?;gates_string`'
 		)
 
-	const definition_string = raw_definition_string.replace(/\s+?/g, '')
+	const definition_string = raw_definition_string.replace(/\s+/g, '')
 
 	const gate_string = substituteDefinition(raw_gate_string, definition_string)
 
@@ -105,7 +105,7 @@ const parseRegister = (
 	options: QemmetStringOptions
 ) => {
 	const { startFromOne: isStartFromOne } = options
-	const gate_register_array = gate_register_string.trimEnd().replace(/\s+?/g, ' ').split(' ')
+	const gate_register_array = gate_register_string.trimEnd().replace(/\s+/g, ' ').split(' ')
 	/*
 		Cases:
 		1. "" -> [""] -> Expand to qubits
