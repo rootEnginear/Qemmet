@@ -60,9 +60,25 @@ const parseMetadata = (qemmet_string) => {
 const tokenizeGateString = (gate_string) => [
     ...gate_string.matchAll(new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[(.*?)\\])*([\\d\\s]*)`, 'g')),
 ];
+const ensureMultipleRegister = (registers, gate_control_length) => {
+    // it's fine if it has no controls OR registers length are enough for the controls and the gate
+    if (!(gate_control_length - 1) || registers.length === gate_control_length)
+        return registers;
+    // if the reg is too much, slice off
+    if (registers.length > gate_control_length)
+        return registers.slice(0, gate_control_length);
+    // If not, it need to fill the registers as much as the gate + controls requires
+    // first, generate possible reg
+    const possible_reg = new Array(gate_control_length).fill(0).map((_, i) => i);
+    // then, remove the regs that are already in the reg_arr
+    const filled_reg = [...new Set(registers.concat(possible_reg))];
+    // finally, trim the excess
+    return filled_reg.slice(0, gate_control_length);
+};
 const parseRegister = (gate_register_string, qubit_count, control_count, options) => {
     const { startFromOne: isStartFromOne } = options;
     const gate_register_array = gate_register_string.trimEnd().replace(/\s+/g, ' ').split(' ');
+    const gate_control_length = control_count + 1;
     /*
         Cases:
         1. "" -> [""] -> Expand to qubits
@@ -77,15 +93,19 @@ const parseRegister = (gate_register_string, qubit_count, control_count, options
         if (gate_register_array[0].length === 0) {
             // if it is a controled gate: fill the registers as much as the gate requires
             if (control_count)
-                return new Array(control_count + 1).fill(0).map((_, i) => i);
+                return new Array(gate_control_length).fill(0).map((_, i) => i);
             // if it's not a controlled gate: fill the gate into all registers
             return new Array(qubit_count).fill(0).map((_, i) => i);
         }
         // Case 2
-        return [...gate_register_array[0]].map((n) => (isStartFromOne ? +n - 1 : +n));
+        const register_arr = [...gate_register_array[0]].map((n) => (isStartFromOne ? +n - 1 : +n));
+        return ensureMultipleRegister(register_arr, gate_control_length);
     }
     // Case 3 & 4 & 5
-    return gate_register_array.filter(Boolean).map((n) => (isStartFromOne ? +n - 1 : +n));
+    const register_arr = gate_register_array
+        .filter(Boolean)
+        .map((n) => (isStartFromOne ? +n - 1 : +n));
+    return ensureMultipleRegister(register_arr, gate_control_length);
 };
 const parseGateParams = (gate_params) => {
     if (typeof gate_params === 'string') {
