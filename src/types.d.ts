@@ -9,16 +9,11 @@ export interface QemmetGateInfo {
 	gate_registers: number[]
 }
 
-export interface ParsedQemmetData {
+export interface QemmetParserOutput {
 	qubit_count: number
 	bit_count: number
 	expanded_string: string
 	gate_info: QemmetGateInfo[]
 	definition_string: string
 	options: QemmetStringOptions
-}
-
-export interface QemmetParserOutput extends ParsedQemmetData {
-	toQASMString: () => string
-	toQiskitString: () => string
 }

@@ -1,6 +1,8 @@
-import Qemmet from './build/qemmet.js'
+import Qemmet from './build/qemmet'
+import getQiskitString from './build/target/qiskit'
+import getQASMString from './build/target/qasm3'
 
-const app = new Vue({
+new Vue({
 	el: '#app',
 	data: {
 		raw_string: '4;3;x4h[ccx134h1-3x1-3ccz1-3x1-3h1-3]*2m1-3',
@@ -20,9 +22,9 @@ const app = new Vue({
 			console.log('Expanded string:', this.qemmet_info.expanded_string)
 			switch (this.target_lang) {
 				case 'openqasm3':
-					return this.qemmet_info.toQASMString()
+					return getQASMString(this.qemmet_info)
 				default:
-					return this.qemmet_info.toQiskitString()
+					return getQiskitString(this.qemmet_info)
 			}
 		},
 	},
