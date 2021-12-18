@@ -12,7 +12,6 @@ export interface QemmetGateInfo {
 export interface QemmetParserOutput {
 	qubit_count: number
 	bit_count: number
-	expanded_string: string
 	gate_info: QemmetGateInfo[]
 	definition_string: string
 	options: QemmetStringOptions

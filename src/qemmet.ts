@@ -207,7 +207,6 @@ export const parseQemmetString = (qemmet_string: string): QemmetParserOutput => 
 	return {
 		qubit_count,
 		bit_count,
-		expanded_string: gate_string,
 		gate_info,
 		definition_string,
 		options,

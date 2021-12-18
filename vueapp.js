@@ -2,6 +2,7 @@ import { parseQemmetString } from './build/qemmet.js'
 
 import { getQiskitString } from './build/translators/qiskit.js'
 import { getQASMString } from './build/translators/qasm3.js'
+import { getQemmetString } from './build/translators/qemmet.js'
 
 new Vue({
 	el: '#app',
@@ -20,7 +21,7 @@ new Vue({
 		},
 		transpiled_code: function () {
 			if (typeof this.qemmet_info === 'string') return this.qemmet_info
-			console.log('Expanded string:', this.qemmet_info.expanded_string)
+			console.log('Expanded string:', getQemmetString(this.qemmet_info))
 			switch (this.target_lang) {
 				case 'openqasm3':
 					return getQASMString(this.qemmet_info)
