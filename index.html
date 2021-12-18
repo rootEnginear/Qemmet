@@ -23,294 +23,354 @@
     notation.</p>
   <details>
     <summary>How does this work?</summary>
-    <p>
-      The syntax consists of 5 parts:
-    </p>
-    <p>
-      <code
-        style="display:block">[quantum_register_num]<mark>;</mark>[classical_register_num]<mark>;</mark>&lt;gate_string&gt;[<mark>;</mark>[definition_string][<mark>;</mark>[options]...]]</code>
-    </p>
-    <ul>
-      <li>
-        The <code>quantum_register_num</code> is an integer used to specify the number of
-        qubits in the quantum register. It is optional and defaults to <code>1</code>.
-      </li>
-      <li>
-        The <code>classical_register_num</code> is an integer used to specify the number
-        of bits in the classical register. It is optional and defaults to <code>0</code>.
-      </li>
-      <li>
-        The <code>gate_string</code> is a <strong>required</strong> string in the form of:
+    <section id="structure">
+      <h2>The structure</h2>
+      <p>
+        The syntax consists of 5 parts:
         <code
-          style="display:block;margin:.5rem 0">&lt;[control_string]&lt;gate_name&gt;[<mark>[</mark>[params][,[params]]...<mark>]</mark>][qubits]&gt;...</code>
-      </li>
-      <li>
-        The <code>definition_string</code> is an optional string defaults to
-        <code>''</code>. Please see the <a
-          href="#define">definition string</a> section for more information.
-      </li>
-      <li>The <code>options</code> is a string of integers. It is optional and defaults to
-        <code>;1</code>. Please see the <a href="#options">available options</a> section
-        for more information.
-      </li>
-    </ul>
-    <p>As you can see, the <code>quantum_register_num</code> and
-      <code>classical_register_num</code> parts are very simple. Now, the
-      <code>gate_string</code> part might look very complicated, but it is actually very
-      simple. &mdash; So, how do I start to input my gates?
-    </p>
-    <ol>
-      <li>First, a <code>control_string</code> is a string of letter <code>c</code>. You
-        just have to think if your gate you're entering will have any controls. If
-        yes, enter the character <code>c</code> as much as you want. If not, just skip
-        this part.</li>
-      <li>Then, you type your gate name which can be found <a href="#gates">below</a>.
-      </li>
-      <li>After that, if your gate requires a parameter, you enter that by surrounding
-        it with a pair of brackets (Well, if it's not required, you just skip this step
-        without entering any brackets). If your gate requires more than one parameter, you
-        separate them with a comma. If a comma is adjacent to the other one, being the
-        first, or the last, the 0 will be filled accordingly. For example: <code>[]</code>
-        is equal to <code>[0]</code>, <code>[,]</code> is equal to <code>[0,0]</code>,
-        <code>[,,]</code> is equal to <code>[0,0,0]</code>. There are 2 constants
-        supported: <code>pi</code> and <code>euler</code> (I imported them from numpy).
-      </li>
-      <li>
-        Finally, you enter the qubit(s) you want to apply. There are some rules apply
-        for shorthand-ness:
-        <ul><b>Case 1:</b> No number is entered
-          <li>If no number is entered and it is <strong>a single-qubit gate</strong>, it
-            will apply that gate to <strong>all</strong> of specified qubits.
-          </li>
-          <li>If no number is entered and it is <strong>a multiple-qubit gate</strong>
-            (maybe with a control modifier or it's a swap gate), it will apply to qubit 1
-            2 (3 4 ... if there are a lot of controls).</li>
-        </ul>
-        <ul><b>Case 2:</b> A number <strong>without any spaces</strong> is entered
-          <li>If a number is entered with no spaces, it will be treated as a single digit
-            packed together. For example: <code>123</code> means qubit 1, 2, and 3.</li>
-        </ul>
-        <ul><b>Case 3:</b> Some spaces is entered
-          <li>If there are some spaces present <strong>at the first or between</strong>
-            the numbers. It will considered as "seperated qubits". For example:
-            <code>12 3</code> means qubit 12 and 3, <code>&nbsp;12</code> means qubit 12
-            (you see the tiny space in front of the number, right?
-          </li>
-        </ul>
-      </li>
-    </ol>
-    <p>There you have it! Now you repeat these steps for the next gate and keep entering
-      them one by one without any spaces. If you're still not understand it, that's fine!
-      You can see more examples below to grasp more concept around the syntax.</p>
-    <b>Notes:</b>
-    <ul>
-      <li>For ease of human counting, by default, <strong>the register starts from
-          1</strong>, not 0. However, you can change them by using <a
-          href="#options">option arguments</a>.</li>
-      </li>
-      <li>Currently this is only a parser, <strong>not a syntax checker</strong>, so
-        please check the syntax
-        again by yourself.</li>
-      <li>This is a prototype right now. And the code itself is super spaghetti, but if
-        you can stand them and want to add something just open a pull request!
-      </li>
-    </ul>
-    <strong id="define">Definition string</strong>
-    <p>
-      The definition string is a string in a syntax of:
-      <code
-        style="display:block;margin:.5rem 0">[&lt;name&gt;<mark>=</mark>&lt;meaning&gt;[<mark>,</mark>&lt;name&gt;<mark>=</mark>&lt;meaning&gt;]...]</code>
-      It is a preprocessor that will substitute the <code>meaning</code> into the
-      defined <code>name</code> founded in <code>gate_string</code>. For example:
-      <code
-        style="display:block;margin:.5rem 0">
-        ;;a;a=xhx // ;;xhx<br>
-        ;;htesty;test=zz // ;;hzzy<br>
-        ;;p82;p8=p[pi/8] // ;;p[pi/8]2
-      </code>
-      It can be used with repeat and/or range syntax:
-      <code
-        style="display:block;margin:.5rem 0">
-        ;;[ht]*3;t=ccx // ;;hccxhccxhccx<br>
-        ;;fhf;f=x1-4 // ;;x1-4hx1-4
-      </code>
-      The <code>name</code> can be the same as the available gates as it gets substitute
-      before gate evaluation.
-      <code
-        style="display:block;margin:.5rem 0">
-        ;;x;x=xxx // ;;xxx
-      </code>
-      The <code>definition_string</code> can consist of multiple definitions. It evaluates
-      from left to right, so it can be used as a kind of a repeat syntax too.
-      <code
-        style="display:block;margin:.5rem 0">
-      ;;a;a=bb,b=xxx // ;;xxxxxx<br>
-      ;;a[b]*2a;a=xb,b=hx // ;;xhxhxhxxhx
-      </code>
-      Please note that the definition string will be <strong>evaluated before a repeat and
-        range syntax</strong>. This can affect the range syntax if the <code>name</code>
-      includes a number after it.
-      <code
-        style="display:block;margin:.5rem 0">
-      ;;b321;b3=ccx1 // ccx121<br>
-      ;;b3-1;b3=ccx // ccx-1 -> ccx<br>
-      ;;b3-1;b3=ccx1 // ccx1-1 -> ccx1 (1-1 evaluates to 1)
-      </code>
-    </p>
-
-    <strong>Repeat syntax</strong>
-    <p>
-      The repeat syntax is a preprocessor that let you repeat a chunk of your circuit
-      string by this syntax:
-      <code
-        style="display:block;margin:.5rem 0">
-          <mark>[</mark>&lt;string&gt;<mark>]*</mark>&lt;repeat_number&gt;
+          style="display:block">[quantum_register_num]<mark>;</mark>[classical_register_num]<mark>;</mark>&lt;gate_string&gt;[<mark>;</mark>[definition_string][<mark>;</mark>[options]...]]</code>
+      </p>
+      <ul>
+        <li>
+          The <code>quantum_register_num</code> is an integer used to specify the number
+          of
+          qubits in the quantum register. It is optional and defaults to <code>1</code>.
+        </li>
+        <li>
+          The <code>classical_register_num</code> is an integer used to specify the number
+          of bits in the classical register. It is optional and defaults to
+          <code>0</code>.
+        </li>
+        <li>
+          The <code>gate_string</code> is a <strong>required</strong> string in the form
+          of:
+          <code
+            style="display:block;margin:.5rem 0">&lt;[control_string]&lt;gate_name&gt;[<mark>[</mark>[params][,[params]]...<mark>]</mark>][qubits]&gt;...</code>
+        </li>
+        <li>
+          The <code>definition_string</code> is an optional string defaults to
+          <code>''</code>. Please see the <a
+            href="#define">definition string</a> section for more information.
+        </li>
+        <li>The <code>options</code> is a string of integers. It is optional and defaults
+          to
+          <code>;1</code>. Please see the <a href="#options">available options</a> section
+          for more information.
+        </li>
+      </ul>
+      <p>As you can see, the <code>quantum_register_num</code> and
+        <code>classical_register_num</code> parts are very simple. Now, the
+        <code>gate_string</code> part might look very complicated, but it is actually very
+        simple. &mdash; So, how do I start to input my gates?
+      </p>
+      <ol>
+        <li>First, a <code>control_string</code> is a string of letter <code>c</code>. You
+          just have to think if your gate you're entering will have any controls. If
+          yes, enter the character <code>c</code> as much as you want. If not, just skip
+          this part.</li>
+        <li>Then, you type your gate name which can be found <a href="#gates">below</a>.
+        </li>
+        <li>After that, if your gate requires a parameter, you enter that by surrounding
+          it with a pair of brackets (Well, if it's not required, you just skip this step
+          without entering any brackets). If your gate requires more than one parameter,
+          you
+          separate them with a comma. If a comma is adjacent to the other one, being the
+          first, or the last, the 0 will be filled accordingly. For example:
+          <code>[]</code>
+          is equal to <code>[0]</code>, <code>[,]</code> is equal to <code>[0,0]</code>,
+          <code>[,,]</code> is equal to <code>[0,0,0]</code>. There are 2 constants
+          supported: <code>pi</code> and <code>euler</code> (I imported them from numpy).
+        </li>
+        <li>
+          Finally, you enter the qubit(s) you want to apply. There are some rules apply
+          for shorthand-ness:
+          <ul><b>Case 1:</b> No number is entered
+            <li>If no number is entered and it is <strong>a single-qubit gate</strong>, it
+              will apply that gate to <strong>all of specified qubits</strong>.
+            </li>
+            <li>If no number is entered and it is <strong>a multiple-qubit gate</strong>
+              (maybe with a control modifier or it's a swap gate), it will apply to qubit
+              1
+              2 (3 4 ... if there are a lot of controls).</li>
+          </ul>
+          <ul><b>Case 2:</b> A number <strong>without any spaces</strong> is entered
+            <li>If a number is entered with no spaces, it will be treated as a single
+              digit
+              packed together. For example: <code>123</code> means qubit 1, 2, and 3.</li>
+          </ul>
+          <ul><b>Case 3:</b> Some spaces is entered
+            <li>If there are some spaces present <strong>at the first or between</strong>
+              the numbers. It will considered as "seperated qubits". For example:
+              <code>12 3</code> means qubit 12 and 3, <code>&nbsp;12</code> means qubit 12
+              (you see the tiny space in front of the number, right?
+            </li>
+          </ul>
+        </li>
+      </ol>
+      <p>There you have it! Now you repeat these steps for the next gate and keep entering
+        them one by one without any spaces. If you're still not understand it, that's
+        fine!
+        You can see more examples below to grasp more concept around the syntax.</p>
+      <b>Notes:</b>
+      <ul>
+        <li>For ease of human counting, by default, <strong>the register starts from
+            1</strong>, not 0. However, you can change them by using <a
+            href="#options">option arguments</a>.</li>
+        </li>
+        <li>Currently this is only a parser, <strong>not a syntax checker</strong>, so
+          please check the syntax
+          again by yourself.</li>
+        <li>This is a prototype right now. And the code itself is super spaghetti, but if
+          you can stand them and want to add something just open a pull request!
+        </li>
+      </ul>
+    </section>
+    <section id="repeat">
+      <h2>Repeat syntax</h2>
+      <p>
+        The repeat syntax is a preprocessor that let you repeat a chunk of your circuit
+        string by this syntax:
+        <code
+          style="display:block;margin:.5rem 0">
+            <mark>[</mark>&lt;string&gt;<mark>]*</mark>&lt;repeat_number&gt;|&lt;char&gt;<mark>*</mark>&lt;repeat_number&gt;
+          </code>
+        The first syntax is called a "string repeat syntax" which requires you to wrap the
+        string with a pair of brackets. The second one is called a "character repeat
+        syntax" which does not require any brackets, but only repeat the character in
+        front of the <code>*</code> sign. For example:
+        <code
+          style="display:block;margin:.5rem 0">
+          Bas*2o*2n // Bassoon<br>
+          L[ol]*3 // Lololol
         </code>
-      For example:
-      <code
-        style="display:block;margin:.5rem 0">
-        Ba[s]*2[o]*2n // Bassoon
-      </code>
-      The repeat syntax itself can be wrapped inside of another repeat syntax. For
-      example:
-      <code
-        style="display:block;margin:.5rem 0">
-        [l[o]*3l ]*2 // loool loool
-      </code>
-      This can be very useful with several quantum circuit that required you to repeat a
-      chuck of the circuit. For example: A Grover's search circuit:
-      <code
-        style="display:block;margin:.5rem 0">
-        4;3;x4h[ccx134h1-3x1-3ccz1-3x1-3h1-3]*2m1-3
-      </code>
-    </p>
-    <strong>Range syntax</strong>
-    <p>
-      The range syntax is a preprocessor that transform a substring in a format of
-      <code
-        style="display:block;margin:.5rem 0">
-        &lt;start&gt;<mark>-</mark>&lt;end&gt;
-      </code>
-      into a space-separated number list string. For example:
-      <code
-        style="display:block;margin:.5rem 0">
-        1-5 // 1 2 3 4 5<br>
-        5-1 // 5 4 3 2 1<br>
-        9-12 // 9 10 11 12<br>
-        12-9 // 12 11 10 9<br>
-      </code>
-      This is really useful to span numbers of qubits in the circuit without having to
-      type them all by yourself.
-    </p>
-    <strong id="gates">Available gates/instructions:</strong>
-    <ul style="column-count:2;">
-      <li><code>x</code>: Pauli-X gate</li>
-      <li><code>y</code>: Pauli-Y gate</li>
-      <li><code>z</code>: Pauli-Z gate</li>
-      <li><code>h</code>: Hadamard gate</li>
-      <li><code>s</code>: S gate</li>
-      <li><code>sdg</code>: Sdag gate</li>
-      <li><code>t</code>: T gate</li>
-      <li><code>tdg</code>: Tdag gate</li>
-      <li><code>p</code>: Phase gate</li>
-      <li><code>sx</code> (<code>/x</code>): Sqrt(X) gate</li>
-      <li><code>rx</code>: Rotation about X gate</li>
-      <li><code>ry</code>: Rotation about Y gate</li>
-      <li><code>rz</code>: Rotation about Z gate</li>
-      <li><code>u1</code>: U1 gate</li>
-      <li><code>u2</code>: U2 gate</li>
-      <li><code>u3</code>: U3 gate</li>
-      <li><code>i</code>: Identity gate</li>
-      <li><code>sw</code>: Swap gate</li>
-      <li><code>b</code>: Barrier instruction</li>
-      <li><code>m</code>: Measure instruction</li>
-    </ul>
-    <strong><code>gate_string</code> examples and its outputs:</strong>
-    <ul>
-      <li><code>x</code>: Apply the X gate to all qubits.</li>
-      <li><code>x12</code>: Apply the X gate to qubit 1 and 2.</li>
-      <li><code>x12 10</code>: Apply the X gate to qubit 12 and 10.</li>
-      <li><code>x 12</code>: Apply the X gate to qubit 12.</li>
-      <li><code>cx</code>: Apply the CX gate to qubit 1 and 2, where 1 is the
-        control and 2 is the target.</li>
-      <li><code>ccx</code>: Apply the CX gate to qubit 1, 2, and 3, where 1 and
-        2 is the control and 3 is the target.</li>
-      <li><code>cx34</code>: Apply the CX gate to qubit 3 and 4, where 3 is the
-        control and 4 is the target.</li>
-      <li><code>cx 10 1</code>: Apply the CX gate to qubit 10 and 1, where 10
-        is the control and 1 is the target.</li>
-      <li><code>cccccx1-6</code>: Apply the CCCCCX gate from qubit 1 to 6 where qubit 1 to
-        5 are the controls and 6 is the target.
-      </li>
-      <li><code>cccx12 1 11 9</code>: Apply the CCCX gate to qubit 12, 1, 11
-        and 9 where 12, 1, and 11 are the controls and 9 is the target.</li>
-      <li><code>rz[pi]1</code>: Apply rotation about Z gate to qubit 1 with a
-        theta of pi
-      </li>
-      <li><code>crz[pi]12</code>: Apply controlled rotation about Z gate to quantum
-        register 1 and 2, where 1 is the control and 2 is the target with a theta of pi.
-      </li>
-      <li><code>cu3[pi,,]34</code>: Apply controlled U3 gate to qubit 3 and 4,
-        where 3 is the control and 4 is the target with values of theta, phi, and lambda
-        of pi, 0, and 0. </li>
-      <li><code>u2[,tau]</code>: Apply U2 gate to all qubits with a theta and
-        pi of 0 and tau</li>
-      <li><code>x12h</code>: Apply the X gate to qubit 1 and 2, then apply the
-        H gate to all qubits.</li>
-      <li><code>hx12</code>: Apply the H gate to all qubits, then apply the X
-        gate to qubit 1 and 2.</li>
-      <li><code>[h[x]*2]*3</code>: Expand into <code>hxxhxxhxx</code>. You knew the drill.
-      </li>
-      <li><code>[c]*10x</code>: Expand into <code>ccccccccccx</code>. That was absurdly
-        large multi-control X gate.</li>
-      <li><code>x2-5</code>: Apply the X gate from qubit 2 to 5.</li>
-      <li><code>cccx7-4</code>: Apply the CCCX gate from qubit 7 to 4 where qubit 7 to 5
-        are the controls and qubit 4 is the target.</li>
-    </ul>
-    <strong>Example circuits:</strong>
-    <ul>
-      <li><code>2;;h1cx</code>: Bell's state.</li>
-      <li><code>;1;hm</code>: 1-bit randomizer.</li>
-      <li>
-        <code>4;3;x4h[ccx134h1-3x1-3ccz1-3x1-3h1-3]*2m1-3</code>:
-        Grover's search.
-      </li>
-      <li><code>3;;h2cx23cxh1m12cx23cz13</code>: Quantum teleportation.</li>
-      <li>
-        <code>4;4;h4p814p424p234h3p413p223h2p2h1sw14sw23;p8=cp[pi/8],p4=cp[pi/4],p2=cp[pi/2]</code>:
-        Quantum Fourier transform
-      </li>
-    </ul>
-    <strong id="options">Available options:</strong>
-    <p>Currently, there is only one option available which is <code>startFromOne</code>
-      which defaults to <code>1</code> (<code>true</code>). However, if you're entering
-      your circuit start
-      from 0, you can change this to <code>0</code>. For example:
-      <code
-        style="display:block;margin:.5rem 0">
-        2;;h0cx;0 // H gate at qubit 0, CX at qubit 0 and 1
-      </code>
-    </p>
-    <strong>BitSafe</strong>
-    <p>
-      After a Qemmet string has been parsed, the parser will check if the circuit contains
-      more register than defined in <code>quantum_register_num</code> and
-      <code>classical_register_num</code> section. If that is the case, it will return the
-      maximum register founded as to the parser output. This is to avoid the translated
-      output to contain any register overflow errors. However, the shorthand single-gate
-      notation will still take the qubits from the definition. For example,
-      <code>;;h4x</code> will have the same result as <code>;;h4x1</code>, not
-      <code>;;h4x1-4</code>.
-    </p>
-    <strong>Processing pipeline</strong>
-    <picture>
-      <source
-        srcset="https://mermaid.ink/svg/eyJjb2RlIjoiZmxvd2NoYXJ0IExSXG4gICAgMDBbL3FlbW1ldF9zdHJpbmcvXVxuXG4gICAgMTBbW3N1YnN0aXR1dGVEZWZpbml0aW9uXV1cblxuICAgIDIwW1tleHBhbmRSYW5nZVN5bnRheF1dXG4gICAgMjFbW2V4cGFuZFJlcGVhdFN5bnRheF1dXG4gICAgXG4gICAgMzBbW3Rva2VuaXplR2F0ZVN0cmluZ11dXG4gICAgMzFbW3BhcnNlR2F0ZVRva2VuXV1cbiAgICAzOVtCaXRTYWZlXVxuXG4gICAgOTBbW2dldFFBU01TdHJpbmddXVxuICAgIDkxW1tnZXRRaXNraXRTdHJpbmddXVxuXG4gICAgMDAgLS0-IEFcbiAgICBzdWJncmFwaCBBIFtEZWZpbml0aW9uIFN1YnN0aXR1dGlvbl1cbiAgICAgICAgMTBcbiAgICBlbmRcbiAgICBBIC0tPiBCXG4gICAgc3ViZ3JhcGggQiBbU3RyaW5nIFByZXByb2Nlc3Nvcl1cbiAgICAgICAgMjAgLS0-IDIxXG4gICAgZW5kXG4gICAgQiAtLT4gQ1xuICAgIHN1YmdyYXBoIEMgW1BhcnNlcl1cbiAgICAgICAgMzAgLS0-IDMxIC0tPiAzOVxuICAgIGVuZFxuICAgIEMgLS0-IDkwXG4gICAgQyAtLT4gOTFcbiAgICAiLCJtZXJtYWlkIjp7InRoZW1lIjoiZGFyayJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlLCJhdXRvU3luYyI6dHJ1ZSwidXBkYXRlRGlhZ3JhbSI6ZmFsc2V9"
-        media="(prefers-color-scheme: dark)">
-      <img
-        src="https://mermaid.ink/svg/eyJjb2RlIjoiZmxvd2NoYXJ0IExSXG4gICAgMDBbL3FlbW1ldF9zdHJpbmcvXVxuXG4gICAgMTBbW3N1YnN0aXR1dGVEZWZpbml0aW9uXV1cblxuICAgIDIwW1tleHBhbmRSYW5nZVN5bnRheF1dXG4gICAgMjFbW2V4cGFuZFJlcGVhdFN5bnRheF1dXG4gICAgXG4gICAgMzBbW3Rva2VuaXplR2F0ZVN0cmluZ11dXG4gICAgMzFbW3BhcnNlR2F0ZVRva2VuXV1cbiAgICAzOVtCaXRTYWZlXVxuXG4gICAgOTBbW2dldFFBU01TdHJpbmddXVxuICAgIDkxW1tnZXRRaXNraXRTdHJpbmddXVxuXG4gICAgMDAgLS0-IEFcbiAgICBzdWJncmFwaCBBIFtEZWZpbml0aW9uIFN1YnN0aXR1dGlvbl1cbiAgICAgICAgMTBcbiAgICBlbmRcbiAgICBBIC0tPiBCXG4gICAgc3ViZ3JhcGggQiBbU3RyaW5nIFByZXByb2Nlc3Nvcl1cbiAgICAgICAgMjAgLS0-IDIxXG4gICAgZW5kXG4gICAgQiAtLT4gQ1xuICAgIHN1YmdyYXBoIEMgW1BhcnNlcl1cbiAgICAgICAgMzAgLS0-IDMxIC0tPiAzOVxuICAgIGVuZFxuICAgIEMgLS0-IDkwXG4gICAgQyAtLT4gOTFcbiAgICAiLCJtZXJtYWlkIjp7fSwidXBkYXRlRWRpdG9yIjpmYWxzZSwiYXV0b1N5bmMiOnRydWUsInVwZGF0ZURpYWdyYW0iOmZhbHNlfQ"
-        alt="Processing pipeline flowchart" loading='lazy' decoding="async">
-    </picture>
+        The repeat syntax itself can be wrapped inside of another repeat syntax. For
+        example:
+        <code
+          style="display:block;margin:.5rem 0">
+          [lo*3l ]*2 // loool loool
+        </code>
+        This can be very useful with several quantum circuit that required you to repeat a
+        chuck of the circuit. For example: A Grover's search circuit:
+        <code
+          style="display:block;margin:.5rem 0">
+          4;3;x4h[ccx134h1-3x1-3ccz1-3x1-3h1-3]*2m1-3
+        </code>
+        By the design, the repeat syntax will apply
+        <code><mark>[</mark>&lt;string&gt;<mark>]*</mark>&lt;repeat_number&gt;</code>
+        syntax first, then <code>&lt;char&gt;<mark>*</mark>&lt;repeat_number&gt;</code>
+        syntax. For example:
+        <code
+          style="display:block;margin:.5rem 0">
+          [me]*2*3 // meme*3 -> memeee<br>
+          [lo*3l ]*2 // lo*3l lo*3l -> loool loool
+        </code>
+        Please note that the repeat syntax is <strong>executed before everything
+          else</strong>.
+      </p>
+    </section>
+    <section id="range">
+      <h2>Range syntax</h2>
+      <p>
+        The range syntax is a preprocessor that transform a substring in a format of
+        <code
+          style="display:block;margin:.5rem 0">
+          &lt;start&gt;<mark>-</mark>&lt;end&gt;
+        </code>
+        into a space-separated number list string. For example:
+        <code
+          style="display:block;margin:.5rem 0">
+          1-5 // 1 2 3 4 5<br>
+          5-1 // 5 4 3 2 1<br>
+          9-12 // 9 10 11 12<br>
+          12-9 // 12 11 10 9<br>
+        </code>
+        Note that the range syntax will be <strong>executed after the repeat
+          syntax</strong>. For example:
+        <code
+          style="display:block;margin:.5rem 0">
+          [x1]*3-5 // x1x1x1-5 -> x1x1x1 2 3 4 5
+        </code>
+        This is really useful to span numbers of qubits in the circuit without having to
+        type them all by yourself.
+      </p>
+    </section>
+    <section id="define">
+      <h2>Definition string</h2>
+      <p>
+        The definition string is a string in a syntax of:
+        <code
+          style="display:block;margin:.5rem 0">[&lt;name&gt;<mark>=</mark>&lt;meaning&gt;[<mark>,</mark>&lt;name&gt;<mark>=</mark>&lt;meaning&gt;]...]</code>
+        It is a preprocessor that will substitute the <code>meaning</code> into the
+        defined <code>name</code> founded in <code>gate_string</code>. For example:
+        <code
+          style="display:block;margin:.5rem 0">
+          ;;a;a=xhx // ;;xhx<br>
+          ;;htesty;test=zz // ;;hzzy<br>
+          ;;p82;p8=p[pi/8] // ;;p[pi/8]2
+        </code>
+        It can be used with repeat and/or range syntax:
+        <code
+          style="display:block;margin:.5rem 0">
+          ;;[ht]*3;t=ccx // ;;hccxhccxhccx<br>
+          ;;fhf;f=x1-4 // ;;x1 2 3 4hx1 2 3 4
+        </code>
+        The <code>name</code> can be the same as the available gates as it gets substitute
+        before gate evaluation.
+        <code
+          style="display:block;margin:.5rem 0">
+          ;;x;x=xxx // ;;xxx
+        </code>
+        The <code>definition_string</code> can consist of multiple definitions. It
+        evaluates
+        from left to right, so it can be used as a kind of a repeat syntax too.
+        <code
+          style="display:block;margin:.5rem 0">
+        ;;a;a=bb,b=xxx // ;;bb -> ;;xxxxxx<br>
+        ;;ab*2a;a=xb,b=hy // ;;abba -> ;;xbbbxb ->;;xhyhyhyxhy
+        </code>
+        Please note that the definition string will be <strong>executed after the repeat
+          and range syntax</strong>. This can affect the range syntax if the
+        <code>name</code> includes a trailing number, so it's advised. Also, naming with
+        an <code>*</code> is totally legal, but once again, let's not do that.
+        <code
+          style="display:block;margin:.5rem 0">
+        ;;b3-1;b3=ccx // b3 2 1 -> ccx 2 1 (missing 1 qubit)<br>
+        ;;b3-1;b3=ccx1 // b3 2 1 -> ccx1 2 1<br>
+        ;;[a1]*4-3;a1=x // a1a1a1a1-3 -> a1a1a1a1 2 3 -> xxxx 2 3 (apply x to qubit 2 and 3)<br>
+        ;;a1*3-1;a1=x // a111-3 -> a111 110 109 ... 3 2 1 -> x11 110 109 ... 3 2 1 (that's a lot of qubits)<br>
+        ;;a*5;a*5=x // aaaaa (no substitution as `*` is executed as repeat syntax)
+        </code>
+      </p>
+    </section>
+    <section id="options">
+      <h2>Available options:</h2>
+      <p>Currently, there is only one option available which is <code>startFromOne</code>
+        which defaults to <code>1</code> (<code>true</code>). However, if you're entering
+        your circuit start
+        from 0, you can change this to <code>0</code>. For example:
+        <code
+          style="display:block;margin:.5rem 0">
+          2;;h0cx;0 // H gate at qubit 0, CX at qubit 0 and 1
+        </code>
+      </p>
+    </section>
+    <section id="bitsafe">
+      <h2>BitSafe</h2>
+      <p>
+        After a Qemmet string has been parsed, the parser will check if the circuit
+        contains
+        more register than defined in <code>quantum_register_num</code> and
+        <code>classical_register_num</code> section. If that is the case, it will return
+        the
+        maximum register founded as to the parser output. This is to avoid the translated
+        output to contain any register overflow errors. However, the shorthand single-gate
+        notation will still take the qubits from the definition. For example,
+        <code>;;h4x</code> will have the same result as <code>;;h4x1</code>, not
+        <code>;;h4x1-4</code>.
+      </p>
+    </section>
+    <section id="pipeline">
+      <h2>Processing pipeline</h2>
+      <picture>
+        <source
+          srcset="https://mermaid.ink/svg/eyJjb2RlIjoiZmxvd2NoYXJ0IExSXG4gICAgMDBbL3FlbW1ldF9zdHJpbmcvXVxuXG4gICAgMTBbW2V4cGFuZFN0cmluZ1JlcGVhdFN5bnRheF1dXG4gICAgMTFbW2V4cGFuZENoYXJSZXBlYXRTeW50YXhdXVxuICAgIDEyW1tleHBhbmRSYW5nZVN5bnRheF1dXG5cbiAgICAyMFtbc3Vic3RpdHV0ZURlZmluaXRpb25dXVxuICAgIFxuICAgIDMwW1t0b2tlbml6ZUdhdGVTdHJpbmddXVxuICAgIDMxW1twYXJzZUdhdGVUb2tlbl1dXG4gICAgMzlbQml0U2FmZV1cblxuICAgIDkwW1tnZXRRQVNNU3RyaW5nXV1cbiAgICA5MVtbZ2V0UWlza2l0U3RyaW5nXV1cblxuICAgIDAwIC0tPiBBXG4gICAgc3ViZ3JhcGggQSBbU3RyaW5nIFByZXByb2Nlc3Nvcl1cbiAgICAgICAgMTAgLS0-IDExIC0tPiAxMlxuICAgIGVuZFxuICAgIEEgLS0-IEJcbiAgICBzdWJncmFwaCBCIFtEZWZpbml0aW9uIFN1YnN0aXR1dGlvbl1cbiAgICAgICAgMjBcbiAgICBlbmRcbiAgICBCIC0tPiBDXG4gICAgc3ViZ3JhcGggQyBbUGFyc2VyXVxuICAgICAgICAzMCAtLT4gMzEgLS0-IDM5XG4gICAgZW5kXG4gICAgQyAtLT4gOTBcbiAgICBDIC0tPiA5MVxuICAgICIsIm1lcm1haWQiOnsidGhlbWUiOiJkYXJrIn0sInVwZGF0ZUVkaXRvciI6ZmFsc2UsImF1dG9TeW5jIjp0cnVlLCJ1cGRhdGVEaWFncmFtIjpmYWxzZX0"
+          media="(prefers-color-scheme: dark)">
+        <img
+          src="https://mermaid.ink/svg/eyJjb2RlIjoiZmxvd2NoYXJ0IExSXG4gICAgMDBbL3FlbW1ldF9zdHJpbmcvXVxuXG4gICAgMTBbW2V4cGFuZFN0cmluZ1JlcGVhdFN5bnRheF1dXG4gICAgMTFbW2V4cGFuZENoYXJSZXBlYXRTeW50YXhdXVxuICAgIDEyW1tleHBhbmRSYW5nZVN5bnRheF1dXG5cbiAgICAyMFtbc3Vic3RpdHV0ZURlZmluaXRpb25dXVxuICAgIFxuICAgIDMwW1t0b2tlbml6ZUdhdGVTdHJpbmddXVxuICAgIDMxW1twYXJzZUdhdGVUb2tlbl1dXG4gICAgMzlbQml0U2FmZV1cblxuICAgIDkwW1tnZXRRQVNNU3RyaW5nXV1cbiAgICA5MVtbZ2V0UWlza2l0U3RyaW5nXV1cblxuICAgIDAwIC0tPiBBXG4gICAgc3ViZ3JhcGggQSBbU3RyaW5nIFByZXByb2Nlc3Nvcl1cbiAgICAgICAgMTAgLS0-IDExIC0tPiAxMlxuICAgIGVuZFxuICAgIEEgLS0-IEJcbiAgICBzdWJncmFwaCBCIFtEZWZpbml0aW9uIFN1YnN0aXR1dGlvbl1cbiAgICAgICAgMjBcbiAgICBlbmRcbiAgICBCIC0tPiBDXG4gICAgc3ViZ3JhcGggQyBbUGFyc2VyXVxuICAgICAgICAzMCAtLT4gMzEgLS0-IDM5XG4gICAgZW5kXG4gICAgQyAtLT4gOTBcbiAgICBDIC0tPiA5MVxuICAgICIsIm1lcm1haWQiOnt9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlLCJhdXRvU3luYyI6dHJ1ZSwidXBkYXRlRGlhZ3JhbSI6ZmFsc2V9"
+          alt="Processing pipeline flowchart" loading='lazy' decoding="async">
+      </picture>
+    </section>
+    <section id="gates">
+      <h2>Available gates/instructions:</h2>
+      <ul style="column-count:2;">
+        <li><code>x</code>: Pauli-X gate</li>
+        <li><code>y</code>: Pauli-Y gate</li>
+        <li><code>z</code>: Pauli-Z gate</li>
+        <li><code>h</code>: Hadamard gate</li>
+        <li><code>s</code>: S gate</li>
+        <li><code>sdg</code>: Sdag gate</li>
+        <li><code>t</code>: T gate</li>
+        <li><code>tdg</code>: Tdag gate</li>
+        <li><code>p[lamda]</code>: Phase gate</li>
+        <li><code>sx</code> (<code>/x</code>): Sqrt(X) gate</li>
+        <li><code>rx[theta]</code>: Rotation about X gate</li>
+        <li><code>ry[theta]</code>: Rotation about Y gate</li>
+        <li><code>rz[lambda]</code>: Rotation about Z gate</li>
+        <li><code>u1[lambda]</code>: U1 gate</li>
+        <li><code>u2[phi, lambda]</code>: U2 gate</li>
+        <li><code>u3[theta, phi, lambda]</code>: U3 gate</li>
+        <li><code>i</code>: Identity gate</li>
+        <li><code>sw</code>: Swap gate</li>
+        <li><code>b</code>: Barrier instruction</li>
+        <li><code>m</code>: Measure instruction</li>
+      </ul>
+    </section>
+    <section id="gate-examples">
+      <h2><code>gate_string</code> examples and its outputs:</h2>
+      <ul>
+        <li><code>x</code>: Apply the X gate to all qubits.</li>
+        <li><code>x12</code>: Apply the X gate to qubit 1 and 2.</li>
+        <li><code>x12 10</code>: Apply the X gate to qubit 12 and 10.</li>
+        <li><code>x 12</code>: Apply the X gate to qubit 12.</li>
+        <li><code>cx</code>: Apply the CX gate to qubit 1 and 2, where 1 is the
+          control and 2 is the target.</li>
+        <li><code>ccx</code>: Apply the CX gate to qubit 1, 2, and 3, where 1 and
+          2 is the control and 3 is the target.</li>
+        <li><code>cx34</code>: Apply the CX gate to qubit 3 and 4, where 3 is the
+          control and 4 is the target.</li>
+        <li><code>cx 10 1</code>: Apply the CX gate to qubit 10 and 1, where 10
+          is the control and 1 is the target.</li>
+        <li><code>cccccx1-6</code>: Apply the CCCCCX gate from qubit 1 to 6 where qubit 1
+          to
+          5 are the controls and 6 is the target.
+        </li>
+        <li><code>cccx12 1 11 9</code>: Apply the CCCX gate to qubit 12, 1, 11
+          and 9 where 12, 1, and 11 are the controls and 9 is the target.</li>
+        <li><code>rz[pi]1</code>: Apply rotation about Z gate to qubit 1 with a
+          theta of pi
+        </li>
+        <li><code>crz[pi]12</code>: Apply controlled rotation about Z gate to quantum
+          register 1 and 2, where 1 is the control and 2 is the target with a theta of pi.
+        </li>
+        <li><code>cu3[pi,,]34</code>: Apply controlled U3 gate to qubit 3 and 4,
+          where 3 is the control and 4 is the target with values of theta, phi, and lambda
+          of pi, 0, and 0. </li>
+        <li><code>u2[,tau]</code>: Apply U2 gate to all qubits with a theta and
+          pi of 0 and tau</li>
+        <li><code>x12h</code>: Apply the X gate to qubit 1 and 2, then apply the
+          H gate to all qubits.</li>
+        <li><code>hx12</code>: Apply the H gate to all qubits, then apply the X
+          gate to qubit 1 and 2.</li>
+        <li><code>[hx*2]*3</code>: Expand into <code>hxxhxxhxx</code>. You knew the
+          drill.
+        </li>
+        <li><code>c*10x</code>: Expand into <code>ccccccccccx</code>. That was absurdly
+          large multi-control X gate.</li>
+        <li><code>x2-5</code>: Apply the X gate from qubit 2 to 5.</li>
+        <li><code>cccx7-4</code>: Apply the CCCX gate from qubit 7 to 4 where qubit 7 to 5
+          are the controls and qubit 4 is the target.</li>
+      </ul>
+    </section>
+    <section id="circuit-examples">
+      <h2>Example circuits:</h2>
+      <ul>
+        <li><code>2;;h1cx</code>: Bell's state.</li>
+        <li><code>;1;hm</code>: 1-bit randomizer.</li>
+        <li>
+          <code>4;3;x4h[ccx134h1-3x1-3ccz1-3x1-3h1-3]*2m1-3</code>:
+          Grover's search.
+        </li>
+        <li>
+          <code>3;;x4hh4[ccx134hxcczxh]*2m</code>:
+          Same Grover's search as above, just shorter by using BitSafe.
+        </li>
+        <li><code>3;;h2cx23cxh1m12cx23cz13</code>: Quantum teleportation.</li>
+        <li>
+          <code>4;4;h4p814p424p234h3p413p223h2p2h1sw14sw23;p8=cp[pi/8],p4=cp[pi/4],p2=cp[pi/2]</code>:
+          Quantum Fourier transform
+        </li>
+      </ul>
+    </section>
   </details>
   <hr>
   <section id="app">
