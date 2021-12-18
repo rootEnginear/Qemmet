@@ -91,7 +91,7 @@ const parseRegister = (gate_register_string, qubit_count, control_count, options
 };
 const parseGateParams = (gate_params) => {
     if (typeof gate_params === 'string') {
-        const trimmed_gate_params = gate_params.replace(/ /g, '');
+        const trimmed_gate_params = gate_params.replace(/\s/g, '');
         if (trimmed_gate_params === '')
             return '0';
         return trimmed_gate_params

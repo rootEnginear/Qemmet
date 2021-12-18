@@ -136,7 +136,7 @@ const parseRegister = (
 
 const parseGateParams = (gate_params: string | undefined) => {
 	if (typeof gate_params === 'string') {
-		const trimmed_gate_params = gate_params.replace(/ /g, '')
+		const trimmed_gate_params = gate_params.replace(/\s/g, '')
 		if (trimmed_gate_params === '') return '0'
 		return trimmed_gate_params
 			.replace(/,,/g, ',0,')
