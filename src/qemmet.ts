@@ -58,10 +58,10 @@ const preprocessString = (string: string): string =>
 	pipe(expandStringRepeatSyntax, expandCharRepeatSyntax, expandRangeSyntax)(string)
 
 const transformOptionString = (option_string: string): QemmetStringOptions => {
-	if (!option_string) return { startFromOne: true }
+	if (!option_string) return { start_from_one: true }
 	const option_array = [...option_string].map(Number)
 	return {
-		startFromOne: !!option_array[0],
+		start_from_one: !!option_array[0],
 	}
 }
 
@@ -122,7 +122,7 @@ const parseRegister = (
 	control_count: number,
 	options: QemmetStringOptions
 ) => {
-	const { startFromOne: isStartFromOne } = options
+	const { start_from_one: is_start_from_one } = options
 	const gate_register_array = gate_register_string.trimEnd().replace(/\s+/g, ' ').split(' ')
 	const gate_control_length = control_count + 1
 	/*
@@ -143,13 +143,13 @@ const parseRegister = (
 			return new Array(qubit_count).fill(0).map((_, i) => i)
 		}
 		// Case 2
-		const register_arr = [...gate_register_array[0]].map((n) => (isStartFromOne ? +n - 1 : +n))
+		const register_arr = [...gate_register_array[0]].map((n) => (is_start_from_one ? +n - 1 : +n))
 		return ensureMultipleRegister(register_arr, gate_control_length)
 	}
 	// Case 3 & 4 & 5
 	const register_arr = gate_register_array
 		.filter(Boolean)
-		.map((n) => (isStartFromOne ? +n - 1 : +n))
+		.map((n) => (is_start_from_one ? +n - 1 : +n))
 	return ensureMultipleRegister(register_arr, gate_control_length)
 }
 

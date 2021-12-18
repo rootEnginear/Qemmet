@@ -1,5 +1,5 @@
 export interface QemmetStringOptions {
-	startFromOne: boolean
+	start_from_one: boolean
 }
 
 export interface QemmetGateInfo {
