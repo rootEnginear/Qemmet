@@ -290,13 +290,24 @@
         2;;h0cx;0 // H gate at qubit 0, CX at qubit 0 and 1
       </code>
     </p>
+    <strong>BitSafe</strong>
+    <p>
+      After a Qemmet string has been parsed, the parser will check if the circuit contains
+      more register than defined in <code>quantum_register_num</code> and
+      <code>classical_register_num</code> section. If that is the case, it will return the
+      maximum register founded as to the parser output. This is to avoid the translated
+      output to contain any register overflow errors. However, the shorthand single-gate
+      notation will still take the qubits from the definition. For example,
+      <code>;;h4x</code> will have the same result as <code>;;h4x1</code>, not
+      <code>;;h4x1-4</code>.
+    </p>
     <strong>Processing pipeline</strong>
     <picture>
       <source
-        srcset="https://mermaid.ink/svg/eyJjb2RlIjoiZmxvd2NoYXJ0IExSXG4gICAgMTBbL3FlbW1ldF9zdHJpbmcvXVxuICAgIDIwW1tleHBhbmRSYW5nZVN5bnRheF1dXG4gICAgMzBbW2V4cGFuZFJlcGVhdFN5bnRheF1dXG4gICAgMzFbW3N1YnN0aXR1dGVEZWZpbml0aW9uXV1cbiAgICA0MFtbdG9rZW5pemVHYXRlU3RyaW5nXV1cbiAgICA1MFtbcGFyc2VHYXRlVG9rZW5dXVxuICAgIDYwW1tnZXRRQVNNU3RyaW5nXV1cbiAgICA3MFtbZ2V0UWlza2l0U3RyaW5nXV1cblxuICAgIDEwIC0tPiBCXG4gICAgc3ViZ3JhcGggQSBbU3RyaW5nIFByZXByb2Nlc3Nvcl1cbiAgICAgICAgMjAgLS0-IDMwXG4gICAgZW5kXG4gICAgQiAtLT4gQVxuICAgIHN1YmdyYXBoIEIgW0RlZmluaXRpb24gU3Vic3RpdHV0aW9uXVxuICAgICAgICAzMVxuICAgIGVuZFxuICAgIEEgLS0-IENcbiAgICBzdWJncmFwaCBDIFtQYXJzZXJdXG4gICAgICAgIDQwIC0tPiA1MFxuICAgIGVuZFxuICAgIEMgLS0-IDYwXG4gICAgQyAtLT4gNzBcbiAgICAiLCJtZXJtYWlkIjp7InRoZW1lIjoiZGFyayJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlLCJhdXRvU3luYyI6dHJ1ZSwidXBkYXRlRGlhZ3JhbSI6ZmFsc2V9"
+        srcset="https://mermaid.ink/svg/eyJjb2RlIjoiZmxvd2NoYXJ0IExSXG4gICAgMDBbL3FlbW1ldF9zdHJpbmcvXVxuXG4gICAgMTBbW3N1YnN0aXR1dGVEZWZpbml0aW9uXV1cblxuICAgIDIwW1tleHBhbmRSYW5nZVN5bnRheF1dXG4gICAgMjFbW2V4cGFuZFJlcGVhdFN5bnRheF1dXG4gICAgXG4gICAgMzBbW3Rva2VuaXplR2F0ZVN0cmluZ11dXG4gICAgMzFbW3BhcnNlR2F0ZVRva2VuXV1cbiAgICAzOVtCaXRTYWZlXVxuXG4gICAgOTBbW2dldFFBU01TdHJpbmddXVxuICAgIDkxW1tnZXRRaXNraXRTdHJpbmddXVxuXG4gICAgMDAgLS0-IEFcbiAgICBzdWJncmFwaCBBIFtEZWZpbml0aW9uIFN1YnN0aXR1dGlvbl1cbiAgICAgICAgMTBcbiAgICBlbmRcbiAgICBBIC0tPiBCXG4gICAgc3ViZ3JhcGggQiBbU3RyaW5nIFByZXByb2Nlc3Nvcl1cbiAgICAgICAgMjAgLS0-IDIxXG4gICAgZW5kXG4gICAgQiAtLT4gQ1xuICAgIHN1YmdyYXBoIEMgW1BhcnNlcl1cbiAgICAgICAgMzAgLS0-IDMxIC0tPiAzOVxuICAgIGVuZFxuICAgIEMgLS0-IDkwXG4gICAgQyAtLT4gOTFcbiAgICAiLCJtZXJtYWlkIjp7InRoZW1lIjoiZGFyayJ9LCJ1cGRhdGVFZGl0b3IiOmZhbHNlLCJhdXRvU3luYyI6dHJ1ZSwidXBkYXRlRGlhZ3JhbSI6ZmFsc2V9"
         media="(prefers-color-scheme: dark)">
       <img
-        src="https://mermaid.ink/svg/eyJjb2RlIjoiZmxvd2NoYXJ0IExSXG4gICAgMTBbL3FlbW1ldF9zdHJpbmcvXVxuICAgIDIwW1tleHBhbmRSYW5nZVN5bnRheF1dXG4gICAgMzBbW2V4cGFuZFJlcGVhdFN5bnRheF1dXG4gICAgMzFbW3N1YnN0aXR1dGVEZWZpbml0aW9uXV1cbiAgICA0MFtbdG9rZW5pemVHYXRlU3RyaW5nXV1cbiAgICA1MFtbcGFyc2VHYXRlVG9rZW5dXVxuICAgIDYwW1tnZXRRQVNNU3RyaW5nXV1cbiAgICA3MFtbZ2V0UWlza2l0U3RyaW5nXV1cblxuICAgIDEwIC0tPiBCXG4gICAgc3ViZ3JhcGggQSBbU3RyaW5nIFByZXByb2Nlc3Nvcl1cbiAgICAgICAgMjAgLS0-IDMwXG4gICAgZW5kXG4gICAgQiAtLT4gQVxuICAgIHN1YmdyYXBoIEIgW0RlZmluaXRpb24gU3Vic3RpdHV0aW9uXVxuICAgICAgICAzMVxuICAgIGVuZFxuICAgIEEgLS0-IENcbiAgICBzdWJncmFwaCBDIFtQYXJzZXJdXG4gICAgICAgIDQwIC0tPiA1MFxuICAgIGVuZFxuICAgIEMgLS0-IDYwXG4gICAgQyAtLT4gNzBcbiAgICAiLCJtZXJtYWlkIjp7fSwidXBkYXRlRWRpdG9yIjpmYWxzZSwiYXV0b1N5bmMiOnRydWUsInVwZGF0ZURpYWdyYW0iOmZhbHNlfQ"
+        src="https://mermaid.ink/svg/eyJjb2RlIjoiZmxvd2NoYXJ0IExSXG4gICAgMDBbL3FlbW1ldF9zdHJpbmcvXVxuXG4gICAgMTBbW3N1YnN0aXR1dGVEZWZpbml0aW9uXV1cblxuICAgIDIwW1tleHBhbmRSYW5nZVN5bnRheF1dXG4gICAgMjFbW2V4cGFuZFJlcGVhdFN5bnRheF1dXG4gICAgXG4gICAgMzBbW3Rva2VuaXplR2F0ZVN0cmluZ11dXG4gICAgMzFbW3BhcnNlR2F0ZVRva2VuXV1cbiAgICAzOVtCaXRTYWZlXVxuXG4gICAgOTBbW2dldFFBU01TdHJpbmddXVxuICAgIDkxW1tnZXRRaXNraXRTdHJpbmddXVxuXG4gICAgMDAgLS0-IEFcbiAgICBzdWJncmFwaCBBIFtEZWZpbml0aW9uIFN1YnN0aXR1dGlvbl1cbiAgICAgICAgMTBcbiAgICBlbmRcbiAgICBBIC0tPiBCXG4gICAgc3ViZ3JhcGggQiBbU3RyaW5nIFByZXByb2Nlc3Nvcl1cbiAgICAgICAgMjAgLS0-IDIxXG4gICAgZW5kXG4gICAgQiAtLT4gQ1xuICAgIHN1YmdyYXBoIEMgW1BhcnNlcl1cbiAgICAgICAgMzAgLS0-IDMxIC0tPiAzOVxuICAgIGVuZFxuICAgIEMgLS0-IDkwXG4gICAgQyAtLT4gOTFcbiAgICAiLCJtZXJtYWlkIjp7fSwidXBkYXRlRWRpdG9yIjpmYWxzZSwiYXV0b1N5bmMiOnRydWUsInVwZGF0ZURpYWdyYW0iOmZhbHNlfQ"
         alt="Processing pipeline flowchart" loading='lazy' decoding="async">
     </picture>
   </details>

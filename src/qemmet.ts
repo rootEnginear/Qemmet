@@ -185,6 +185,4 @@ const parseQemmetString = (qemmet_string: string): QemmetParserOutput => {
 	}
 }
 
-export default {
-	parseQemmetString,
-}
+export default { parseQemmetString }

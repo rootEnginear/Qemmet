@@ -1,6 +1,7 @@
-import Qemmet from './build/qemmet'
-import getQiskitString from './build/target/qiskit'
-import getQASMString from './build/target/qasm3'
+import Qemmet from './build/qemmet.js'
+
+import QiskitTranslator from './build/translators/qiskit.js'
+import QASMTranslator from './build/translators/qasm3.js'
 
 new Vue({
 	el: '#app',
@@ -22,9 +23,9 @@ new Vue({
 			console.log('Expanded string:', this.qemmet_info.expanded_string)
 			switch (this.target_lang) {
 				case 'openqasm3':
-					return getQASMString(this.qemmet_info)
+					return QASMTranslator.getQASMString(this.qemmet_info)
 				default:
-					return getQiskitString(this.qemmet_info)
+					return QiskitTranslator.getQiskitString(this.qemmet_info)
 			}
 		},
 	},

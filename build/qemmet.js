@@ -127,6 +127,4 @@ const parseQemmetString = (qemmet_string) => {
         options,
     };
 };
-export default {
-    parseQemmetString,
-};
+export default { parseQemmetString };

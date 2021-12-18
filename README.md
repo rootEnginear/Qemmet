@@ -15,9 +15,16 @@ You can download the compiled build in the `build` folder and include it in your
 </script>
 ```
 
-To parse a Qemmet string, use the function `parseQemmetString(qemmet_string)`. Then, you can call a function `toQiskitString()` or `toQASMString()` from your parser output object. For example:
+To parse a Qemmet string, use the function `parseQemmetString(qemmet_string)`.
 
 ```js
-const parsed_qemmet = Qemmet.parseQemmetString("2;;h1cx")
-console.log(parsed_qemmet.toQiskitString())
+const parsed_qemmet = Qemmet.parseQemmetString("2;;h1cx");
+```
+
+After parsing, you can translate the output into the target language by importing the translating module(s).
+
+```js
+import getQiskitString from 'translators/qiskit.js';
+
+getQiskitString(parsed_qemmet);
 ```

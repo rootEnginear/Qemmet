@@ -80,6 +80,4 @@ ${bit_declaration_string}
 ${qasm_string}`
 }
 
-export default {
-	getQASMString,
-}
+export default { getQASMString }
