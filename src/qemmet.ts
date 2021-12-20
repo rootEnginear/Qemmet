@@ -1,5 +1,10 @@
 import { QemmetGateInfo, QemmetParserOutput, QemmetStringOptions } from './types'
 
+// Utils
+const _pipe = (a: (fn_arg: any) => any, b: (fn_arg: any) => any) => (arg: any) => b(a(arg))
+export const pipe = (...ops: ((fn_arg: any) => any)[]) => ops.reduce(_pipe)
+
+// Parser
 const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstmi]', 'g')
 
 const substituteDefinition = (raw_string: string, definition_string: string) => {
@@ -21,20 +26,19 @@ const substituteDefinition = (raw_string: string, definition_string: string) => 
 	return processed_raw_string
 }
 
-const _pipe = (a: (fn_arg: any) => any, b: (fn_arg: any) => any) => (arg: any) => b(a(arg))
-const pipe = (...ops: ((fn_arg: any) => any)[]) => ops.reduce(_pipe)
-
-// Expand repeat syntax
-// Examples:
-// - "[x]*3" -> "xxx"
-// - "[[x]*2]*3" -> "xxxxxx"
-// - "[[x]*2y]*3" -> "xxyxxyxxy"
-const expandStringRepeatSyntax = (repeat_string: string): string => {
-	const expanded_text = repeat_string.replace(
-		/\[([^\[\]]+?)\]\*(\d+)/g,
+export const expandStringRepeatSyntax = (repeat_string: string): string => {
+	// replace ' with E000 and E000* with E001
+	const repl_quo = repeat_string.replace(/'/g, '\uE000').replace(/\uE000\*/g, '\uE001')
+	// expand
+	const expanded_text = repl_quo.replace(
+		/\uE000([^\uE000\uE001]*?)\uE001(\d+)/g,
 		(_, inner_text, repeat_count) => inner_text.repeat(+repeat_count)
 	)
-	return expanded_text !== repeat_string ? expandStringRepeatSyntax(expanded_text) : expanded_text
+	// rollback
+	const final_text = expanded_text.replace(/\uE001/g, '\uE000*').replace(/\uE000/g, "'")
+	return final_text !== repeat_string
+		? expandStringRepeatSyntax(final_text)
+		: final_text.replace(/'/g, '')
 }
 
 const expandCharRepeatSyntax = (repeat_string: string): string => {

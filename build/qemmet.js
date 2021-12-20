@@ -1,3 +1,7 @@
+// Utils
+const _pipe = (a, b) => (arg) => b(a(arg));
+export const pipe = (...ops) => ops.reduce(_pipe);
+// Parser
 const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstmi]', 'g');
 const substituteDefinition = (raw_string, definition_string) => {
     const formatted_definition_string = definition_string.trim().replace(/\s+/g, ' ');
@@ -13,16 +17,16 @@ const substituteDefinition = (raw_string, definition_string) => {
     const processed_raw_string = definition.reduce((string, { name, meaning }) => string.replace(new RegExp(name, 'g'), meaning), raw_string);
     return processed_raw_string;
 };
-const _pipe = (a, b) => (arg) => b(a(arg));
-const pipe = (...ops) => ops.reduce(_pipe);
-// Expand repeat syntax
-// Examples:
-// - "[x]*3" -> "xxx"
-// - "[[x]*2]*3" -> "xxxxxx"
-// - "[[x]*2y]*3" -> "xxyxxyxxy"
-const expandStringRepeatSyntax = (repeat_string) => {
-    const expanded_text = repeat_string.replace(/\[([^\[\]]+?)\]\*(\d+)/g, (_, inner_text, repeat_count) => inner_text.repeat(+repeat_count));
-    return expanded_text !== repeat_string ? expandStringRepeatSyntax(expanded_text) : expanded_text;
+export const expandStringRepeatSyntax = (repeat_string) => {
+    // replace ' with E000 and E000* with E001
+    const repl_quo = repeat_string.replace(/'/g, '\uE000').replace(/\uE000\*/g, '\uE001');
+    // expand
+    const expanded_text = repl_quo.replace(/\uE000([^\uE000\uE001]*?)\uE001(\d+)/g, (_, inner_text, repeat_count) => inner_text.repeat(+repeat_count));
+    // rollback
+    const final_text = expanded_text.replace(/\uE001/g, '\uE000*').replace(/\uE000/g, "'");
+    return final_text !== repeat_string
+        ? expandStringRepeatSyntax(final_text)
+        : final_text.replace(/'/g, '');
 };
 const expandCharRepeatSyntax = (repeat_string) => {
     const expanded_text = repeat_string.replace(/(.)\*(\d+)/g, (_, inner_text, repeat_count) => inner_text.repeat(+repeat_count));
@@ -39,10 +43,10 @@ const expandRangeSyntax = (range_string) => range_string.replace(/(\d+)-(\d+)/g,
 const preprocessString = (string) => pipe(expandStringRepeatSyntax, expandCharRepeatSyntax, expandRangeSyntax)(string);
 const transformOptionString = (option_string) => {
     if (!option_string)
-        return { startFromOne: true };
+        return { start_from_one: true };
     const option_array = [...option_string].map(Number);
     return {
-        startFromOne: !!option_array[0],
+        start_from_one: !!option_array[0],
     };
 };
 const parseMetadata = (qemmet_string) => {
@@ -79,7 +83,7 @@ const ensureMultipleRegister = (registers, gate_control_length) => {
     return filled_reg.slice(0, gate_control_length);
 };
 const parseRegister = (gate_register_string, qubit_count, control_count, options) => {
-    const { startFromOne: isStartFromOne } = options;
+    const { start_from_one: is_start_from_one } = options;
     const gate_register_array = gate_register_string.trimEnd().replace(/\s+/g, ' ').split(' ');
     const gate_control_length = control_count + 1;
     /*
@@ -101,13 +105,13 @@ const parseRegister = (gate_register_string, qubit_count, control_count, options
             return new Array(qubit_count).fill(0).map((_, i) => i);
         }
         // Case 2
-        const register_arr = [...gate_register_array[0]].map((n) => (isStartFromOne ? +n - 1 : +n));
+        const register_arr = [...gate_register_array[0]].map((n) => (is_start_from_one ? +n - 1 : +n));
         return ensureMultipleRegister(register_arr, gate_control_length);
     }
     // Case 3 & 4 & 5
     const register_arr = gate_register_array
         .filter(Boolean)
-        .map((n) => (isStartFromOne ? +n - 1 : +n));
+        .map((n) => (is_start_from_one ? +n - 1 : +n));
     return ensureMultipleRegister(register_arr, gate_control_length);
 };
 const parseGateParams = (gate_params) => {
