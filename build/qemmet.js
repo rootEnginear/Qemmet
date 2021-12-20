@@ -32,14 +32,20 @@ const expandCharRepeatSyntax = (repeat_string) => {
     const expanded_text = repeat_string.replace(/(.)\*(\d+)/g, (_, inner_text, repeat_count) => inner_text.repeat(+repeat_count));
     return expanded_text !== repeat_string ? expandStringRepeatSyntax(expanded_text) : expanded_text;
 };
-const expandRangeSyntax = (range_string) => range_string.replace(/(\d+)-(\d+)/g, (_, start, end) => {
+export const generateRange = (start, end) => {
     const max = Math.max(+start, +end);
     const min = Math.min(+start, +end);
     const sorted_range = Array.from({ length: max - min + 1 }, (_, i) => min + i);
     const range_arr = +start === min ? sorted_range : sorted_range.reverse();
     const range_string = range_arr.join(' ');
     return range_string;
-});
+};
+export const expandRangeSyntax = (range_string) => {
+    const expanded_text = range_string.replace(/(\d+)-(\d+)/g, (_, start, end) => generateRange(start, end));
+    return expanded_text !== range_string
+        ? expandRangeSyntax(expanded_text)
+        : expanded_text.replace(/-/g, '');
+};
 const preprocessString = (string) => pipe(expandStringRepeatSyntax, expandCharRepeatSyntax, expandRangeSyntax)(string);
 const transformOptionString = (option_string) => {
     if (!option_string)
