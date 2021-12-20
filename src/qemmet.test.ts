@@ -1,6 +1,11 @@
 import { deepEqual, equal, throws } from 'assert'
 
-import { parseQemmetString, expandStringRepeatSyntax } from './qemmet'
+import {
+	parseQemmetString,
+	expandStringRepeatSyntax,
+	generateRange,
+	expandRangeSyntax,
+} from './qemmet'
 
 describe('Qemmet', function () {
 	describe('parseQemmetString', function () {
@@ -59,5 +64,43 @@ describe('Qemmet', function () {
 		test(`'''''*2`, ``)
 		test(`'*5'*2`, `*5*2`)
 		test(`''*5'*2'`, `*2`)
+	})
+
+	describe('generateRange', function () {
+		function test(start: string, end: string, output: string) {
+			return it(`should generate "${output}" from (${start}, ${end})`, function () {
+				const expanded = generateRange(start, end)
+				equal(expanded, output)
+			})
+		}
+
+		test('1', '3', '1 2 3')
+		test('3', '1', '3 2 1')
+		test('3', '5', '3 4 5')
+		test('5', '3', '5 4 3')
+		test('9', '12', '9 10 11 12')
+		test('12', '9', '12 11 10 9')
+	})
+
+	describe('expandRangeSyntax', function () {
+		function test(input: string, output: string) {
+			return it(`should expand "${input}" into "${output}"`, function () {
+				const expanded = expandRangeSyntax(input)
+				equal(expanded, output)
+			})
+		}
+
+		// Normal way
+		test('1-3', '1 2 3')
+		test('3-1', '3 2 1')
+		test('3-5', '3 4 5')
+		test('5-3', '5 4 3')
+		test('9-12', '9 10 11 12')
+		test('12-9', '12 11 10 9')
+
+		// Not intended way but usable
+		test('1-3-5', '1 2 3 4 5')
+		test('3-1-3', '3 2 1 2 3')
+		test('9-12-10', '9 10 11 12 11 10')
 	})
 })

@@ -48,15 +48,23 @@ const expandCharRepeatSyntax = (repeat_string: string): string => {
 	return expanded_text !== repeat_string ? expandStringRepeatSyntax(expanded_text) : expanded_text
 }
 
-const expandRangeSyntax = (range_string: string): string =>
-	range_string.replace(/(\d+)-(\d+)/g, (_, start, end) => {
-		const max = Math.max(+start, +end)
-		const min = Math.min(+start, +end)
-		const sorted_range = Array.from({ length: max - min + 1 }, (_, i) => min + i)
-		const range_arr = +start === min ? sorted_range : sorted_range.reverse()
-		const range_string = range_arr.join(' ')
-		return range_string
-	})
+export const generateRange = (start: string, end: string) => {
+	const max = Math.max(+start, +end)
+	const min = Math.min(+start, +end)
+	const sorted_range = Array.from({ length: max - min + 1 }, (_, i) => min + i)
+	const range_arr = +start === min ? sorted_range : sorted_range.reverse()
+	const range_string = range_arr.join(' ')
+	return range_string
+}
+
+export const expandRangeSyntax = (range_string: string): string => {
+	const expanded_text = range_string.replace(/(\d+)-(\d+)/g, (_, start, end) =>
+		generateRange(start, end)
+	)
+	return expanded_text !== range_string
+		? expandRangeSyntax(expanded_text)
+		: expanded_text.replace(/-/g, '')
+}
 
 const preprocessString = (string: string): string =>
 	pipe(expandStringRepeatSyntax, expandCharRepeatSyntax, expandRangeSyntax)(string)
