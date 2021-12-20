@@ -40,7 +40,7 @@ describe('Qemmet', function () {
 			})
 		}
 
-		// Normal Inteded way
+		// Normal Intended way
 		test(`'x'*3`, `xxx`)
 
 		// Nesting
