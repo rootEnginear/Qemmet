@@ -7,7 +7,7 @@ import { getQemmetString } from './build/translators/qemmet.js'
 new Vue({
 	el: '#app',
 	data: {
-		raw_string: '4;3;x4h[ccx134h1-3x1-3ccz1-3x1-3h1-3]*2m1-3',
+		raw_string: "4;3;x4h'ccx134h1-3x1-3ccz1-3x1-3h1-3'*2m1-3",
 		target_lang: 'qiskit03',
 		// target_lang: 'openqasm3',
 	},
