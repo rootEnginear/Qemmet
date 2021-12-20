@@ -43,6 +43,8 @@ describe('Qemmet', function () {
 		test(`''x'*2'*3`, `xxxxxx`)
 		test(`''x'*2y'*3`, `xxyxxyxxy`)
 		test(`'''x'*2'*3'*2`, `xxxxxxxxxxxx`)
+		test(`'h'x'*2'*3`, `hxxhxxhxx`)
+		test(`'hx*2'*3`, `hx*2hx*2hx*2`)
 
 		// Parameterized
 		test(`'p[pi]'*2`, `p[pi]p[pi]`)
