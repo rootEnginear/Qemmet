@@ -1,3 +1,7 @@
+// Utils
+const _pipe = (a, b) => (arg) => b(a(arg));
+export const pipe = (...ops) => ops.reduce(_pipe);
+// Parser
 const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstmi]', 'g');
 const substituteDefinition = (raw_string, definition_string) => {
     const formatted_definition_string = definition_string.trim().replace(/\s+/g, ' ');
@@ -13,8 +17,6 @@ const substituteDefinition = (raw_string, definition_string) => {
     const processed_raw_string = definition.reduce((string, { name, meaning }) => string.replace(new RegExp(name, 'g'), meaning), raw_string);
     return processed_raw_string;
 };
-const _pipe = (a, b) => (arg) => b(a(arg));
-const pipe = (...ops) => ops.reduce(_pipe);
 export const expandStringRepeatSyntax = (repeat_string) => {
     // replace ' with E000 and E000* with E001
     const repl_quo = repeat_string.replace(/'/g, '\uE000').replace(/\uE000\*/g, '\uE001');
