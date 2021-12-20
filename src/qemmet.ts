@@ -1,5 +1,10 @@
 import { QemmetGateInfo, QemmetParserOutput, QemmetStringOptions } from './types'
 
+// Utils
+const _pipe = (a: (fn_arg: any) => any, b: (fn_arg: any) => any) => (arg: any) => b(a(arg))
+export const pipe = (...ops: ((fn_arg: any) => any)[]) => ops.reduce(_pipe)
+
+// Parser
 const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstmi]', 'g')
 
 const substituteDefinition = (raw_string: string, definition_string: string) => {
@@ -20,9 +25,6 @@ const substituteDefinition = (raw_string: string, definition_string: string) => 
 	)
 	return processed_raw_string
 }
-
-const _pipe = (a: (fn_arg: any) => any, b: (fn_arg: any) => any) => (arg: any) => b(a(arg))
-const pipe = (...ops: ((fn_arg: any) => any)[]) => ops.reduce(_pipe)
 
 export const expandStringRepeatSyntax = (repeat_string: string): string => {
 	// replace ' with E000 and E000* with E001
