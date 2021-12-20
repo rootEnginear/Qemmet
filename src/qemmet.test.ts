@@ -2,13 +2,6 @@ import { deepEqual, equal, throws } from 'assert'
 
 import { parseQemmetString, expandStringRepeatSyntax } from './qemmet'
 
-function generateExpandStringRepeatSyntaxTest(input: string, output: string) {
-	return it(`should expand "${input}" into "${output}"`, function () {
-		const expanded = expandStringRepeatSyntax(input)
-		equal(expanded, output)
-	})
-}
-
 describe('Qemmet', function () {
 	describe('parseQemmetString', function () {
 		it('should parse ";;x" without error', function () {
@@ -35,7 +28,13 @@ describe('Qemmet', function () {
 	})
 
 	describe('expandStringRepeatSyntax', function () {
-		const test = generateExpandStringRepeatSyntaxTest
+		function test(input: string, output: string) {
+			return it(`should expand "${input}" into "${output}"`, function () {
+				const expanded = expandStringRepeatSyntax(input)
+				equal(expanded, output)
+			})
+		}
+
 		// Normal Inteded way
 		test(`'x'*3`, `xxx`)
 
