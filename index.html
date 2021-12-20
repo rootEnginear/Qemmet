@@ -132,7 +132,7 @@
         string by this syntax:
         <code
           style="display:block;margin:.5rem 0">
-            <mark>[</mark>&lt;string&gt;<mark>]*</mark>&lt;repeat_number&gt;|&lt;char&gt;<mark>*</mark>&lt;repeat_number&gt;
+            <mark>'</mark>&lt;string&gt;<mark>'*</mark>&lt;repeat_number&gt;|&lt;char&gt;<mark>*</mark>&lt;repeat_number&gt;
           </code>
         The first syntax is called a "string repeat syntax" which requires you to wrap the
         string with a pair of brackets. The second one is called a "character repeat
@@ -141,28 +141,28 @@
         <code
           style="display:block;margin:.5rem 0">
           Bas*2o*2n // Bassoon<br>
-          L[ol]*3 // Lololol
+          L'ol'*3 // Lololol
         </code>
         The repeat syntax itself can be wrapped inside of another repeat syntax. For
         example:
         <code
           style="display:block;margin:.5rem 0">
-          [lo*3l ]*2 // loool loool
+          'lo*3l '*2 // loool loool
         </code>
         This can be very useful with several quantum circuit that required you to repeat a
         chuck of the circuit. For example: A Grover's search circuit:
         <code
           style="display:block;margin:.5rem 0">
-          4;3;x4h[ccx134h1-3x1-3ccz1-3x1-3h1-3]*2m1-3
+          4;3;x4h'ccx134h1-3x1-3ccz1-3x1-3h1-3'*2m1-3
         </code>
         By the design, the repeat syntax will apply
-        <code><mark>[</mark>&lt;string&gt;<mark>]*</mark>&lt;repeat_number&gt;</code>
+        <code><mark>'</mark>&lt;string&gt;<mark>'*</mark>&lt;repeat_number&gt;</code>
         syntax first, then <code>&lt;char&gt;<mark>*</mark>&lt;repeat_number&gt;</code>
         syntax. For example:
         <code
           style="display:block;margin:.5rem 0">
-          [me]*2*3 // meme*3 -> memeee<br>
-          [lo*3l ]*2 // lo*3l lo*3l -> loool loool
+          'me'*2*3 // meme*3 -> memeee<br>
+          'lo*3l '*2 // lo*3l lo*3l -> loool loool
         </code>
         Please note that the repeat syntax is <strong>executed before everything
           else</strong>.
@@ -188,7 +188,7 @@
           syntax</strong>. For example:
         <code
           style="display:block;margin:.5rem 0">
-          [x1]*3-5 // x1x1x1-5 -> x1x1x1 2 3 4 5
+          'x1'*3-5 // x1x1x1-5 -> x1x1x1 2 3 4 5
         </code>
         This is really useful to span numbers of qubits in the circuit without having to
         type them all by yourself.
@@ -211,7 +211,7 @@
         It can be used with repeat and/or range syntax:
         <code
           style="display:block;margin:.5rem 0">
-          ;;[ht]*3;t=ccx // ;;hccxhccxhccx<br>
+          ;;'ht'*3;t=ccx // ;;hccxhccxhccx<br>
           ;;fhf;f=x1-4 // ;;x1 2 3 4hx1 2 3 4
         </code>
         The <code>name</code> can be the same as the available gates as it gets substitute
@@ -236,7 +236,7 @@
           style="display:block;margin:.5rem 0">
         ;;b3-1;b3=ccx // b3 2 1 -> ccx 2 1 (missing 1 qubit)<br>
         ;;b3-1;b3=ccx1 // b3 2 1 -> ccx1 2 1<br>
-        ;;[a1]*4-3;a1=x // a1a1a1a1-3 -> a1a1a1a1 2 3 -> xxxx 2 3 (apply x to qubit 2 and 3)<br>
+        ;;'a1'*4-3;a1=x // a1a1a1a1-3 -> a1a1a1a1 2 3 -> xxxx 2 3 (apply x to qubit 2 and 3)<br>
         ;;a1*3-1;a1=x // a111-3 -> a111 110 109 ... 3 2 1 -> x11 110 109 ... 3 2 1 (that's a lot of qubits)<br>
         ;;a*5;a*5=x // aaaaa (no substitution as `*` is executed as repeat syntax)
         </code>
@@ -341,7 +341,7 @@
           H gate to all qubits.</li>
         <li><code>hx12</code>: Apply the H gate to all qubits, then apply the X
           gate to qubit 1 and 2.</li>
-        <li><code>[hx*2]*3</code>: Expand into <code>hxxhxxhxx</code>. You knew the
+        <li><code>'hx*2'*3</code>: Expand into <code>hxxhxxhxx</code>. You knew the
           drill.
         </li>
         <li><code>c*10x</code>: Expand into <code>ccccccccccx</code>. That was absurdly
@@ -357,11 +357,11 @@
         <li><code>2;;h1cx</code>: Bell's state.</li>
         <li><code>;1;hm</code>: 1-bit randomizer.</li>
         <li>
-          <code>4;3;x4h[ccx134h1-3x1-3ccz1-3x1-3h1-3]*2m1-3</code>:
+          <code>4;3;x4h'ccx134h1-3x1-3ccz1-3x1-3h1-3'*2m1-3</code>:
           Grover's search.
         </li>
         <li>
-          <code>3;;x4hh4[ccx134hxcczxh]*2m</code>:
+          <code>3;;x4hh4'ccx134hxcczxh'*2m</code>:
           Same Grover's search as above, just shorter by using BitSafe.
         </li>
         <li><code>3;;h2cx23cxh1m12cx23cz13</code>: Quantum teleportation.</li>
