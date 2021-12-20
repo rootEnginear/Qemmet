@@ -86,6 +86,18 @@ describe('Qemmet', function () {
 		test(`**3`, ``)
 	})
 
+	describe('expandRepeatSyntax CROSSCHECK', function () {
+		function test(input: string, output: string) {
+			return it(`should expand "${input}" into "${output}"`, function () {
+				const expanded = expandCharRepeatSyntax(expandStringRepeatSyntax(input))
+				equal(expanded, output)
+			})
+		}
+
+		// Normal Intended way
+		test(`'x*3y'*2`, `xxxyxxxy`)
+	})
+
 	describe('generateRange', function () {
 		function test(start: string, end: string, output: string) {
 			return it(`should generate "${output}" from (${start}, ${end})`, function () {
