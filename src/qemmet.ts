@@ -41,11 +41,13 @@ export const expandStringRepeatSyntax = (repeat_string: string): string => {
 		: final_text.replace(/'/g, '')
 }
 
-const expandCharRepeatSyntax = (repeat_string: string): string => {
+export const expandCharRepeatSyntax = (repeat_string: string): string => {
 	const expanded_text = repeat_string.replace(/(.)\*(\d+)/g, (_, inner_text, repeat_count) =>
 		inner_text.repeat(+repeat_count)
 	)
-	return expanded_text !== repeat_string ? expandStringRepeatSyntax(expanded_text) : expanded_text
+	return expanded_text !== repeat_string
+		? expandCharRepeatSyntax(expanded_text)
+		: expanded_text.replace(/\*/g, '')
 }
 
 export const generateRange = (start: string, end: string) => {

@@ -3,6 +3,7 @@ import { deepEqual, equal, throws } from 'assert'
 import {
 	parseQemmetString,
 	expandStringRepeatSyntax,
+	expandCharRepeatSyntax,
 	generateRange,
 	expandRangeSyntax,
 } from './qemmet'
@@ -64,6 +65,25 @@ describe('Qemmet', function () {
 		test(`'''''*2`, ``)
 		test(`'*5'*2`, `*5*2`)
 		test(`''*5'*2'`, `*2`)
+	})
+
+	describe('expandCharRepeatSyntax', function () {
+		function test(input: string, output: string) {
+			return it(`should expand "${input}" into "${output}"`, function () {
+				const expanded = expandCharRepeatSyntax(input)
+				equal(expanded, output)
+			})
+		}
+
+		// Normal Intended way
+		test(`x*3`, `xxx`)
+
+		// Nesting
+		test(`x*2*3`, `xxxx`)
+		test(`x*2y*3`, `xxyyy`)
+
+		// Eh?
+		test(`**3`, ``)
 	})
 
 	describe('generateRange', function () {
