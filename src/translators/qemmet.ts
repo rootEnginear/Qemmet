@@ -33,7 +33,11 @@ const getGateString = (gate_info: QemmetGateInfo[]): string => {
 	return processed_qemmet_string
 }
 
-export const getQemmetString = ({ qubit_count, bit_count, gate_info }: QemmetParserOutput) => {
+export const translateQemmetString = ({
+	qubit_count,
+	bit_count,
+	gate_info,
+}: QemmetParserOutput) => {
 	const gate_string = getGateString(gate_info)
 	return `${qubit_count};${bit_count};${gate_string};;0`
 }

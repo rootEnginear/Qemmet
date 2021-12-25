@@ -27,7 +27,7 @@ const getGateString = (gate_info) => {
         .join('');
     return processed_qemmet_string;
 };
-export const getQemmetString = ({ qubit_count, bit_count, gate_info }) => {
+export const translateQemmetString = ({ qubit_count, bit_count, gate_info, }) => {
     const gate_string = getGateString(gate_info);
     return `${qubit_count};${bit_count};${gate_string};;0`;
 };

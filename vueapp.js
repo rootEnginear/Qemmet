@@ -1,8 +1,8 @@
 import { parseQemmetString } from './build/qemmet.js'
 
-import { getQiskitString } from './build/translators/qiskit.js'
-import { getQASMString } from './build/translators/qasm3.js'
-import { getQemmetString } from './build/translators/qemmet.js'
+import { translateQemmetString as getQiskitString } from './build/translators/qiskit.js'
+import { translateQemmetString as getQASMString } from './build/translators/qasm3.js'
+import { translateQemmetString as getQemmetString } from './build/translators/qemmet.js'
 
 new Vue({
 	el: '#app',
