@@ -88,20 +88,12 @@ const parseMetadata = (qemmet_string: string) => {
 	const qubit_count = qr_string === '' ? 1 : +qr_string
 	const bit_count = +cr_string
 
-	if (Number.isNaN(qubit_count))
-		throw new Error(
-			'Quantum register is not a number. Must be a number or leave it blank for a quantum register.'
-		)
+	if (Number.isNaN(qubit_count)) throw new Error('Quantum register is not a number.')
 
-	if (Number.isNaN(bit_count))
-		throw new Error(
-			'Classical register is not a number. Must be a number or leave it blank for no classical register.'
-		)
+	if (Number.isNaN(bit_count)) throw new Error('Classical register is not a number.')
 
 	if (!raw_gate_string)
-		throw new Error(
-			'`gates_string` not found. The required format is `quantum_register?;classical_register?;gates_string`'
-		)
+		throw new Error('`gates_string` part does not found. Required at least 1 gate.')
 
 	const gate_string = substituteDefinition(raw_gate_string, definition_string)
 
