@@ -19,9 +19,7 @@ describe('Qemmet', function () {
 		it('should parse ";;" with error', function () {
 			throws(function () {
 				parseQemmetString(';;')
-			}, new Error(
-				'`gates_string` not found. The required format is `quantum_register?;classical_register?;gates_string`'
-			))
+			}, new Error('`gates_string` part does not found. Required at least 1 gate.'))
 		})
 
 		it('shoud parse ";;ccx" as same as ";;ccx012"', function () {
