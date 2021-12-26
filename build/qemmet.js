@@ -145,6 +145,7 @@ export const ensureInstruction = (gate_info) => {
         };
     });
 };
+const failsafePipeline = (gate_info) => pipe(ensureParameterizedGate, ensureInstruction)(gate_info);
 const parseRegister = (gate_register_string, qubit_count, control_count, options) => {
     const { start_from_one: is_start_from_one } = options;
     const gate_register_array = gate_register_string.trimEnd().replace(/\s+/g, ' ').split(' ');
@@ -205,9 +206,9 @@ export const parseQemmetString = (qemmet_string) => {
     const { qubit_count: raw_qubit_count, bit_count: raw_bit_count, gate_string, definition_string, options, } = parseMetadata(qemmet_string);
     const gate_token = tokenizeGateString(gate_string);
     const raw_gate_info = parseGateToken(gate_token, raw_qubit_count, options);
-    // ParamSafe: format gates to have corrent amount of params
-    const gate_info = ensureParameterizedGate(raw_gate_info);
-    // BitSafe: safe guarding registers so the transpiled circuit won't error.
+    // Failsafe
+    const gate_info = failsafePipeline(raw_gate_info);
+    // BitSafe
     const qubit_count = getMaxRegister(raw_qubit_count, gate_info);
     const bit_count = getMaxBitRegister(raw_bit_count, gate_info);
     return {
