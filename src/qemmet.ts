@@ -246,7 +246,10 @@ export const parseQemmetString = (qemmet_string: string): QemmetParserOutput => 
 		options,
 	} = parseMetadata(qemmet_string)
 	const gate_token = tokenizeGateString(gate_string)
-	const gate_info = parseGateToken(gate_token, raw_qubit_count, options)
+	const raw_gate_info = parseGateToken(gate_token, raw_qubit_count, options)
+
+	// ParamSafe: format gates to have corrent amount of params
+	const gate_info = ensureParameterizedGate(raw_gate_info)
 
 	// BitSafe: safe guarding registers so the transpiled circuit won't error.
 	const qubit_count = getMaxRegister(raw_qubit_count, gate_info)
