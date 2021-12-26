@@ -164,6 +164,27 @@ export const ensureParameterizedGate = (gate_info: QemmetGateInfo[]): QemmetGate
 	})
 }
 
+// instructions should not have any controls
+export const ensureInstruction = (gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
+	return gate_info.map(({ gate_name, control_count, ...rest }) => {
+		switch (gate_name) {
+			case 'b':
+			case 'm':
+				return {
+					...rest,
+					gate_name,
+					control_count: 0,
+				}
+		}
+
+		return {
+			...rest,
+			gate_name,
+			control_count,
+		}
+	})
+}
+
 const parseRegister = (
 	gate_register_string: string,
 	qubit_count: number,

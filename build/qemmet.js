@@ -126,6 +126,25 @@ export const ensureParameterizedGate = (gate_info) => {
         };
     });
 };
+// instructions should not have any controls
+export const ensureInstruction = (gate_info) => {
+    return gate_info.map(({ gate_name, control_count, ...rest }) => {
+        switch (gate_name) {
+            case 'b':
+            case 'm':
+                return {
+                    ...rest,
+                    gate_name,
+                    control_count: 0,
+                };
+        }
+        return {
+            ...rest,
+            gate_name,
+            control_count,
+        };
+    });
+};
 const parseRegister = (gate_register_string, qubit_count, control_count, options) => {
     const { start_from_one: is_start_from_one } = options;
     const gate_register_array = gate_register_string.trimEnd().replace(/\s+/g, ' ').split(' ');
