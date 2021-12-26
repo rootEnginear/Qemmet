@@ -9,6 +9,7 @@ import {
 	generateRange,
 	expandRangeSyntax,
 	ensureParameterizedGate,
+	ensureInstruction,
 } from './qemmet'
 
 describe('Qemmet', function () {
@@ -214,5 +215,32 @@ describe('Qemmet', function () {
 		test(generate_input('u3', '1,2'), `1, 2, 0`)
 		test(generate_input('u3', '1,2,3'), `1, 2, 3`)
 		test(generate_input('u3', '1,2,3,4'), `1, 2, 3`)
+	})
+
+	describe('ensureInstruction', function () {
+		function test(input: QemmetGateInfo, output: number) {
+			return it(`should fix "${input.control_count}" of the gate "${input.gate_name}" into "${output}"`, function () {
+				const expanded = ensureInstruction([input])[0].control_count
+				equal(expanded, output)
+			})
+		}
+
+		function generate_input(gate_name: string, control_count: number): QemmetGateInfo {
+			return { control_count, gate_name, gate_params: '', gate_registers: [0] }
+		}
+
+		test(generate_input('x', 0), 0)
+		test(generate_input('x', 1), 1)
+		test(generate_input('y', 0), 0)
+		test(generate_input('y', 1), 1)
+		test(generate_input('z', 0), 0)
+		test(generate_input('z', 1), 1)
+		test(generate_input('h', 0), 0)
+		test(generate_input('h', 1), 1)
+
+		test(generate_input('b', 0), 0)
+		test(generate_input('b', 1), 0)
+		test(generate_input('m', 0), 0)
+		test(generate_input('m', 1), 0)
 	})
 })
