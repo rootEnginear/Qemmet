@@ -1,3 +1,5 @@
+import { QemmetGateInfo, QemmetParserOutput, QemmetStringOptions } from './types'
+
 import { deepEqual, equal, throws } from 'assert'
 
 import {
@@ -6,6 +8,7 @@ import {
 	expandCharRepeatSyntax,
 	generateRange,
 	expandRangeSyntax,
+	ensureParameterizedGate,
 } from './qemmet'
 
 describe('Qemmet', function () {
@@ -162,5 +165,54 @@ describe('Qemmet', function () {
 		test('5--3', '53')
 		test('9--12', '912')
 		test('12--9', '129')
+	})
+
+	describe('ensureParameterizedGate', function () {
+		function test(input: QemmetGateInfo, output: string) {
+			return it(`should fix "${input.gate_params}" of the gate "${input.gate_name}" into "${output}"`, function () {
+				const expanded = ensureParameterizedGate([input])[0].gate_params
+				equal(expanded, output)
+			})
+		}
+
+		function generate_input(gate_name: string, gate_params: string): QemmetGateInfo {
+			return { control_count: 0, gate_name, gate_params, gate_registers: [0] }
+		}
+
+		// 0 params required
+		test(generate_input('x', '0'), '')
+		test(generate_input('y', '0'), '')
+		test(generate_input('z', '0'), '')
+		test(generate_input('h', '0'), '')
+
+		// 1 param required
+		test(generate_input('p', ''), `0`)
+		test(generate_input('p', '1'), `1`)
+		test(generate_input('p', '1,2'), `1`)
+		test(generate_input('rx', ''), `0`)
+		test(generate_input('rx', '1'), `1`)
+		test(generate_input('rx', '1,2'), `1`)
+		test(generate_input('ry', ''), `0`)
+		test(generate_input('ry', '1'), `1`)
+		test(generate_input('ry', '1,2'), `1`)
+		test(generate_input('rz', ''), `0`)
+		test(generate_input('rz', '1'), `1`)
+		test(generate_input('rz', '1,2'), `1`)
+		test(generate_input('u1', ''), `0`)
+		test(generate_input('u1', '1'), `1`)
+		test(generate_input('u1', '1,2'), `1`)
+
+		// 2 params required
+		test(generate_input('u2', ''), `0, 0`)
+		test(generate_input('u2', '1'), `1, 0`)
+		test(generate_input('u2', '1,2'), `1, 2`)
+		test(generate_input('u2', '1,2,3'), `1, 2`)
+
+		// 3 params required
+		test(generate_input('u3', ''), `0, 0, 0`)
+		test(generate_input('u3', '1'), `1, 0, 0`)
+		test(generate_input('u3', '1,2'), `1, 2, 0`)
+		test(generate_input('u3', '1,2,3'), `1, 2, 3`)
+		test(generate_input('u3', '1,2,3,4'), `1, 2, 3`)
 	})
 })
