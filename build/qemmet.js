@@ -73,7 +73,7 @@ const parseMetadata = (qemmet_string) => {
     return { qubit_count, bit_count, gate_string, definition_string, options };
 };
 const tokenizeGateString = (gate_string) => [
-    ...gate_string.matchAll(new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[((?:[\d\s,]|pi|euler)*?)\\])*([\\d\\s]*)`, 'g')),
+    ...gate_string.matchAll(new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[((?:[\\d\\s,+\\-*/]|pi|euler)*?)\\])*([\\d\\s]*)`, 'g')),
 ];
 const ensureMultipleRegister = (registers, gate_control_length) => {
     // it's fine if it has no controls OR registers length are enough for the controls and the gate
