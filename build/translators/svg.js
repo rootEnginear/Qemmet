@@ -118,7 +118,7 @@ export const translateQemmetString = ({ qubit_count, bit_count, gate_info, }) =>
         .join('');
     return `<svg width="${(normalized_gate_info.length + 1) * 40 + 16}" height="${(qubit_count + bit_count) * 48}">
   <style>
-    @import url("http://fonts.cdnfonts.com/css/latin-modern-roman");
+    @import url("https://fonts.cdnfonts.com/css/latin-modern-roman");
   </style>
 
   ${generateQubits(qubit_count, normalized_gate_info.length)}${generateBits(bit_count, qubit_count, normalized_gate_info.length)}${gates}

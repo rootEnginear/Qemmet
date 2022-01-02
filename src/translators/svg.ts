@@ -191,7 +191,7 @@ export const translateQemmetString = ({
 		(qubit_count + bit_count) * 48
 	}">
   <style>
-    @import url("http://fonts.cdnfonts.com/css/latin-modern-roman");
+    @import url("https://fonts.cdnfonts.com/css/latin-modern-roman");
   </style>
 
   ${generateQubits(qubit_count, normalized_gate_info.length)}${generateBits(
