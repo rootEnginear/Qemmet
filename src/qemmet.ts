@@ -105,7 +105,7 @@ const parseMetadata = (qemmet_string: string) => {
 const tokenizeGateString = (gate_string: string) => [
 	...gate_string.matchAll(
 		new RegExp(
-			`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[((?:[\d\s,]|pi|euler)*?)\\])*([\\d\\s]*)`,
+			`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[((?:[\\d\\s,+\\-*/]|pi|euler)*?)\\])*([\\d\\s]*)`,
 			'g'
 		)
 	),
