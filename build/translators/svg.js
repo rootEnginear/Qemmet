@@ -57,7 +57,7 @@ const generateGate = (gate_name, gate_params) => {
             ? `<text x="${40 * (column + 1) + 8 + 16 - 1}" y="${48 * qubit + 32 + 8 - 1}" dominant-baseline="middle" text-anchor="middle" font-family="LMRoman10, serif" font-size='0.625rem'>(${formatted_params})</text>`
             : '';
         // No param
-        return (`<use xlink:href="#gate" x="${40 * (column + 1) + 8}" y="${48 * qubit}"></use><text x="${40 * (column + 1) + 8 + 16 - 1}" y="${48 * qubit + 16 + 2}" dominant-baseline="middle" text-anchor="middle" font-family="LMRomanSlant10, sans-serif">${gate_name.toUpperCase()}</text>` +
+        return (`<use xlink:href="#gate" x="${40 * (column + 1) + 8}" y="${48 * qubit}"></use><text x="${40 * (column + 1) + 8 + 16 - 1}" y="${48 * qubit + 16 + 2}" dominant-baseline="middle" text-anchor="middle" font-family="LMRomanSlant10, serif">${gate_name.toUpperCase()}</text>` +
             params_str);
     };
 };
