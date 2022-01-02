@@ -1,5 +1,5 @@
 const normalizeAdjacentGate = (raw_gate_info) => {
-    let gate_info = raw_gate_info;
+    let gate_info = JSON.parse(JSON.stringify(raw_gate_info));
     let gate_info_len = gate_info.length;
     for (let i = 0; i + 1 < gate_info_len; i++) {
         const curr_gate = gate_info[i];
