@@ -102,7 +102,7 @@ const generateGate = (
 				40 * (column + 1) + 8 + 16 - 1
 			}" y="${
 				48 * qubit + 16 + 2
-			}" dominant-baseline="middle" text-anchor="middle" font-family="LMRomanSlant10, sans-serif">${gate_name.toUpperCase()}</text>` +
+			}" dominant-baseline="middle" text-anchor="middle" font-family="LMRomanSlant10, serif">${gate_name.toUpperCase()}</text>` +
 			params_str
 		)
 	}
@@ -191,7 +191,7 @@ export const translateQemmetString = ({
 		(qubit_count + bit_count) * 48
 	}">
   <style>
-    @import url("http://fonts.cdnfonts.com/css/latin-modern-roman");
+    @import url("https://fonts.cdnfonts.com/css/latin-modern-roman");
   </style>
 
   ${generateQubits(qubit_count, normalized_gate_info.length)}${generateBits(
