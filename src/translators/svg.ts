@@ -195,7 +195,7 @@ export const translateQemmetString = ({
 
 			return lines + controls + gates
 		})
-		.join('')
+		.join('\n  ')
 
 	const svg_width = (normalized_gate_info.length + 1) * 40 + 16
 	const svg_height = (qubit_count + bit_count) * 48
@@ -215,11 +215,9 @@ export const translateQemmetString = ({
     }
   </style>
 
-  ${generateQubits(qubit_count, normalized_gate_info.length)}${generateBits(
-		bit_count,
-		qubit_count,
-		normalized_gate_info.length
-	)}${gates}
+  ${generateQubits(qubit_count, normalized_gate_info.length)}
+  ${generateBits(bit_count, qubit_count, normalized_gate_info.length)}
+  ${gates}
 
   <symbol id="gate" width="32" height="32" viewBox="0 0 32 32">
     <rect x="1.5" y="1.5" width="29" height="29" fill="white" stroke="black" />
