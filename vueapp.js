@@ -39,6 +39,14 @@ new Vue({
 		svg: function () {
 			return getSVG(this.qemmet_info)
 		},
+		svg_object_url: function () {
+			const svg = this.svg
+			const preface = '<?xml version="1.0" standalone="no"?>\r\n'
+			const blob = new Blob([preface, svg], { type: 'image/svg+xml;charset=utf-8' })
+			const url = URL.createObjectURL(blob)
+
+			return url
+		},
 	},
 	methods: {
 		copyTranspiledCode: function () {
@@ -50,6 +58,35 @@ new Vue({
 					console.error('Async: Could not copy text: ', err.message)
 				}
 			)
+		},
+
+		downloadSvg: function () {
+			const url = this.svg_object_url
+
+			const a = document.createElement('a')
+			a.download = 'qemmet.svg'
+			a.href = url
+			a.click()
+		},
+		downloadPng: function () {
+			const url = this.svg_object_url
+
+			const img = new Image()
+			const canvas = document.createElement('canvas')
+			const ctx = canvas.getContext('2d')
+
+			img.onload = function () {
+				canvas.width = img.width
+				canvas.height = img.height
+				ctx.drawImage(img, 0, 0)
+
+				const a = document.createElement('a')
+				a.download = 'qemmet.png'
+				a.href = canvas.toDataURL('image/png')
+				a.click()
+			}
+
+			img.src = url
 		},
 	},
 })
