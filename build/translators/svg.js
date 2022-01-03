@@ -54,10 +54,10 @@ const generateGate = (gate_name, gate_params) => {
             .replace(/euler/g, 'e')
             .replace(/\s/g, '');
         const params_str = gate_params
-            ? `<text x="${40 * (column + 1) + 8 + 16 - 1}" y="${48 * qubit + 32 + 8 - 1}" dominant-baseline="middle" text-anchor="middle" font-family="LMRoman10, serif" font-size='0.625rem'>(${formatted_params})</text>`
+            ? `<text x="${40 * (column + 1) + 8 + 16 - 1}" y="${48 * qubit + 32 + 8 - 1}" dominant-baseline="middle" text-anchor="middle" font-family="LMR, LMM, 'Latin Modern Roman', 'Latin Modern Math', 'Computer Modern', serif" font-size='0.625rem'>(${formatted_params})</text>`
             : '';
         // No param
-        return (`<use xlink:href="#gate" x="${40 * (column + 1) + 8}" y="${48 * qubit}"></use><text x="${40 * (column + 1) + 8 + 16 - 1}" y="${48 * qubit + 16 + 2}" dominant-baseline="middle" text-anchor="middle" font-family="LMRomanSlant10, serif">${gate_name.toUpperCase()}</text>` +
+        return (`<use xlink:href="#gate" x="${40 * (column + 1) + 8}" y="${48 * qubit}"></use><text x="${40 * (column + 1) + 8 + 16 - 1}" y="${48 * qubit + 16 + 2}" dominant-baseline="middle" text-anchor="middle" font-family="LMRS, LMR, LMM, 'Latin Modern Roman', 'Latin Modern Math', 'Computer Modern', serif">${gate_name.toUpperCase()}</text>` +
             params_str);
     };
 };
@@ -118,7 +118,7 @@ export const translateQemmetString = ({ qubit_count, bit_count, gate_info, }) =>
         .join('');
     return `<svg width="${(normalized_gate_info.length + 1) * 40 + 16}" height="${(qubit_count + bit_count) * 48}">
   <style>
-    @import url("https://fonts.cdnfonts.com/css/latin-modern-roman");
+    @import url("https://cdn.jsdelivr.net/gh/rootEnginear/Qemmet/fonts/fonts.css");
   </style>
 
   ${generateQubits(qubit_count, normalized_gate_info.length)}${generateBits(bit_count, qubit_count, normalized_gate_info.length)}${gates}
