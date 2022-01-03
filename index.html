@@ -49,13 +49,11 @@
     <label for="raw_string">Input Qemmet string:</label>
     <input id="raw_string" type="text" v-model.trim="raw_string"
       style="width:100%;box-sizing:border-box">
-    <label for="svg-preview">Circuit Preview:</label>
+    <label for="svg-preview">Circuit Preview (<a
+        @click="downloadSvg" style="cursor:pointer">download image</a>):</label>
     <div v-html="svg" class="svg-container" id="svg-preview"
       style="overflow-x:scroll;text-align:center">
     </div>
-    <p style="margin:.5rem 0 0;">
-      You can get an SVG code by choosing the target language as <code>SVG</code>.
-    </p>
     <pre><code style="overflow-y:scroll;height:40vh">{{transpiled_code}}</code></pre>
     <div style="display:flex;align-items:flex-end">
       <div style="flex:1 1 0">
@@ -69,8 +67,7 @@
       </div>
       <div>
         <button @click="copyTranspiledCode" style="margin-right:0;margin-left:1rem">Copy
-          to
-          clipboard</button>
+          to clipboard</button>
       </div>
     </div>
   </section>

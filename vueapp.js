@@ -51,5 +51,16 @@ new Vue({
 				}
 			)
 		},
+		downloadSvg: function () {
+			const svg = this.svg
+			const preface = '<?xml version="1.0" standalone="no"?>\r\n'
+			const blob = new Blob([preface, svg], { type: 'image/svg+xml;charset=utf-8' })
+			const url = URL.createObjectURL(blob)
+
+			const a = document.createElement('a')
+			a.download = 'qemmet.svg'
+			a.href = url
+			a.click()
+		},
 	},
 })
