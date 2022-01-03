@@ -1,33 +1,5 @@
 import { QemmetGateInfo, QemmetParserOutput } from '../types'
 
-// TODO: implement this in qemmet core
-const normalizeAdjacentGate = (raw_gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
-	let gate_info = JSON.parse(JSON.stringify(raw_gate_info)) as QemmetGateInfo[]
-	let gate_info_len = gate_info.length
-
-	for (let i = 0; i + 1 < gate_info_len; i++) {
-		const curr_gate = gate_info[i]
-		const next_gate = gate_info[i + 1]
-
-		if (curr_gate.control_count !== next_gate.control_count || curr_gate.control_count !== 0)
-			continue
-
-		if (
-			curr_gate.gate_name === next_gate.gate_name &&
-			curr_gate.gate_params === next_gate.gate_params &&
-			curr_gate.gate_registers.filter((value) => next_gate.gate_registers.includes(value))
-				.length === 0
-		) {
-			gate_info[i].gate_registers = curr_gate.gate_registers.concat(next_gate.gate_registers)
-			gate_info.splice(i + 1, 1)
-			i--
-			gate_info_len--
-		}
-	}
-
-	return gate_info
-}
-
 const generateQubits = (qubit_count: number, depth: number): string => {
 	return new Array(qubit_count)
 		.fill('')
@@ -176,7 +148,7 @@ export const translateQemmetString = ({
 	bit_count,
 	gate_info,
 }: QemmetParserOutput) => {
-	const normalized_gate_info = separateMeasures(normalizeAdjacentGate(gate_info))
+	const normalized_gate_info = separateMeasures(gate_info)
 	const gates = normalized_gate_info
 		.map(({ gate_name, control_count, gate_registers, gate_params }, column) => {
 			if (gate_name === 'm') return generateMeasure(gate_registers[0], qubit_count, column)
