@@ -119,7 +119,7 @@ export const translateQemmetString = ({ qubit_count, bit_count, gate_info, }) =>
             : generateGateCol(gate_name, gate_qb, gate_params, column);
         return lines + controls + gates;
     })
-        .join('');
+        .join('\n  ');
     const svg_width = (normalized_gate_info.length + 1) * 40 + 16;
     const svg_height = (qubit_count + bit_count) * 48;
     return `<svg width="${svg_width}" height="${svg_height}" viewBox="0 0 ${svg_width} ${svg_height}" xmlns="http://www.w3.org/2000/svg">
@@ -137,7 +137,9 @@ export const translateQemmetString = ({ qubit_count, bit_count, gate_info, }) =>
     }
   </style>
 
-  ${generateQubits(qubit_count, normalized_gate_info.length)}${generateBits(bit_count, qubit_count, normalized_gate_info.length)}${gates}
+  ${generateQubits(qubit_count, normalized_gate_info.length)}
+  ${generateBits(bit_count, qubit_count, normalized_gate_info.length)}
+  ${gates}
 
   <symbol id="gate" width="32" height="32" viewBox="0 0 32 32">
     <rect x="1.5" y="1.5" width="29" height="29" fill="white" stroke="black" />
