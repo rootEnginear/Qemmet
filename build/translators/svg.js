@@ -1,41 +1,80 @@
+// Universal Constant
+const GATE_SIZE = 32;
+const HALF_GATE = GATE_SIZE / 2;
+// Adjustable Constant
+const X_MARGIN = 8;
+const Y_MARGIN = 16;
+const KET_MARGIN = 8;
+const LINE_TRAIL_LEFT = 12;
+const LINE_TRAIL_RIGHT = 12;
+const LINE_SPACE = 3;
+const PARAM_Y_SHIFT = -1;
+const SVG_MARGIN = 8;
+// Computed Constant
+const HORZ_BOX = GATE_SIZE + X_MARGIN;
+const VERT_BOX = GATE_SIZE + Y_MARGIN;
+const HALF_LINE_SPACE = LINE_SPACE / 2;
 const generateQubits = (qubit_count, depth) => {
     return new Array(qubit_count)
         .fill('')
-        .map((_, i) => `<use href="#ket0" x="0" y="${i * 48}" width="32" height="32"></use><line x1="36" y1="${i * 48 + 16}" x2="${(depth + 1) * 40 + 8}" y2="${i * 48 + 16}" stroke="black" stroke-width="1" />`)
+        .map((_, i) => {
+        const y_ket = i * VERT_BOX;
+        const y_line = y_ket + HALF_GATE;
+        const x_start = HORZ_BOX + KET_MARGIN - LINE_TRAIL_LEFT;
+        const x_end = (depth + 1) * HORZ_BOX + LINE_TRAIL_RIGHT;
+        return `<use href="#ket0" x="0" y="${y_ket}" width="32" height="32"></use><line x1="${x_start}" y1="${y_line}" x2="${x_end}" y2="${y_line}" stroke="black" stroke-width="1" />`;
+    })
         .join('');
 };
 const generateBits = (bit_count, qubit_count, depth) => {
     return new Array(bit_count)
         .fill('')
         .map((_, i) => {
-        const pos_index = i + qubit_count;
-        return `<line x1="36" y1="${pos_index * 48 + 16 - 1.5}" x2="${(depth + 1) * 40 + 8}" y2="${pos_index * 48 + 16 - 1.5}" stroke="black" stroke-width="1" /><line x1="36" y1="${pos_index * 48 + 16 + 1.5}" x2="${(depth + 1) * 40 + 8}" y2="${pos_index * 48 + 16 + 1.5}" stroke="black" stroke-width="1" />`;
+        const y_base = (i + qubit_count) * VERT_BOX + HALF_GATE;
+        const y_up = y_base - HALF_LINE_SPACE;
+        const y_down = y_base + HALF_LINE_SPACE;
+        const x_start = HORZ_BOX + KET_MARGIN - LINE_TRAIL_LEFT;
+        const x_end = (depth + 1) * HORZ_BOX + LINE_TRAIL_RIGHT;
+        return `<line x1="${x_start}" y1="${y_up}" x2="${x_end}" y2="${y_up}" stroke="black" stroke-width="1" /><line x1="${x_start}" y1="${y_down}" x2="${x_end}" y2="${y_down}" stroke="black" stroke-width="1" />`;
     })
         .join('');
 };
 const generateMeasure = (qubit, qubit_count, column) => {
-    return `<line x1="${40 * (column + 1) + 16 + 8 - 1.5}" y1="${48 * qubit + 16}" x2="${40 * (column + 1) + 16 + 8 - 1.5}" y2="${48 * (qubit + qubit_count) + 16 - 1.5 - 6}" stroke="black" stroke-width="1" /><line x1="${40 * (column + 1) + 16 + 8 + 1.5}" y1="${48 * qubit + 16}" x2="${40 * (column + 1) + 16 + 8 + 1.5}" y2="${48 * (qubit + qubit_count) + 16 - 1.5 - 6}" stroke="black" stroke-width="1" /><use href="#measure" x="${40 * (column + 1) + 8}" y="${48 * qubit}" width="32" height="32"></use><use href="#arrow" x="${40 * (column + 1) + 16 + 4 - 1}" y="${48 * (qubit + qubit_count) + 8 - 2}" width="10" height="8"></use>`;
+    const gate_x = (column + 1) * HORZ_BOX + KET_MARGIN;
+    const gate_y = qubit * VERT_BOX;
+    const line_x_base = gate_x + HALF_GATE;
+    const line_x_left = line_x_base - HALF_LINE_SPACE;
+    const line_x_right = line_x_base + HALF_LINE_SPACE;
+    const line_y_top = gate_y + HALF_GATE;
+    const line_y_bottom = (qubit + qubit_count) * VERT_BOX + HALF_GATE - HALF_LINE_SPACE - 8; // -8 -> arrow height
+    const arrow_x = line_x_base - 5; // -5 -> half arrow width
+    return `<line x1="${line_x_left}" y1="${line_y_top}" x2="${line_x_left}" y2="${line_y_bottom}" stroke="black" stroke-width="1" /><line x1="${line_x_right}" y1="${line_y_top}" x2="${line_x_right}" y2="${line_y_bottom}" stroke="black" stroke-width="1" /><use href="#arrow" x="${arrow_x}" y="${line_y_bottom}" width="10" height="8"></use><use href="#measure" x="${gate_x}" y="${gate_y}" width="32" height="32"></use>`;
 };
 const generateGate = (gate_name, gate_params) => {
     return (qubit, column) => {
+        const gate_x = (column + 1) * HORZ_BOX + KET_MARGIN;
+        const gate_y = qubit * VERT_BOX;
         switch (gate_name) {
             case 'sw':
             case 'sdg':
             case 'tdg':
-                return `<use href="#${gate_name}" x="${40 * (column + 1) + 8}" y="${48 * qubit}" width="32" height="32"></use>`;
+                return `<use href="#${gate_name}" x="${gate_x}" y="${gate_y}" width="32" height="32"></use>`;
             case '/x':
             case 'sx':
-                return `<use href="#sqrt_x" x="${40 * (column + 1) + 8}" y="${48 * qubit}" width="32" height="32"></use>`;
+                return `<use href="#sqrt_x" x="${gate_x}" y="${gate_y}" width="32" height="32"></use>`;
         }
+        const text_x = gate_x + HALF_GATE - 1; // -1 -> center slant
+        const text_y = gate_y + HALF_GATE + 2; // +2 -> center capital letter
+        const param_y = gate_y + GATE_SIZE + Y_MARGIN / 2 + PARAM_Y_SHIFT;
         const formatted_params = gate_params
             .replace(/pi/g, 'π')
             .replace(/euler/g, 'e')
             .replace(/\s/g, '');
         const params_str = gate_params
-            ? `<text class="params" x="${40 * (column + 1) + 8 + 16 - 1}" y="${48 * qubit + 32 + 8 - 1}" dominant-baseline="middle" text-anchor="middle">(${formatted_params})</text>`
+            ? `<text class="params" x="${text_x}" y="${param_y}" dominant-baseline="middle" text-anchor="middle">(${formatted_params})</text>`
             : '';
         // No param
-        return (`<use href="#gate" x="${40 * (column + 1) + 8}" y="${48 * qubit}" width="32" height="32"></use><text x="${40 * (column + 1) + 8 + 16 - 1}" y="${48 * qubit + 16 + 2}" dominant-baseline="middle" text-anchor="middle">${gate_name.toUpperCase()}</text>` +
+        return (`<use href="#gate" x="${gate_x}" y="${gate_y}" width="32" height="32"></use><text x="${text_x}" y="${text_y}" dominant-baseline="middle" text-anchor="middle">${gate_name.toUpperCase()}</text>` +
             params_str);
     };
 };
@@ -51,15 +90,18 @@ const generateGateCol = (gate_name, gate_registers, gate_params, column) => {
 const generateVerticalLine = (qubits, column, isBarrier = false) => {
     const max = Math.max(...qubits);
     const min = Math.min(...qubits);
-    const x = 40 * (column + 1) + 16 + 8;
-    const y1 = 48 * min + 16 - +isBarrier * 15;
-    const y2 = 48 * max + 16 + +isBarrier * 15;
+    const barrier_modifier = +isBarrier * (HALF_GATE - 1);
+    const x = (column + 1) * HORZ_BOX + KET_MARGIN + HALF_GATE;
+    const y1 = min * VERT_BOX + HALF_GATE - barrier_modifier;
+    const y2 = max * VERT_BOX + HALF_GATE + barrier_modifier;
     return `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="black" stroke-width="1" ${isBarrier ? `stroke-dasharray="4"` : ''}/>`;
 };
 const generateControls = (qubits, column) => {
     return qubits
         .map((qubit) => {
-        return `<use href="#control" x="${40 * (column + 1) + 8}" y="${qubit * 48}" width="32" height="32"></use>`;
+        const x = (column + 1) * HORZ_BOX + KET_MARGIN;
+        const y = qubit * VERT_BOX;
+        return `<use href="#control" x="${x}" y="${y}" width="32" height="32"></use>`;
     })
         .join('');
 };
@@ -94,14 +136,14 @@ export const translateQemmetString = ({ qubit_count, bit_count, gate_info, }) =>
         const lines = control_count ? generateVerticalLine(gate_registers, column) : '';
         const controls = control_qb.length ? generateControls(control_qb, column) : '';
         const gates = gate_name === 'x' && control_count
-            ? `<use href="#x_gate" x="${40 * (column + 1) + 8}" y="${48 * gate_qb[0]}" width="32" height="32"></use>`
+            ? `<use href="#x_gate" x="${(column + 1) * HORZ_BOX + KET_MARGIN}" y="${VERT_BOX * gate_qb[0]}" width="32" height="32"></use>`
             : generateGateCol(gate_name, gate_qb, gate_params, column);
         return lines + controls + gates;
     })
         .join('\n  ');
-    const svg_width = (normalized_gate_info.length + 1) * 40 + 16;
-    const svg_height = (qubit_count + bit_count) * 48;
-    return `<svg width="${svg_width}" height="${svg_height}" viewBox="0 0 ${svg_width} ${svg_height}" xmlns="http://www.w3.org/2000/svg">
+    const svg_width = (normalized_gate_info.length + 1) * HORZ_BOX + KET_MARGIN + LINE_TRAIL_RIGHT;
+    const svg_height = (qubit_count + bit_count) * VERT_BOX;
+    return `<svg width="${svg_width + SVG_MARGIN}" height="${svg_height + SVG_MARGIN}" viewBox="${-SVG_MARGIN / 2} ${-SVG_MARGIN / 2} ${svg_width + SVG_MARGIN} ${svg_height + SVG_MARGIN}" xmlns="http://www.w3.org/2000/svg">
   <style>
     @import url("https://cdn.jsdelivr.net/gh/rootEnginear/Qemmet/fonts/fonts.css");
 
