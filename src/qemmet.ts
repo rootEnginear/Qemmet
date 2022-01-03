@@ -88,20 +88,12 @@ const parseMetadata = (qemmet_string: string) => {
 	const qubit_count = qr_string === '' ? 1 : +qr_string
 	const bit_count = +cr_string
 
-	if (Number.isNaN(qubit_count))
-		throw new Error(
-			'Quantum register is not a number. Must be a number or leave it blank for a quantum register.'
-		)
+	if (Number.isNaN(qubit_count)) throw new Error('Quantum register is not a number.')
 
-	if (Number.isNaN(bit_count))
-		throw new Error(
-			'Classical register is not a number. Must be a number or leave it blank for no classical register.'
-		)
+	if (Number.isNaN(bit_count)) throw new Error('Classical register is not a number.')
 
 	if (!raw_gate_string)
-		throw new Error(
-			'`gates_string` not found. The required format is `quantum_register?;classical_register?;gates_string`'
-		)
+		throw new Error('`gates_string` part does not found. Required at least 1 gate.')
 
 	const gate_string = substituteDefinition(raw_gate_string, definition_string)
 
@@ -112,7 +104,10 @@ const parseMetadata = (qemmet_string: string) => {
 
 const tokenizeGateString = (gate_string: string) => [
 	...gate_string.matchAll(
-		new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[(.*?)\\])*([\\d\\s]*)`, 'g')
+		new RegExp(
+			`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[((?:[\\d\\s,+\\-*/]|pi|euler)*?)\\])*([\\d\\s]*)`,
+			'g'
+		)
 	),
 ]
 
@@ -129,6 +124,69 @@ const ensureMultipleRegister = (registers: number[], gate_control_length: number
 	// finally, trim the excess
 	return filled_reg.slice(0, gate_control_length)
 }
+
+const formatParameter = (params: string[], count: number): string[] => {
+	const fill_empty_str = params.map((p) => (p.trim() === '' ? '0' : p))
+	const params_count = fill_empty_str.length
+
+	if (params_count > count) return fill_empty_str.slice(0, count)
+	if (params_count < count) return fill_empty_str.concat(new Array(count - params_count).fill('0'))
+	return fill_empty_str
+}
+
+export const ensureParameterizedGate = (gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
+	return gate_info.map(({ gate_name, gate_params, ...rest }) => {
+		const params_arr = gate_params.split(',')
+		let formatted_params: string[] = []
+
+		switch (gate_name) {
+			case 'p':
+			case 'rx':
+			case 'ry':
+			case 'rz':
+			case 'u1':
+				formatted_params = formatParameter(params_arr, 1)
+				break
+			case 'u2':
+				formatted_params = formatParameter(params_arr, 2)
+				break
+			case 'u3':
+				formatted_params = formatParameter(params_arr, 3)
+				break
+			// If it's not a parameterized gate, it will remove any params attached
+		}
+
+		return {
+			...rest,
+			gate_name,
+			gate_params: formatted_params.join(', '),
+		}
+	})
+}
+
+// instructions should not have any controls
+export const ensureInstruction = (gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
+	return gate_info.map(({ gate_name, control_count, ...rest }) => {
+		switch (gate_name) {
+			case 'b':
+			case 'm':
+				return {
+					...rest,
+					gate_name,
+					control_count: 0,
+				}
+		}
+
+		return {
+			...rest,
+			gate_name,
+			control_count,
+		}
+	})
+}
+
+const failsafePipeline = (gate_info: QemmetGateInfo[]) =>
+	pipe(ensureParameterizedGate, ensureInstruction)(gate_info)
 
 const parseRegister = (
 	gate_register_string: string,
@@ -171,11 +229,7 @@ const parseGateParams = (gate_params: string | undefined) => {
 	if (typeof gate_params === 'string') {
 		const trimmed_gate_params = gate_params.replace(/\s/g, '')
 		if (trimmed_gate_params === '') return '0'
-		return trimmed_gate_params
-			.replace(/,,/g, ',0,')
-			.replace(/,$/, ',0')
-			.replace(/^,/, '0,')
-			.replace(/,/g, ', ')
+		return trimmed_gate_params.replace(/,,/g, ',0,').replace(/,$/, ',0').replace(/^,/, '0,')
 	}
 	return ''
 }
@@ -216,9 +270,11 @@ export const parseQemmetString = (qemmet_string: string): QemmetParserOutput => 
 		options,
 	} = parseMetadata(qemmet_string)
 	const gate_token = tokenizeGateString(gate_string)
-	const gate_info = parseGateToken(gate_token, raw_qubit_count, options)
+	const raw_gate_info = parseGateToken(gate_token, raw_qubit_count, options)
 
-	// BitSafe: safe guarding registers so the transpiled circuit won't error.
+	// Failsafe
+	const gate_info = failsafePipeline(raw_gate_info)
+	// BitSafe
 	const qubit_count = getMaxRegister(raw_qubit_count, gate_info)
 	const bit_count = getMaxBitRegister(raw_bit_count, gate_info)
 
