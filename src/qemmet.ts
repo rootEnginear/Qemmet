@@ -50,6 +50,21 @@ export const expandCharRepeatSyntax = (repeat_string: string): string => {
 		: expanded_text.replace(/\*/g, '')
 }
 
+export const expandRepeatSyntax = (repeat_string: string): string => {
+	// preserve `*` inside `[...]`
+	const escaped_asterisk = repeat_string.replace(
+		/(?:\[(.*?)\])/g,
+		(_, inside) => `[${inside.replace(/\*/g, '\uE002')}]`
+	)
+	// execute syntax
+	const expanded_repeat_string = pipe(
+		expandStringRepeatSyntax,
+		expandCharRepeatSyntax
+	)(escaped_asterisk)
+	// rollback `*`
+	return expanded_repeat_string.replace(/\uE002/g, '*')
+}
+
 export const generateRange = (start: string, end: string) => {
 	const max = Math.max(+start, +end)
 	const min = Math.min(+start, +end)
@@ -69,7 +84,7 @@ export const expandRangeSyntax = (range_string: string): string => {
 }
 
 const preprocessString = (string: string): string =>
-	pipe(expandStringRepeatSyntax, expandCharRepeatSyntax, expandRangeSyntax)(string)
+	pipe(expandRepeatSyntax, expandRangeSyntax)(string)
 
 const transformOptionString = (option_string: string): QemmetStringOptions => {
 	if (!option_string) return { start_from_one: true }
