@@ -8,6 +8,15 @@
 }
 
 @font-face {
+	font-family: 'LMR';
+	font-style: normal;
+	font-weight: 400;
+	src: local('lmroman8-regular'),
+		url('https://cdn.jsdelivr.net/gh/rootEnginear/Qemmet/fonts/lmroman8-regular.otf')
+			format('opentype');
+}
+
+@font-face {
 	font-family: 'LMM';
 	font-style: normal;
 	font-weight: 400;
