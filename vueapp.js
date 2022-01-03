@@ -76,8 +76,9 @@ new Vue({
 			const ctx = canvas.getContext('2d')
 
 			img.onload = function () {
-				canvas.width = img.width
-				canvas.height = img.height
+				canvas.width = img.width * 3
+				canvas.height = img.height * 3
+				ctx.scale(3, 3)
 				ctx.drawImage(img, 0, 0)
 
 				const a = document.createElement('a')
