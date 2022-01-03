@@ -5,14 +5,39 @@ import { translateQemmetString as getQASMString } from './build/translators/qasm
 import { translateQemmetString as getQemmetString } from './build/translators/qemmet.js'
 import { translateQemmetString as getSVG } from './build/translators/svg.js'
 
+const EXAMPLES = [
+	{
+		code: '2;;h1cx12',
+		name: "Bell's state",
+	},
+	{
+		code: '2;2;hm',
+		name: '2-bit randomizer',
+	},
+	{
+		code: "4;3;x4h'ccx134h1-3x1-3ccz3-1x1-3h1-3'*2m1-3",
+		name: "Grover's search",
+	},
+	{
+		code: "3;;x4hh4'ccx134hxcczxh'*2m",
+		name: "Grover's search as above, just shorter by using the failsafe mechanism",
+	},
+	{
+		code: '3;;h2cx23cxh1m12cx23cz13',
+		name: 'Quantum teleportation',
+	},
+	{
+		code: '4;;h4p814p424p234h3p413p223h2p2h1sw14sw23;p8=cp[pi/8],p4=cp[pi/4],p2=cp[pi/2]',
+		name: 'Quantum Fourier transform',
+	},
+]
+
 new Vue({
 	el: '#app',
 	data: {
-		// raw_string: '2;;hh1h2h3',
-		raw_string: "4;3;x4h'ccx134h1-3x1-3ccz1-3x1-3h1-3'*2m1-3",
+		examples: EXAMPLES,
+		raw_string: "4;3;x4h'ccx134h1-3x1-3ccz3-1x1-3h1-3'*2m1-3",
 		// raw_string: '4;;h4p814p424p234h3p413p223h2p2h1sw14sw23;p8=cp[pi/8],p4=cp[pi/4],p2=cp[pi/2]',
-		// raw_string:
-		// 	'2;;xyzhssdgttdgp[pi]/xsxrxryrzu1u2u3[3*pi/4,3*pi/4,3*pi/4]iswbmcxcyczchcscsdgctctdgcp[pi]c/xcsxcrxcrycrzcu1cu2cu3cicscwcbcm',
 		target_lang: 'qiskit03',
 		// target_lang: 'openqasm3',
 	},
@@ -52,6 +77,13 @@ new Vue({
 		},
 	},
 	methods: {
+		setQemmet: function (str) {
+			// this.raw_string = ''
+			// ;[...str].forEach((c, i) => {
+			// 	setTimeout(() => (this.raw_string += c), 50 * i)
+			// })
+			this.raw_string = str
+		},
 		copyTranspiledCode: function () {
 			navigator.clipboard.writeText(this.transpiled_code).then(
 				function () {
@@ -62,7 +94,6 @@ new Vue({
 				}
 			)
 		},
-
 		downloadSvg: function () {
 			const url = this.svg_object_url
 
