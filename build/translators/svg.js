@@ -53,10 +53,10 @@ const generateGate = (gate_name, gate_params) => {
             .replace(/euler/g, 'e')
             .replace(/\s/g, '');
         const params_str = gate_params
-            ? `<text x="${40 * (column + 1) + 8 + 16 - 1}" y="${48 * qubit + 32 + 8 - 1}" dominant-baseline="middle" text-anchor="middle" font-family="LMR, LMM, 'Latin Modern Roman', 'Latin Modern Math', 'Computer Modern', serif" font-size='0.625rem'>(${formatted_params})</text>`
+            ? `<text class="params" x="${40 * (column + 1) + 8 + 16 - 1}" y="${48 * qubit + 32 + 8 - 1}" dominant-baseline="middle" text-anchor="middle">(${formatted_params})</text>`
             : '';
         // No param
-        return (`<use href="#gate" x="${40 * (column + 1) + 8}" y="${48 * qubit}" width="32" height="32"></use><text x="${40 * (column + 1) + 8 + 16 - 1}" y="${48 * qubit + 16 + 2}" dominant-baseline="middle" text-anchor="middle" font-family="LMRS, LMR, LMM, 'Latin Modern Roman', 'Latin Modern Math', 'Computer Modern', serif">${gate_name.toUpperCase()}</text>` +
+        return (`<use href="#gate" x="${40 * (column + 1) + 8}" y="${48 * qubit}" width="32" height="32"></use><text x="${40 * (column + 1) + 8 + 16 - 1}" y="${48 * qubit + 16 + 2}" dominant-baseline="middle" text-anchor="middle">${gate_name.toUpperCase()}</text>` +
             params_str);
     };
 };
@@ -125,6 +125,16 @@ export const translateQemmetString = ({ qubit_count, bit_count, gate_info, }) =>
     return `<svg width="${svg_width}" height="${svg_height}" viewBox="0 0 ${svg_width} ${svg_height}" xmlns="http://www.w3.org/2000/svg">
   <style>
     @import url("https://cdn.jsdelivr.net/gh/rootEnginear/Qemmet/fonts/fonts.css");
+
+    text {
+      font-family: LMR, LMM, 'Latin Modern Roman', 'Latin Modern Math', 'Computer Modern', serif;
+      font-style: oblique;
+    }
+
+    text.params {
+      font-size: 0.625rem;
+      font-style: normal;
+    }
   </style>
 
   ${generateQubits(qubit_count, normalized_gate_info.length)}${generateBits(bit_count, qubit_count, normalized_gate_info.length)}${gates}

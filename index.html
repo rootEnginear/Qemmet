@@ -11,6 +11,8 @@
 
   <link rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.min.css">
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/gh/rootEnginear/Qemmet/fonts/fonts.css">
 
   <style>
     .svg-container>svg {
@@ -49,8 +51,9 @@
     <label for="raw_string">Input Qemmet string:</label>
     <input id="raw_string" type="text" v-model.trim="raw_string"
       style="width:100%;box-sizing:border-box">
-    <label for="svg-preview">Circuit Preview (<a
-        @click="downloadSvg" style="cursor:pointer">download image</a>):</label>
+    <label for="svg-preview">Circuit Preview (download <a
+        @click="downloadSvg" style="cursor:pointer">SVG</a>/<a
+        @click="downloadPng" style="cursor:pointer">PNG</a>):</label>
     <div v-html="svg" class="svg-container" id="svg-preview"
       style="overflow-x:scroll;text-align:center">
     </div>
