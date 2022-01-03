@@ -6,6 +6,7 @@ import {
 	parseQemmetString,
 	expandStringRepeatSyntax,
 	expandCharRepeatSyntax,
+	expandRepeatSyntax,
 	generateRange,
 	expandRangeSyntax,
 	ensureParameterizedGate,
@@ -91,13 +92,16 @@ describe('Qemmet', function () {
 	describe('expandRepeatSyntax CROSSCHECK', function () {
 		function test(input: string, output: string) {
 			return it(`should expand "${input}" into "${output}"`, function () {
-				const expanded = expandCharRepeatSyntax(expandStringRepeatSyntax(input))
+				const expanded = expandRepeatSyntax(input)
 				equal(expanded, output)
 			})
 		}
 
 		// Normal Intended way
 		test(`'x*3y'*2`, `xxxyxxxy`)
+
+		// * as params
+		test(`'p[3*pi/2]'*2`, `p[3*pi/2]p[3*pi/2]`)
 	})
 
 	describe('generateRange', function () {
