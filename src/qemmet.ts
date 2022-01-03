@@ -87,18 +87,25 @@ const preprocessString = (string: string): string =>
 	pipe(expandRepeatSyntax, expandRangeSyntax)(string)
 
 const transformOptionString = (option_string: string): QemmetStringOptions => {
-	if (!option_string) return { start_from_one: true }
-	const option_array = [...option_string].map(Number)
+	const formatted_option_string = option_string.padEnd(2, ' ').slice(0, 2)
+	const option_array = [...formatted_option_string].map((c) =>
+		['0', '1'].includes(c) ? !!c : null
+	)
+
 	return {
-		start_from_one: !!option_array[0],
+		start_from_one: option_array[0] ?? true,
+		normalize_adjacent_gates: option_array[1] ?? true,
 	}
 }
 
 const parseMetadata = (qemmet_string: string) => {
 	const preprocessed_qemmet_string = preprocessString(qemmet_string.trim())
 
-	const [qr_string, cr_string, raw_gate_string, definition_string = '', option_string = ''] =
-		preprocessed_qemmet_string.split(';').map((s) => s.trim().toLowerCase())
+	const [a, b, c, d = '', option_string = ''] = preprocessed_qemmet_string.toLowerCase().split(';')
+
+	const [qr_string, cr_string, raw_gate_string, definition_string] = [a, b, c, d].map((s) =>
+		s?.trim()
+	)
 
 	const qubit_count = qr_string === '' ? 1 : +qr_string
 	const bit_count = +cr_string
@@ -276,6 +283,33 @@ const getMaxBitRegister = (bit_count: number, gate_info: QemmetGateInfo[]) =>
 		gate_info.filter(({ gate_name }) => gate_name === 'm')
 	)
 
+export const normalizeAdjacentGate = (raw_gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
+	let gate_info = JSON.parse(JSON.stringify(raw_gate_info)) as QemmetGateInfo[]
+	let gate_info_len = gate_info.length
+
+	for (let i = 0; i + 1 < gate_info_len; i++) {
+		const curr_gate = gate_info[i]
+		const next_gate = gate_info[i + 1]
+
+		if (curr_gate.control_count !== next_gate.control_count || curr_gate.control_count !== 0)
+			continue
+
+		if (
+			curr_gate.gate_name === next_gate.gate_name &&
+			curr_gate.gate_params === next_gate.gate_params &&
+			curr_gate.gate_registers.filter((value) => next_gate.gate_registers.includes(value))
+				.length === 0
+		) {
+			gate_info[i].gate_registers = curr_gate.gate_registers.concat(next_gate.gate_registers)
+			gate_info.splice(i + 1, 1)
+			i--
+			gate_info_len--
+		}
+	}
+
+	return gate_info
+}
+
 export const parseQemmetString = (qemmet_string: string): QemmetParserOutput => {
 	const {
 		qubit_count: raw_qubit_count,
@@ -288,7 +322,13 @@ export const parseQemmetString = (qemmet_string: string): QemmetParserOutput => 
 	const raw_gate_info = parseGateToken(gate_token, raw_qubit_count, options)
 
 	// Failsafe
-	const gate_info = failsafePipeline(raw_gate_info)
+	const safe_gate_info = failsafePipeline(raw_gate_info)
+
+	// Normalize Adjacent Gate
+	const gate_info = options.normalize_adjacent_gates
+		? normalizeAdjacentGate(safe_gate_info)
+		: safe_gate_info
+
 	// BitSafe
 	const qubit_count = getMaxRegister(raw_qubit_count, gate_info)
 	const bit_count = getMaxBitRegister(raw_bit_count, gate_info)

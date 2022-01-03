@@ -1,5 +1,6 @@
 export interface QemmetStringOptions {
 	start_from_one: boolean
+	normalize_adjacent_gates: boolean
 }
 
 export interface QemmetGateInfo {
