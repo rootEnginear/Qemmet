@@ -1,5 +1,5 @@
 # Qemmet
-A way to generate a Qiskit 0.3X or OpenQASM 3.0 code with a shorthand notation.
+A shorthand notation for generating a quantum circuit.
 
 ## A shorthand notation?
 Well, I was creating some random circuits in Qiskit and I'm kind of lazy. So I thought, "It would be cool if we had something like Emmet, but in Quantum". So I create a new syntax that can hold enough information about a circuit and, yeah, this is it. Now I can write a simple Bell's state in a syntax of `h1cx12` instead of a lengthy `qc.h(0)` and `qc.cx(0,1)`.
