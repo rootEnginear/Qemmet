@@ -15,12 +15,12 @@ const EXAMPLES = [
 		name: '2-bit randomizer',
 	},
 	{
-		code: "4;3;x4h'ccx134h1-3x1-3ccz3-1x1-3h1-3'*2m1-3",
+		code: "4;3;x4 h 'ccx134 h1-3 x1-3 ccz3-1 x1-3 h1-3'*2 m1-3",
 		name: "Grover's search",
 	},
 	{
 		code: "3;;x4hh4'ccx134hxcczxh'*2m",
-		name: "Grover's search as above, just shorter by using the failsafe mechanism",
+		name: "Grover's search as above, just shorter by using the failsafe mechanisms",
 	},
 	{
 		code: '3;;h2cx23cxh1m12cx23cz13',
@@ -36,7 +36,7 @@ new Vue({
 	el: '#app',
 	data: {
 		examples: EXAMPLES,
-		raw_string: "4;3;x4h'ccx134h1-3x1-3ccz3-1x1-3h1-3'*2m1-3",
+		raw_string: "4;3;x4 h 'ccx134 h1-3 x1-3 ccz3-1 x1-3 h1-3'*2 m1-3",
 		// raw_string: '4;;h4p814p424p234h3p413p223h2p2h1sw14sw23;p8=cp[pi/8],p4=cp[pi/4],p2=cp[pi/2]',
 		target_lang: 'qiskit03',
 		// target_lang: 'openqasm3',
