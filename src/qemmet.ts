@@ -104,7 +104,7 @@ const parseMetadata = (qemmet_string: string) => {
 	const [a, b, c, d = '', option_string = ''] = preprocessed_qemmet_string.toLowerCase().split(';')
 
 	const [qr_string, cr_string, raw_gate_string, definition_string] = [a, b, c, d].map((s) =>
-		s.trim()
+		s?.trim()
 	)
 
 	const qubit_count = qr_string === '' ? 1 : +qr_string

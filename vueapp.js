@@ -19,25 +19,28 @@ new Vue({
 	computed: {
 		qemmet_info: function () {
 			try {
-				return parseQemmetString(this.raw_string || ';;')
+				return [parseQemmetString(this.raw_string || ';;'), null]
 			} catch (e) {
-				return `Hmm there are some errors: ${e.message}`
+				return [null, `Hmm there are some errors: ${e.message}`]
 			}
 		},
 		transpiled_code: function () {
-			if (typeof this.qemmet_info === 'string') return this.qemmet_info
-			console.log('Expanded string:', getQemmetString(this.qemmet_info))
+			const [qemmet_info, error] = this.qemmet_info
+			if (error) return error
+
+			console.log('Expanded string:', getQemmetString(qemmet_info))
 			switch (this.target_lang) {
 				case 'openqasm3':
-					return getQASMString(this.qemmet_info)
+					return getQASMString(qemmet_info)
 				case 'svg':
 					return this.svg
 				default:
-					return getQiskitString(this.qemmet_info)
+					return getQiskitString(qemmet_info)
 			}
 		},
 		svg: function () {
-			return getSVG(this.qemmet_info)
+			const [qemmet_info, error] = this.qemmet_info
+			return error ? `<svg></svg>` : getSVG(qemmet_info)
 		},
 		svg_object_url: function () {
 			const svg = this.svg

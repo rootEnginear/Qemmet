@@ -55,9 +55,9 @@
         @click="downloadSvg" style="cursor:pointer">SVG</a>/<a
         @click="downloadPng" style="cursor:pointer">PNG</a>):</label>
     <div v-html="svg" class="svg-container" id="svg-preview"
-      style="overflow-x:scroll;text-align:center">
+      style="overflow:scroll;text-align:center;max-height:40vh">
     </div>
-    <pre><code style="overflow-y:scroll;height:40vh">{{transpiled_code}}</code></pre>
+    <pre><code style="overflow:scroll;height:40vh">{{transpiled_code}}</code></pre>
     <div style="display:flex;align-items:flex-end">
       <div style="flex:1 1 0">
         <label for="target_lang">Target Language:</label>

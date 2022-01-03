@@ -68,7 +68,7 @@ const transformOptionString = (option_string) => {
 const parseMetadata = (qemmet_string) => {
     const preprocessed_qemmet_string = preprocessString(qemmet_string.trim());
     const [a, b, c, d = '', option_string = ''] = preprocessed_qemmet_string.toLowerCase().split(';');
-    const [qr_string, cr_string, raw_gate_string, definition_string] = [a, b, c, d].map((s) => s.trim());
+    const [qr_string, cr_string, raw_gate_string, definition_string] = [a, b, c, d].map((s) => s?.trim());
     const qubit_count = qr_string === '' ? 1 : +qr_string;
     const bit_count = +cr_string;
     if (Number.isNaN(qubit_count))
