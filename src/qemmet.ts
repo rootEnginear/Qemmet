@@ -194,6 +194,8 @@ export const ensureParameterizedGate = (gate_info: QemmetGateInfo[]): QemmetGate
 export const ensureInstruction = (gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
 	return gate_info.map(({ gate_name, control_count, ...rest }) => {
 		switch (gate_name) {
+			case '0':
+			case 'r':
 			case 'b':
 			case 'm':
 				return {

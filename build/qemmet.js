@@ -142,6 +142,8 @@ export const ensureParameterizedGate = (gate_info) => {
 export const ensureInstruction = (gate_info) => {
     return gate_info.map(({ gate_name, control_count, ...rest }) => {
         switch (gate_name) {
+            case '0':
+            case 'r':
             case 'b':
             case 'm':
                 return {
