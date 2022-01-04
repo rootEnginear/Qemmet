@@ -41,7 +41,16 @@ const DEFAULT_OPTIONS = {
 	LINE_SPACE: 3,
 	PARAM_Y_SHIFT: -1,
 	SVG_MARGIN: 8,
+	BACKGROUND_COLOR: '#ffffff',
+	LINE_COLOR: '#222222',
+	FONT_COLOR: '#222222',
+	GATE_BACKGROUND_COLOR: '#ffffff',
 }
+
+let background_color_timeout
+let line_color_timeout
+let font_color_timeout
+let gate_background_color_timeout
 
 new Vue({
 	el: '#app',
@@ -59,6 +68,16 @@ new Vue({
 		line_space: DEFAULT_OPTIONS.LINE_SPACE,
 		param_y_shift: DEFAULT_OPTIONS.PARAM_Y_SHIFT,
 		svg_margin: DEFAULT_OPTIONS.SVG_MARGIN,
+
+		background_color_input: DEFAULT_OPTIONS.BACKGROUND_COLOR,
+		line_color_input: DEFAULT_OPTIONS.LINE_COLOR,
+		font_color_input: DEFAULT_OPTIONS.FONT_COLOR,
+		gate_background_color_input: DEFAULT_OPTIONS.GATE_BACKGROUND_COLOR,
+
+		background_color: DEFAULT_OPTIONS.BACKGROUND_COLOR,
+		line_color: DEFAULT_OPTIONS.LINE_COLOR,
+		font_color: DEFAULT_OPTIONS.FONT_COLOR,
+		gate_background_color: DEFAULT_OPTIONS.GATE_BACKGROUND_COLOR,
 	},
 	computed: {
 		qemmet_info: function () {
@@ -93,6 +112,10 @@ new Vue({
 					LINE_SPACE: this.line_space,
 					PARAM_Y_SHIFT: this.param_y_shift,
 					SVG_MARGIN: this.svg_margin,
+					BACKGROUND_COLOR: this.background_color,
+					LINE_COLOR: this.line_color,
+					FONT_COLOR: this.font_color,
+					GATE_BACKGROUND_COLOR: this.gate_background_color,
 				},
 			}
 			const [qemmet_info, error] = this.qemmet_info
@@ -153,6 +176,35 @@ new Vue({
 			}
 
 			img.src = url
+		},
+		makeBackgroundTransparent: function () {
+			this.background_color = 'transparent'
+		},
+	},
+	watch: {
+		background_color_input: function () {
+			clearTimeout(background_color_timeout)
+			background_color_timeout = setTimeout(() => {
+				this.background_color = this.background_color_input
+			}, 100)
+		},
+		line_color_input: function () {
+			clearTimeout(line_color_timeout)
+			line_color_timeout = setTimeout(() => {
+				this.line_color = this.line_color_input
+			}, 100)
+		},
+		font_color_input: function () {
+			clearTimeout(font_color_timeout)
+			font_color_timeout = setTimeout(() => {
+				this.font_color = this.font_color_input
+			}, 100)
+		},
+		gate_background_color_input: function () {
+			clearTimeout(gate_background_color_timeout)
+			gate_background_color_timeout = setTimeout(() => {
+				this.gate_background_color = this.gate_background_color_input
+			}, 100)
 		},
 	},
 })
