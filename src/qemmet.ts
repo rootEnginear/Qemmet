@@ -105,7 +105,9 @@ export const transformOptionString = (option_string: string): QemmetStringOption
 const parseMetadata = (qemmet_string: string) => {
 	const preprocessed_qemmet_string = preprocessString(qemmet_string.trim())
 
-	const [a, b, c, d = '', option_string = ''] = preprocessed_qemmet_string.toLowerCase().split(';')
+	const [a = '', b = '', c = '', d = '', option_string = ''] = preprocessed_qemmet_string
+		.toLowerCase()
+		.split(';')
 
 	const [qr_string, cr_string, raw_gate_string, definition_string] = [a, b, c, d].map((s) =>
 		s?.trim()
@@ -117,9 +119,6 @@ const parseMetadata = (qemmet_string: string) => {
 	if (Number.isNaN(qubit_count)) throw new Error('Quantum register is not a number.')
 
 	if (Number.isNaN(bit_count)) throw new Error('Classical register is not a number.')
-
-	if (!raw_gate_string)
-		throw new Error('`gates_string` part does not found. Required at least 1 gate.')
 
 	const gate_string = substituteDefinition(raw_gate_string, definition_string)
 

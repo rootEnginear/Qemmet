@@ -82,7 +82,7 @@ new Vue({
 	computed: {
 		qemmet_info: function () {
 			try {
-				return [parseQemmetString(this.raw_string || ';;'), null]
+				return [parseQemmetString(this.raw_string), null]
 			} catch (e) {
 				return [null, `Hmm there are some errors: ${e.message}`]
 			}

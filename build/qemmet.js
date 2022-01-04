@@ -69,7 +69,9 @@ export const transformOptionString = (option_string) => {
 };
 const parseMetadata = (qemmet_string) => {
     const preprocessed_qemmet_string = preprocessString(qemmet_string.trim());
-    const [a, b, c, d = '', option_string = ''] = preprocessed_qemmet_string.toLowerCase().split(';');
+    const [a = '', b = '', c = '', d = '', option_string = ''] = preprocessed_qemmet_string
+        .toLowerCase()
+        .split(';');
     const [qr_string, cr_string, raw_gate_string, definition_string] = [a, b, c, d].map((s) => s?.trim());
     const qubit_count = qr_string === '' ? 1 : +qr_string;
     const bit_count = +cr_string;
@@ -77,8 +79,6 @@ const parseMetadata = (qemmet_string) => {
         throw new Error('Quantum register is not a number.');
     if (Number.isNaN(bit_count))
         throw new Error('Classical register is not a number.');
-    if (!raw_gate_string)
-        throw new Error('`gates_string` part does not found. Required at least 1 gate.');
     const gate_string = substituteDefinition(raw_gate_string, definition_string);
     const options = transformOptionString(option_string);
     return { qubit_count, bit_count, gate_string, definition_string, options };
