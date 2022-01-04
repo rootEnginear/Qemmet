@@ -2,7 +2,7 @@
 const _pipe = (a, b) => (arg) => b(a(arg));
 export const pipe = (...ops) => ops.reduce(_pipe);
 // Parser
-const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstmi]', 'g');
+const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[xyzhstpibmr0]', 'g');
 const substituteDefinition = (raw_string, definition_string) => {
     const formatted_definition_string = definition_string.trim().replace(/\s+/g, ' ');
     if (formatted_definition_string === '')
