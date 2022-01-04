@@ -27,50 +27,98 @@
 </head>
 
 <body style="overflow-y:scroll">
-  <h1>Qemmet</h1>
-  <p>A shorthand notation for generating a quantum circuit.</p>
-  <details>
-    <summary>A shorthand notation?</summary>
-    <p>
-      Well, I was creating some random circuits in Qiskit and I'm kind of lazy. So I
-      thought, "It would be cool if we had something like Emmet, but in Quantum". So I
-      create a new syntax that can hold enough information about a circuit and, yeah, this
-      is it. Now I can write a simple Bell's state in a syntax of <code>h1cx12</code>
-      instead of a lengthy <code>qc.h(0)</code> and <code>qc.cx(0,1)</code>.
-    </p>
-    <h2>How does this work?</h2>
-    <p>
-      Good question! Since writing all of the rules here are going to be pretty long and
-      boring, I suggest you to look up <a
-        href="https://github.com/rootEnginear/Qemmet/wiki">our wiki</a> to learn more
-      about the syntax and mechanics behind Qemmet.
-    </p>
-  </details>
-  <hr>
-  <section id="app">
-    <label for="raw_string">Input Qemmet string:</label>
-    <input id="raw_string" type="text" v-model.trim="raw_string"
-      style="width:100%;box-sizing:border-box">
-    <label for="svg-preview">Circuit Preview (download <a
-        @click="downloadSvg" style="cursor:pointer">SVG</a>/<a
-        @click="downloadPng" style="cursor:pointer">PNG</a>):</label>
-    <div v-html="svg" class="svg-container" id="svg-preview"
-      style="overflow:scroll;text-align:center;max-height:40vh">
-    </div>
-    <pre><code style="overflow:scroll;height:40vh">{{transpiled_code}}</code></pre>
-    <div style="display:flex;align-items:flex-end">
-      <div style="flex:1 1 0">
-        <label for="target_lang">Target Language:</label>
-        <select id="target_lang" v-model="target_lang"
-          style="width:100%;box-sizing:border-box">
-          <option value="qiskit03">Qiskit 0.3X</option>
-          <option value="openqasm3">OpenQASM 3.0</option>
-          <option value="svg">SVG</option>
-        </select>
+  <main id="app">
+    <header>
+      <h1>Qemmet</h1>
+      <p>A shorthand notation for generating a quantum circuit.</p>
+      <details>
+        <summary>A shorthand notation?</summary>
+        <p>
+          Well, I was creating some random circuits in Qiskit and I'm kind of lazy. So I
+          thought, "It would be cool if we had something like Emmet, but in Quantum". So I
+          create a new syntax that can hold enough information about a circuit and, yeah,
+          this
+          is it. Now I can write a simple Bell's state in a syntax of <code>h1cx12</code>
+          instead of a lengthy <code>qc.h(0)</code> and <code>qc.cx(0,1)</code>.
+        </p>
+        <h2>How does this work?</h2>
+        <p>
+          Good question! Since writing all of the rules here are going to be pretty long
+          and
+          boring, I suggest you to look up <a
+            href="https://github.com/rootEnginear/Qemmet/wiki">our wiki</a> to learn more
+          about the syntax and mechanics behind Qemmet.
+        </p>
+        <h2>Example circuits:</h2>
+        <p>Click at the code to see it in action!</p>
+        <ul>
+          <li v-for="({code, name}) in EXAMPLES" :key="code">
+            <a style="cursor:pointer" @click="setQemmet(code)">
+              <code>{{code}}</code>
+            </a>: {{name}}.
+          </li>
+        </ul>
+      </details>
+    </header>
+    <hr>
+    <section>
+      <label for="raw_string">Input Qemmet string:</label>
+      <input id="raw_string" type="text" v-model.trim="raw_string"
+        style="width:100%;box-sizing:border-box">
+      <label for="svg-preview">Circuit Preview (download <a
+          @click="downloadSvg" style="cursor:pointer">SVG</a>/<a
+          @click="downloadPng" style="cursor:pointer">PNG</a>):</label>
+      <div v-html="svg" class="svg-container" id="svg-preview"
+        style="overflow:scroll;text-align:center;max-height:40vh">
       </div>
-      <div>
-        <button @click="copyTranspiledCode" style="margin-right:0;margin-left:1rem">Copy
-          to clipboard</button>
+      <details>
+        <summary>SVG options</summary>
+        <div style="display:flex">
+          <div style="flex:1 1 0;margin-right:0.5rem">
+            <label for="svg_margin">SVG margin</label>
+            <input type="number" id="svg_margin" v-model.number="svg_margin"
+              style="width:100%;box-sizing:border-box">
+            <label for="x_margin">X margin</label>
+            <input type="number" id="x_margin" v-model.number="x_margin"
+              style="width:100%;box-sizing:border-box">
+            <label for="y_margin">Y margin</label>
+            <input type="number" id="y_margin" v-model.number="y_margin"
+              style="width:100%;box-sizing:border-box">
+            <label for="ket_margin">Ket margin</label>
+            <input type="number" id="ket_margin" v-model.number="ket_margin"
+              style="width:100%;box-sizing:border-box">
+          </div>
+          <div style="flex:1 1 0;margin-left:0.5rem">
+            <label for="line_trail_left">Left trail length</label>
+            <input type="number" id="line_trail_left" v-model.number="line_trail_left"
+              style="width:100%;box-sizing:border-box">
+            <label for="line_trail_right">Right trail length</label>
+            <input type="number" id="line_trail_right" v-model.number="line_trail_right"
+              style="width:100%;box-sizing:border-box">
+            <label for="line_space">Double line spacing</label>
+            <input type="number" id="line_space" v-model.number="line_space"
+              style="width:100%;box-sizing:border-box">
+            <label for="param_y_shift">Parameter Y-axis shift</label>
+            <input type="number" id="param_y_shift" v-model.number="param_y_shift"
+              style="width:100%;box-sizing:border-box">
+          </div>
+        </div>
+      </details>
+      <pre><code style="overflow:scroll;height:40vh">{{transpiled_code}}</code></pre>
+      <div style="display:flex;align-items:flex-end">
+        <div style="flex:1 1 0">
+          <label for="target_lang">Target Language:</label>
+          <select id="target_lang" v-model="target_lang"
+            style="width:100%;box-sizing:border-box">
+            <option value="qiskit03">Qiskit 0.3X</option>
+            <option value="openqasm3">OpenQASM 3.0</option>
+            <option value="svg">SVG</option>
+          </select>
+        </div>
+        <div>
+          <button @click="copyTranspiledCode" style="margin-right:0;margin-left:1rem">Copy
+            to clipboard</button>
+        </div>
       </div>
     </div>
   </section>

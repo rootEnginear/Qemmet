@@ -1,37 +1,73 @@
 import { QemmetGateInfo, QemmetParserOutput } from '../types'
 
-// Universal Constant
-const GATE_SIZE = 32
-const HALF_GATE = GATE_SIZE / 2
+interface SvgOptions {
+	X_MARGIN: number
+	Y_MARGIN: number
+	KET_MARGIN: number
+	LINE_TRAIL_LEFT: number
+	LINE_TRAIL_RIGHT: number
+	LINE_SPACE: number
+	PARAM_Y_SHIFT: number
+	SVG_MARGIN: number
+}
 
-// Adjustable Constant
-const X_MARGIN = 8
-const Y_MARGIN = 16
-const KET_MARGIN = 8
+interface SvgDefaultOptions extends SvgOptions {
+	readonly GATE_SIZE: number
+	readonly HALF_GATE: number
+	readonly HORZ_BOX: number
+	readonly VERT_BOX: number
+	readonly HALF_LINE_SPACE: number
+}
 
-const LINE_TRAIL_LEFT = 12
-const LINE_TRAIL_RIGHT = 12
+interface SvgOptionParam {
+	style: SvgOptions
+}
 
-const LINE_SPACE = 3
+const DEFAULT_OPTIONS = Object.freeze({
+	X_MARGIN: 8,
+	Y_MARGIN: 16,
+	KET_MARGIN: 8,
+	LINE_TRAIL_LEFT: 12,
+	LINE_TRAIL_RIGHT: 12,
+	LINE_SPACE: 3,
+	PARAM_Y_SHIFT: -1,
+	SVG_MARGIN: 8,
+})
 
-const PARAM_Y_SHIFT = -1
-
-const SVG_MARGIN = 8
-
-// Computed Constant
-const HORZ_BOX = GATE_SIZE + X_MARGIN
-const VERT_BOX = GATE_SIZE + Y_MARGIN
-
-const HALF_LINE_SPACE = LINE_SPACE / 2
+const RENDER_STYLE: SvgDefaultOptions = Object.seal({
+	// Strict Constant
+	get GATE_SIZE() {
+		return 32
+	},
+	// Adjustable Constants
+	...DEFAULT_OPTIONS,
+	// Computed Constants
+	get HALF_GATE() {
+		return this.GATE_SIZE / 2
+	},
+	get HORZ_BOX() {
+		return this.GATE_SIZE + this.X_MARGIN
+	},
+	get VERT_BOX() {
+		return this.GATE_SIZE + this.Y_MARGIN
+	},
+	get HALF_LINE_SPACE() {
+		return this.LINE_SPACE / 2
+	},
+})
 
 const generateQubits = (qubit_count: number, depth: number): string => {
 	return new Array(qubit_count)
 		.fill('')
 		.map((_, i) => {
-			const y_ket = i * VERT_BOX
-			const y_line = y_ket + HALF_GATE
-			const x_start = HORZ_BOX + KET_MARGIN - LINE_TRAIL_LEFT
-			const x_end = (depth + 1) * HORZ_BOX + LINE_TRAIL_RIGHT
+			const y_ket = i * RENDER_STYLE.VERT_BOX
+			const y_line = y_ket + RENDER_STYLE.HALF_GATE
+			const x_start = RENDER_STYLE.HORZ_BOX + RENDER_STYLE.KET_MARGIN - RENDER_STYLE.LINE_TRAIL_LEFT
+			const x_end =
+				depth * RENDER_STYLE.HORZ_BOX +
+				RENDER_STYLE.GATE_SIZE +
+				RENDER_STYLE.KET_MARGIN +
+				RENDER_STYLE.LINE_TRAIL_RIGHT
 
 			return `<use href="#ket0" x="0" y="${y_ket}" width="32" height="32"></use><line x1="${x_start}" y1="${y_line}" x2="${x_end}" y2="${y_line}" stroke="black" stroke-width="1" />`
 		})
@@ -42,11 +78,11 @@ const generateBits = (bit_count: number, qubit_count: number, depth: number): st
 	return new Array(bit_count)
 		.fill('')
 		.map((_, i) => {
-			const y_base = (i + qubit_count) * VERT_BOX + HALF_GATE
-			const y_up = y_base - HALF_LINE_SPACE
-			const y_down = y_base + HALF_LINE_SPACE
-			const x_start = HORZ_BOX + KET_MARGIN - LINE_TRAIL_LEFT
-			const x_end = (depth + 1) * HORZ_BOX + LINE_TRAIL_RIGHT
+			const y_base = (i + qubit_count) * RENDER_STYLE.VERT_BOX + RENDER_STYLE.HALF_GATE
+			const y_up = y_base - RENDER_STYLE.HALF_LINE_SPACE
+			const y_down = y_base + RENDER_STYLE.HALF_LINE_SPACE
+			const x_start = RENDER_STYLE.HORZ_BOX + RENDER_STYLE.KET_MARGIN - RENDER_STYLE.LINE_TRAIL_LEFT
+			const x_end = (depth + 1) * RENDER_STYLE.HORZ_BOX + RENDER_STYLE.LINE_TRAIL_RIGHT
 
 			return `<line x1="${x_start}" y1="${y_up}" x2="${x_end}" y2="${y_up}" stroke="black" stroke-width="1" /><line x1="${x_start}" y1="${y_down}" x2="${x_end}" y2="${y_down}" stroke="black" stroke-width="1" />`
 		})
@@ -54,15 +90,19 @@ const generateBits = (bit_count: number, qubit_count: number, depth: number): st
 }
 
 const generateMeasure = (qubit: number, qubit_count: number, column: number) => {
-	const gate_x = (column + 1) * HORZ_BOX + KET_MARGIN
-	const gate_y = qubit * VERT_BOX
+	const gate_x = (column + 1) * RENDER_STYLE.HORZ_BOX + RENDER_STYLE.KET_MARGIN
+	const gate_y = qubit * RENDER_STYLE.VERT_BOX
 
-	const line_x_base = gate_x + HALF_GATE
-	const line_x_left = line_x_base - HALF_LINE_SPACE
-	const line_x_right = line_x_base + HALF_LINE_SPACE
+	const line_x_base = gate_x + RENDER_STYLE.HALF_GATE
+	const line_x_left = line_x_base - RENDER_STYLE.HALF_LINE_SPACE
+	const line_x_right = line_x_base + RENDER_STYLE.HALF_LINE_SPACE
 
-	const line_y_top = gate_y + HALF_GATE
-	const line_y_bottom = (qubit + qubit_count) * VERT_BOX + HALF_GATE - HALF_LINE_SPACE - 8 // -8 -> arrow height
+	const line_y_top = gate_y + RENDER_STYLE.HALF_GATE
+	const line_y_bottom =
+		(qubit + qubit_count) * RENDER_STYLE.VERT_BOX +
+		RENDER_STYLE.HALF_GATE -
+		RENDER_STYLE.HALF_LINE_SPACE -
+		8 // -8 -> arrow height
 
 	const arrow_x = line_x_base - 5 // -5 -> half arrow width
 
@@ -74,8 +114,8 @@ const generateGate = (
 	gate_params: QemmetGateInfo['gate_params']
 ): ((qubit: number, column: number) => string) => {
 	return (qubit: number, column: number) => {
-		const gate_x = (column + 1) * HORZ_BOX + KET_MARGIN
-		const gate_y = qubit * VERT_BOX
+		const gate_x = (column + 1) * RENDER_STYLE.HORZ_BOX + RENDER_STYLE.KET_MARGIN
+		const gate_y = qubit * RENDER_STYLE.VERT_BOX
 
 		switch (gate_name) {
 			case 'sw':
@@ -87,9 +127,10 @@ const generateGate = (
 				return `<use href="#sqrt_x" x="${gate_x}" y="${gate_y}" width="32" height="32"></use>`
 		}
 
-		const text_x = gate_x + HALF_GATE - 1 // -1 -> center slant
-		const text_y = gate_y + HALF_GATE + 2 // +2 -> center capital letter
-		const param_y = gate_y + GATE_SIZE + Y_MARGIN / 2 + PARAM_Y_SHIFT
+		const text_x = gate_x + RENDER_STYLE.HALF_GATE - 1 // -1 -> center slant
+		const text_y = gate_y + RENDER_STYLE.HALF_GATE + 2 // +2 -> center capital letter
+		const param_y =
+			gate_y + RENDER_STYLE.GATE_SIZE + RENDER_STYLE.Y_MARGIN / 2 + RENDER_STYLE.PARAM_Y_SHIFT
 
 		const formatted_params = gate_params
 			.replace(/pi/g, 'π')
@@ -127,11 +168,11 @@ const generateVerticalLine = (qubits: number[], column: number, isBarrier = fals
 	const max = Math.max(...qubits)
 	const min = Math.min(...qubits)
 
-	const barrier_modifier = +isBarrier * (HALF_GATE - 1)
+	const barrier_modifier = +isBarrier * (RENDER_STYLE.HALF_GATE - 1)
 
-	const x = (column + 1) * HORZ_BOX + KET_MARGIN + HALF_GATE
-	const y1 = min * VERT_BOX + HALF_GATE - barrier_modifier
-	const y2 = max * VERT_BOX + HALF_GATE + barrier_modifier
+	const x = (column + 1) * RENDER_STYLE.HORZ_BOX + RENDER_STYLE.KET_MARGIN + RENDER_STYLE.HALF_GATE
+	const y1 = min * RENDER_STYLE.VERT_BOX + RENDER_STYLE.HALF_GATE - barrier_modifier
+	const y2 = max * RENDER_STYLE.VERT_BOX + RENDER_STYLE.HALF_GATE + barrier_modifier
 
 	return `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="black" stroke-width="1" ${
 		isBarrier ? `stroke-dasharray="4"` : ''
@@ -141,8 +182,8 @@ const generateVerticalLine = (qubits: number[], column: number, isBarrier = fals
 const generateControls = (qubits: number[], column: number) => {
 	return qubits
 		.map((qubit) => {
-			const x = (column + 1) * HORZ_BOX + KET_MARGIN
-			const y = qubit * VERT_BOX
+			const x = (column + 1) * RENDER_STYLE.HORZ_BOX + RENDER_STYLE.KET_MARGIN
+			const y = qubit * RENDER_STYLE.VERT_BOX
 
 			return `<use href="#control" x="${x}" y="${y}" width="32" height="32"></use>`
 		})
@@ -170,11 +211,24 @@ const separateMeasures = (gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
 		.flat()
 }
 
-export const translateQemmetString = ({
-	qubit_count,
-	bit_count,
-	gate_info,
-}: QemmetParserOutput) => {
+const applyOptions = (
+	options: SvgOptionParam = {
+		style: DEFAULT_OPTIONS,
+	}
+) => {
+	const { style } = options
+
+	Object.assign(RENDER_STYLE, style)
+}
+
+export const translateQemmetString = (
+	{ qubit_count, bit_count, gate_info }: QemmetParserOutput,
+	options: SvgOptionParam = {
+		style: DEFAULT_OPTIONS,
+	}
+) => {
+	applyOptions(options)
+
 	const normalized_gate_info = separateMeasures(gate_info)
 	const gates = normalized_gate_info
 		.map(({ gate_name, control_count, gate_registers, gate_params }, column) => {
@@ -189,23 +243,26 @@ export const translateQemmetString = ({
 			const controls = control_qb.length ? generateControls(control_qb, column) : ''
 			const gates =
 				gate_name === 'x' && control_count
-					? `<use href="#x_gate" x="${(column + 1) * HORZ_BOX + KET_MARGIN}" y="${
-							VERT_BOX * gate_qb[0]
-					  }" width="32" height="32"></use>`
+					? `<use href="#x_gate" x="${
+							(column + 1) * RENDER_STYLE.HORZ_BOX + RENDER_STYLE.KET_MARGIN
+					  }" y="${RENDER_STYLE.VERT_BOX * gate_qb[0]}" width="32" height="32"></use>`
 					: generateGateCol(gate_name, gate_qb, gate_params, column)
 
 			return lines + controls + gates
 		})
 		.join('\n  ')
 
-	const svg_width = (normalized_gate_info.length + 1) * HORZ_BOX + KET_MARGIN + LINE_TRAIL_RIGHT
-	const svg_height = (qubit_count + bit_count) * VERT_BOX
+	const svg_width =
+		(normalized_gate_info.length + 1) * RENDER_STYLE.HORZ_BOX +
+		RENDER_STYLE.KET_MARGIN +
+		RENDER_STYLE.LINE_TRAIL_RIGHT
+	const svg_height = (qubit_count + bit_count) * RENDER_STYLE.VERT_BOX
 
-	return `<svg width="${svg_width + SVG_MARGIN}" height="${svg_height + SVG_MARGIN}" viewBox="${
-		-SVG_MARGIN / 2
-	} ${-SVG_MARGIN / 2} ${svg_width + SVG_MARGIN} ${
-		svg_height + SVG_MARGIN
-	}" xmlns="http://www.w3.org/2000/svg">
+	return `<svg width="${svg_width + RENDER_STYLE.SVG_MARGIN}" height="${
+		svg_height + RENDER_STYLE.SVG_MARGIN
+	}" viewBox="${-RENDER_STYLE.SVG_MARGIN / 2} ${-RENDER_STYLE.SVG_MARGIN / 2} ${
+		svg_width + RENDER_STYLE.SVG_MARGIN
+	} ${svg_height + RENDER_STYLE.SVG_MARGIN}" xmlns="http://www.w3.org/2000/svg">
   <style>
     @import url("https://cdn.jsdelivr.net/gh/rootEnginear/Qemmet/fonts/fonts.css");
 
