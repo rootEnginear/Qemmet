@@ -16,9 +16,7 @@ export const translateQemmetString = ({ qubit_count, bit_count, gate_info, }) =>
         const gate_name = getQASMGateName(original_gate_name);
         // special measure instruction
         if (gate_name === 'm')
-            return `${gate_registers
-                .map((register) => `cr[${register}] = measure qr[${register}]`)
-                .join(';\n')};\n`;
+            return `cr[${gate_params}] = measure qr[${gate_registers[0]}]\n`;
         // special barrier instruction
         if (gate_name === 'b')
             return `barrier ${gate_registers.map((register) => `qr[${register}]`).join(', ')};\n`;

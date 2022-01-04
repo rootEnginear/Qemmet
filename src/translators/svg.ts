@@ -97,7 +97,7 @@ const generateBits = (bit_count: number, qubit_count: number, depth: number): st
 		.join('')
 }
 
-const generateMeasure = (qubit: number, qubit_count: number, column: number) => {
+const generateMeasure = (qubit: number, bit: number, qubit_count: number, column: number) => {
 	const gate_x = (column + 1) * RENDER_STYLE.HORZ_BOX + RENDER_STYLE.KET_MARGIN
 	const gate_y = qubit * RENDER_STYLE.VERT_BOX
 
@@ -107,7 +107,7 @@ const generateMeasure = (qubit: number, qubit_count: number, column: number) => 
 
 	const line_y_top = gate_y + RENDER_STYLE.HALF_GATE
 	const line_y_bottom =
-		(qubit + qubit_count) * RENDER_STYLE.VERT_BOX +
+		(qubit_count + bit) * RENDER_STYLE.VERT_BOX +
 		RENDER_STYLE.HALF_GATE -
 		RENDER_STYLE.HALF_LINE_SPACE -
 		8 // -8 -> arrow height
@@ -204,21 +204,6 @@ const splitControlledQubits = (qubits: number[], isSwapGate = false): [number[],
 	return [ctrls, gate_qb]
 }
 
-const separateMeasures = (gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
-	return gate_info
-		.map(({ control_count, gate_name, gate_params, gate_registers }) =>
-			gate_name === 'm'
-				? gate_registers.map((reg) => ({
-						control_count,
-						gate_name,
-						gate_params,
-						gate_registers: [reg],
-				  }))
-				: { control_count, gate_name, gate_params, gate_registers }
-		)
-		.flat()
-}
-
 const applyOptions = (
 	options: SvgOptionParam = {
 		style: DEFAULT_OPTIONS,
@@ -237,10 +222,10 @@ export const translateQemmetString = (
 ) => {
 	applyOptions(options)
 
-	const normalized_gate_info = separateMeasures(gate_info)
-	const gates = normalized_gate_info
+	const gates = gate_info
 		.map(({ gate_name, control_count, gate_registers, gate_params }, column) => {
-			if (gate_name === 'm') return generateMeasure(gate_registers[0], qubit_count, column)
+			if (gate_name === 'm')
+				return generateMeasure(gate_registers[0], +gate_params, qubit_count, column)
 			if (gate_name === 'b') return generateVerticalLine(gate_registers, column, true)
 
 			const [control_qb, gate_qb] = control_count
@@ -261,7 +246,7 @@ export const translateQemmetString = (
 		.join('\n  ')
 
 	const svg_width =
-		(normalized_gate_info.length + 1) * RENDER_STYLE.HORZ_BOX +
+		(gate_info.length + 1) * RENDER_STYLE.HORZ_BOX +
 		RENDER_STYLE.KET_MARGIN +
 		RENDER_STYLE.LINE_TRAIL_RIGHT -
 		RENDER_STYLE.X_MARGIN
@@ -295,8 +280,8 @@ export const translateQemmetString = (
     }
   </style>
 
-  ${generateQubits(qubit_count, normalized_gate_info.length)}
-  ${generateBits(bit_count, qubit_count, normalized_gate_info.length)}
+  ${generateQubits(qubit_count, gate_info.length)}
+  ${generateBits(bit_count, qubit_count, gate_info.length)}
   ${gates}
 
   <symbol id="gate" width="32" height="32" viewBox="0 0 32 32">

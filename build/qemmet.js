@@ -52,11 +52,13 @@ export const generateRange = (start, end) => {
 };
 export const expandRangeSyntax = (range_string) => {
     const expanded_text = range_string.replace(/(\d+)-(\d+)/g, (_, start, end) => generateRange(start, end));
-    return expanded_text !== range_string
-        ? expandRangeSyntax(expanded_text)
-        : expanded_text.replace(/-/g, '');
+    return expanded_text !== range_string ? expandRangeSyntax(expanded_text) : expanded_text;
 };
-const preprocessString = (string) => pipe(expandRepeatSyntax, expandRangeSyntax)(string);
+const expandMeasureArrowSyntax = (qemmet_string) => qemmet_string
+    .replace(/m([\d\s]*?)->(\d+)/g, (_, qubits, bit) => `m[${bit}]${qubits}`)
+    .replace(/-/g, '')
+    .replace(/>/g, '');
+const preprocessString = (string) => pipe(expandRepeatSyntax, expandRangeSyntax, expandMeasureArrowSyntax)(string);
 export const transformOptionString = (option_string) => {
     const formatted_option_string = option_string.padEnd(2, ' ').slice(0, 2);
     const option_array = [...formatted_option_string].map((c) => ['0', '1'].includes(c) ? !!+c : null);
@@ -113,6 +115,7 @@ export const ensureParameterizedGate = (gate_info) => {
         const params_arr = gate_params.split(',');
         let formatted_params = [];
         switch (gate_name) {
+            case 'm':
             case 'p':
             case 'rx':
             case 'ry':
@@ -196,8 +199,26 @@ const parseGateParams = (gate_params) => {
     }
     return '';
 };
+const formatMeasureParam = (measure_params, register) => {
+    if (!measure_params)
+        return `${register}`;
+    const shifted_params = +measure_params.split(',')[0] - 1;
+    return `${shifted_params < 1 ? 0 : shifted_params}`;
+};
+const formatMeasure = (gate_info) => {
+    return gate_info
+        .map(({ control_count, gate_name, gate_params, gate_registers }) => gate_name === 'm'
+        ? gate_registers.map((reg) => ({
+            control_count,
+            gate_name,
+            gate_params: formatMeasureParam(gate_params, reg),
+            gate_registers: [reg],
+        }))
+        : { control_count, gate_name, gate_params, gate_registers })
+        .flat();
+};
 const parseGateToken = (gate_token, qubit_count, options) => {
-    return gate_token.map(([, control_string, gate_name, gate_params, gate_register_string]) => {
+    const structured_data = gate_token.map(([, control_string, gate_name, gate_params, gate_register_string]) => {
         const control_count = control_string.length + +(gate_name === 'sw');
         return {
             control_count,
@@ -206,17 +227,25 @@ const parseGateToken = (gate_token, qubit_count, options) => {
             gate_registers: parseRegister(gate_register_string, qubit_count, control_count, options),
         };
     });
+    return formatMeasure(structured_data);
 };
 const getMaxRegister = (register_count, gate_info) => gate_info.reduce((max, { gate_registers }) => {
     return Math.max(max, ...gate_registers);
 }, register_count - 1) + 1;
-const getMaxBitRegister = (bit_count, gate_info) => getMaxRegister(bit_count, gate_info.filter(({ gate_name }) => gate_name === 'm'));
+const getMaxBitRegister = (bit_count, gate_info) => gate_info
+    .filter(({ gate_name }) => gate_name === 'm')
+    .reduce((max, { gate_params }) => {
+    return Math.max(max, +gate_params);
+}, bit_count - 1) + 1;
 export const normalizeAdjacentGate = (raw_gate_info) => {
     let gate_info = JSON.parse(JSON.stringify(raw_gate_info));
     let gate_info_len = gate_info.length;
     for (let i = 0; i + 1 < gate_info_len; i++) {
         const curr_gate = gate_info[i];
         const next_gate = gate_info[i + 1];
+        // measure don't collapse
+        if (curr_gate.gate_name === 'm' || next_gate.gate_name === 'm')
+            continue;
         if (curr_gate.control_count !== next_gate.control_count || curr_gate.control_count !== 0)
             continue;
         if (curr_gate.gate_name === next_gate.gate_name &&
