@@ -308,9 +308,11 @@ const getMaxRegister = (register_count: number, gate_info: QemmetGateInfo[]) =>
 	}, register_count - 1) + 1
 
 const getMaxBitRegister = (bit_count: number, gate_info: QemmetGateInfo[]) =>
-	gate_info.reduce((max, { gate_params }) => {
-		return Math.max(max, +gate_params)
-	}, bit_count - 1) + 1
+	gate_info
+		.filter(({ gate_name }) => gate_name === 'm')
+		.reduce((max, { gate_params }) => {
+			return Math.max(max, +gate_params)
+		}, bit_count - 1) + 1
 
 export const normalizeAdjacentGate = (raw_gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
 	let gate_info = JSON.parse(JSON.stringify(raw_gate_info)) as QemmetGateInfo[]

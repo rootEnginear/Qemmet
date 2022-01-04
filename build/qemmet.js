@@ -232,7 +232,9 @@ const parseGateToken = (gate_token, qubit_count, options) => {
 const getMaxRegister = (register_count, gate_info) => gate_info.reduce((max, { gate_registers }) => {
     return Math.max(max, ...gate_registers);
 }, register_count - 1) + 1;
-const getMaxBitRegister = (bit_count, gate_info) => gate_info.reduce((max, { gate_params }) => {
+const getMaxBitRegister = (bit_count, gate_info) => gate_info
+    .filter(({ gate_name }) => gate_name === 'm')
+    .reduce((max, { gate_params }) => {
     return Math.max(max, +gate_params);
 }, bit_count - 1) + 1;
 export const normalizeAdjacentGate = (raw_gate_info) => {
