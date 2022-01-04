@@ -86,10 +86,10 @@ export const expandRangeSyntax = (range_string: string): string => {
 const preprocessString = (string: string): string =>
 	pipe(expandRepeatSyntax, expandRangeSyntax)(string)
 
-const transformOptionString = (option_string: string): QemmetStringOptions => {
+export const transformOptionString = (option_string: string): QemmetStringOptions => {
 	const formatted_option_string = option_string.padEnd(2, ' ').slice(0, 2)
 	const option_array = [...formatted_option_string].map((c) =>
-		['0', '1'].includes(c) ? !!c : null
+		['0', '1'].includes(c) ? !!+c : null
 	)
 
 	return {

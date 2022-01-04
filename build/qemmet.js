@@ -57,9 +57,9 @@ export const expandRangeSyntax = (range_string) => {
         : expanded_text.replace(/-/g, '');
 };
 const preprocessString = (string) => pipe(expandRepeatSyntax, expandRangeSyntax)(string);
-const transformOptionString = (option_string) => {
+export const transformOptionString = (option_string) => {
     const formatted_option_string = option_string.padEnd(2, ' ').slice(0, 2);
-    const option_array = [...formatted_option_string].map((c) => ['0', '1'].includes(c) ? !!c : null);
+    const option_array = [...formatted_option_string].map((c) => ['0', '1'].includes(c) ? !!+c : null);
     return {
         start_from_one: option_array[0] ?? true,
         normalize_adjacent_gates: option_array[1] ?? true,
