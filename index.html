@@ -14,13 +14,6 @@
   <link rel="stylesheet"
     href="https://cdn.jsdelivr.net/gh/rootEnginear/Qemmet/fonts/fonts.css">
 
-  <style>
-    .svg-container>svg {
-      background: white;
-      min-width: 100%;
-    }
-  </style>
-
   <title>Qemmet</title>
   <meta name="description" content="A way to generate a Qiskit 0.3X or OpenQASM 3.0 code with a shorthand
   notation.">
@@ -52,7 +45,7 @@
         <h2>Example circuits:</h2>
         <p>Click at the code to see it in action!</p>
         <ul>
-          <li v-for="({code, name}) in examples" :key="code">
+          <li v-for="({code, name}) in EXAMPLES" :key="code">
             <a style="cursor:pointer" @click="setQemmet(code)">
               <code>{{code}}</code>
             </a>: {{name}}.
@@ -65,12 +58,60 @@
       <label for="raw_string">Input Qemmet string:</label>
       <input id="raw_string" type="text" v-model.trim="raw_string"
         style="width:100%;box-sizing:border-box">
-      <label for="svg-preview">Circuit Preview (download <a
+      <label for="svg-preview">Circuit Diagram (download <a
           @click="downloadSvg" style="cursor:pointer">SVG</a>/<a
           @click="downloadPng" style="cursor:pointer">PNG</a>):</label>
       <div v-html="svg" class="svg-container" id="svg-preview"
         style="overflow:scroll;text-align:center;max-height:40vh">
       </div>
+      <details>
+        <summary>Diagram Options</summary>
+        <div style="display:flex">
+          <div style="flex:1 1 0;margin-right:0.5rem">
+            <label for="svg_margin">SVG margin</label>
+            <input type="number" id="svg_margin" v-model.number="svg_margin"
+              style="width:100%;box-sizing:border-box">
+            <label for="x_margin">X margin</label>
+            <input type="number" id="x_margin" v-model.number="x_margin"
+              style="width:100%;box-sizing:border-box">
+            <label for="y_margin">Y margin</label>
+            <input type="number" id="y_margin" v-model.number="y_margin"
+              style="width:100%;box-sizing:border-box">
+            <label for="ket_margin">Ket margin</label>
+            <input type="number" id="ket_margin" v-model.number="ket_margin"
+              style="width:100%;box-sizing:border-box">
+            <label>Background color (<a
+                @click="makeBackgroundTransparent" style="cursor:pointer">make
+                transparent</a>)</label>
+            <input type="color" id="background_color" v-model="background_color_input"
+              style="width:100%;box-sizing:border-box;padding:4px">
+            <label for="line_color">Line color</label>
+            <input type="color" id="line_color" v-model="line_color_input"
+              style="width:100%;box-sizing:border-box;padding:4px">
+          </div>
+          <div style="flex:1 1 0;margin-left:0.5rem">
+            <label for="line_trail_left">Left trail length</label>
+            <input type="number" id="line_trail_left" v-model.number="line_trail_left"
+              style="width:100%;box-sizing:border-box">
+            <label for="line_trail_right">Right trail length</label>
+            <input type="number" id="line_trail_right" v-model.number="line_trail_right"
+              style="width:100%;box-sizing:border-box">
+            <label for="line_space">Double line spacing</label>
+            <input type="number" id="line_space" v-model.number="line_space"
+              style="width:100%;box-sizing:border-box">
+            <label for="param_y_shift">Parameter Y-axis shift</label>
+            <input type="number" id="param_y_shift" v-model.number="param_y_shift"
+              style="width:100%;box-sizing:border-box">
+            <label for="gate_background_color">Gate background color</label>
+            <input type="color" id="gate_background_color"
+              v-model="gate_background_color_input"
+              style="width:100%;box-sizing:border-box;padding:4px">
+            <label for="font_color">Font color</label>
+            <input type="color" id="font_color" v-model="font_color_input"
+              style="width:100%;box-sizing:border-box;padding:4px">
+          </div>
+        </div>
+      </details>
       <pre><code style="overflow:scroll;height:40vh">{{transpiled_code}}</code></pre>
       <div style="display:flex;align-items:flex-end">
         <div style="flex:1 1 0">
@@ -87,11 +128,12 @@
             to clipboard</button>
         </div>
       </div>
+      </div>
     </section>
-    <br>
     <footer>
       <span style="display:block">
-        Copyright &copy; {{new Date().getFullYear()}} <a
+        Copyright &copy; <span
+          onload="this.innerHTML = new Date().getFullYear()">2021</span> <a
           href="https://github.com/rootEnginear" target="_blank"
           rel="noopener nofollow noreferrer">rootEnginear</a> All right reserved.
       </span>
@@ -100,11 +142,9 @@
           rel="noopener nofollow noreferrer">GitHub</a>
       </small>
     </footer>
-  </main>
 
-  <!-- <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script> -->
-  <script src="https://cdn.jsdelivr.net/npm/vue@2" defer></script>
-  <script src="vueapp.js" type="module" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2" defer></script>
+    <script src="vueapp.js" type="module" defer></script>
 </body>
 
 </html>

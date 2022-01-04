@@ -32,14 +32,52 @@ const EXAMPLES = [
 	},
 ]
 
+const DEFAULT_OPTIONS = {
+	X_MARGIN: 8,
+	Y_MARGIN: 16,
+	KET_MARGIN: 8,
+	LINE_TRAIL_LEFT: 12,
+	LINE_TRAIL_RIGHT: 12,
+	LINE_SPACE: 3,
+	PARAM_Y_SHIFT: -1,
+	SVG_MARGIN: 8,
+	BACKGROUND_COLOR: '#ffffff',
+	LINE_COLOR: '#222222',
+	FONT_COLOR: '#222222',
+	GATE_BACKGROUND_COLOR: '#ffffff',
+}
+
+let background_color_timeout
+let line_color_timeout
+let font_color_timeout
+let gate_background_color_timeout
+
 new Vue({
 	el: '#app',
 	data: {
-		examples: EXAMPLES,
+		EXAMPLES,
 		raw_string: "4;3;x4 h 'ccx134 h1-3 x1-3 ccz3-1 x1-3 h1-3'*2 m1-3",
 		// raw_string: '4;;h4p814p424p234h3p413p223h2p2h1sw14sw23;p8=cp[pi/8],p4=cp[pi/4],p2=cp[pi/2]',
 		target_lang: 'qiskit03',
 		// target_lang: 'openqasm3',
+		x_margin: DEFAULT_OPTIONS.X_MARGIN,
+		y_margin: DEFAULT_OPTIONS.Y_MARGIN,
+		ket_margin: DEFAULT_OPTIONS.KET_MARGIN,
+		line_trail_left: DEFAULT_OPTIONS.LINE_TRAIL_LEFT,
+		line_trail_right: DEFAULT_OPTIONS.LINE_TRAIL_RIGHT,
+		line_space: DEFAULT_OPTIONS.LINE_SPACE,
+		param_y_shift: DEFAULT_OPTIONS.PARAM_Y_SHIFT,
+		svg_margin: DEFAULT_OPTIONS.SVG_MARGIN,
+
+		background_color_input: DEFAULT_OPTIONS.BACKGROUND_COLOR,
+		line_color_input: DEFAULT_OPTIONS.LINE_COLOR,
+		font_color_input: DEFAULT_OPTIONS.FONT_COLOR,
+		gate_background_color_input: DEFAULT_OPTIONS.GATE_BACKGROUND_COLOR,
+
+		background_color: DEFAULT_OPTIONS.BACKGROUND_COLOR,
+		line_color: DEFAULT_OPTIONS.LINE_COLOR,
+		font_color: DEFAULT_OPTIONS.FONT_COLOR,
+		gate_background_color: DEFAULT_OPTIONS.GATE_BACKGROUND_COLOR,
 	},
 	computed: {
 		qemmet_info: function () {
@@ -64,8 +102,24 @@ new Vue({
 			}
 		},
 		svg: function () {
+			const options = {
+				style: {
+					X_MARGIN: this.x_margin,
+					Y_MARGIN: this.y_margin,
+					KET_MARGIN: this.ket_margin,
+					LINE_TRAIL_LEFT: this.line_trail_left,
+					LINE_TRAIL_RIGHT: this.line_trail_right,
+					LINE_SPACE: this.line_space,
+					PARAM_Y_SHIFT: this.param_y_shift,
+					SVG_MARGIN: this.svg_margin,
+					BACKGROUND_COLOR: this.background_color,
+					LINE_COLOR: this.line_color,
+					FONT_COLOR: this.font_color,
+					GATE_BACKGROUND_COLOR: this.gate_background_color,
+				},
+			}
 			const [qemmet_info, error] = this.qemmet_info
-			return error ? `<svg></svg>` : getSVG(qemmet_info)
+			return error ? `<svg></svg>` : getSVG(qemmet_info, options)
 		},
 		svg_object_url: function () {
 			const svg = this.svg
@@ -122,6 +176,35 @@ new Vue({
 			}
 
 			img.src = url
+		},
+		makeBackgroundTransparent: function () {
+			this.background_color = 'transparent'
+		},
+	},
+	watch: {
+		background_color_input: function () {
+			clearTimeout(background_color_timeout)
+			background_color_timeout = setTimeout(() => {
+				this.background_color = this.background_color_input
+			}, 100)
+		},
+		line_color_input: function () {
+			clearTimeout(line_color_timeout)
+			line_color_timeout = setTimeout(() => {
+				this.line_color = this.line_color_input
+			}, 100)
+		},
+		font_color_input: function () {
+			clearTimeout(font_color_timeout)
+			font_color_timeout = setTimeout(() => {
+				this.font_color = this.font_color_input
+			}, 100)
+		},
+		gate_background_color_input: function () {
+			clearTimeout(gate_background_color_timeout)
+			gate_background_color_timeout = setTimeout(() => {
+				this.gate_background_color = this.gate_background_color_input
+			}, 100)
 		},
 	},
 })
