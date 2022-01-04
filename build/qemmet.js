@@ -52,11 +52,13 @@ export const generateRange = (start, end) => {
 };
 export const expandRangeSyntax = (range_string) => {
     const expanded_text = range_string.replace(/(\d+)-(\d+)/g, (_, start, end) => generateRange(start, end));
-    return expanded_text !== range_string
-        ? expandRangeSyntax(expanded_text)
-        : expanded_text.replace(/-/g, '');
+    return expanded_text !== range_string ? expandRangeSyntax(expanded_text) : expanded_text;
 };
-const preprocessString = (string) => pipe(expandRepeatSyntax, expandRangeSyntax)(string);
+const expandMeasureArrowSyntax = (qemmet_string) => qemmet_string
+    .replace(/m([\d\s]*?)->(\d+)/g, (_, qubits, bit) => `m[${bit}]${qubits}`)
+    .replace(/-/g, '')
+    .replace(/>/g, '');
+const preprocessString = (string) => pipe(expandRepeatSyntax, expandRangeSyntax, expandMeasureArrowSyntax)(string);
 export const transformOptionString = (option_string) => {
     const formatted_option_string = option_string.padEnd(2, ' ').slice(0, 2);
     const option_array = [...formatted_option_string].map((c) => ['0', '1'].includes(c) ? !!+c : null);

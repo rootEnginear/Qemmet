@@ -78,13 +78,17 @@ export const expandRangeSyntax = (range_string: string): string => {
 	const expanded_text = range_string.replace(/(\d+)-(\d+)/g, (_, start, end) =>
 		generateRange(start, end)
 	)
-	return expanded_text !== range_string
-		? expandRangeSyntax(expanded_text)
-		: expanded_text.replace(/-/g, '')
+	return expanded_text !== range_string ? expandRangeSyntax(expanded_text) : expanded_text
 }
 
+const expandMeasureArrowSyntax = (qemmet_string: string): string =>
+	qemmet_string
+		.replace(/m([\d\s]*?)->(\d+)/g, (_, qubits, bit) => `m[${bit}]${qubits}`)
+		.replace(/-/g, '')
+		.replace(/>/g, '')
+
 const preprocessString = (string: string): string =>
-	pipe(expandRepeatSyntax, expandRangeSyntax)(string)
+	pipe(expandRepeatSyntax, expandRangeSyntax, expandMeasureArrowSyntax)(string)
 
 export const transformOptionString = (option_string: string): QemmetStringOptions => {
 	const formatted_option_string = option_string.padEnd(2, ' ').slice(0, 2)
