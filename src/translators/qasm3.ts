@@ -18,10 +18,14 @@ export const translateQemmetString = ({
 			// translate gate name
 			const gate_name = getQASMGateName(original_gate_name)
 
-			// special measure instruction
+			// measure instruction
 			if (gate_name === 'm') return `cr[${gate_params}] = measure qr[${gate_registers[0]}]\n`
 
-			// special barrier instruction
+			// reset instruction
+			if (gate_name === 'r')
+				return `${gate_registers.map((register) => `reset qr[${register}]`).join('\n')}\n`
+
+			// barrier instruction
 			if (gate_name === 'b')
 				return `barrier ${gate_registers.map((register) => `qr[${register}]`).join(', ')};\n`
 
