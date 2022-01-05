@@ -11,5 +11,5 @@ const getGateString = (gate_info) => {
 };
 export const translateQemmetString = ({ qubit_count, bit_count, gate_info, }) => {
     const gate_string = getGateString(gate_info);
-    return `${qubit_count};${bit_count};${gate_string}`;
+    return `${qubit_count};${bit_count};${gate_string};;0`;
 };
