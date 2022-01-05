@@ -52,14 +52,18 @@
     }
 
     .svg-container {
-      overflow-x: scroll;
-      overflow-y: hidden;
+      overflow: scroll hidden;
       text-align: center;
+
+      border-radius: 6px;
+      background: var(--background-alt);
+
       max-height: 40vh
     }
 
     .svg-container>svg {
-      max-height: 40vh;
+      max-height: inherit;
+      width: auto;
     }
   </style>
 
