@@ -57,6 +57,7 @@ new Vue({
 	data: {
 		EXAMPLES,
 		raw_string: "4;3;x4 h 'ccx134 h1-3 x1-3 ccz3-1 x1-3 h1-3'*2 m1-3",
+		// raw_string: ';;x2h2EEFFEEFFEEFF;E=rm,F=rhcxhm',
 		// raw_string: '4;;h4p814p424p234h3p413p223h2p2h1sw14sw23;p8=cp[pi/8],p4=cp[pi/4],p2=cp[pi/2]',
 		target_lang: 'qiskit03',
 		// target_lang: 'openqasm3',
@@ -82,7 +83,7 @@ new Vue({
 	computed: {
 		qemmet_info: function () {
 			try {
-				return [parseQemmetString(this.raw_string || ';;'), null]
+				return [parseQemmetString(this.raw_string), null]
 			} catch (e) {
 				return [null, `Hmm there are some errors: ${e.message}`]
 			}
@@ -132,11 +133,14 @@ new Vue({
 	},
 	methods: {
 		setQemmet: function (str) {
-			// this.raw_string = ''
-			// ;[...str].forEach((c, i) => {
-			// 	setTimeout(() => (this.raw_string += c), 50 * i)
-			// })
 			this.raw_string = str
+		},
+		demonstration: function () {
+			const original_raw_string = this.raw_string
+			this.raw_string = ''
+			;[...original_raw_string].forEach((c, i) => {
+				setTimeout(() => (this.raw_string += c), 500 * i)
+			})
 		},
 		copyTranspiledCode: function () {
 			navigator.clipboard.writeText(this.transpiled_code).then(

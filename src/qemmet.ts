@@ -5,7 +5,7 @@ const _pipe = (a: (fn_arg: any) => any, b: (fn_arg: any) => any) => (arg: any) =
 export const pipe = (...ops: ((fn_arg: any) => any)[]) => ops.reduce(_pipe)
 
 // Parser
-const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstmi]', 'g')
+const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[xyzhstpibmr]', 'g')
 
 const substituteDefinition = (raw_string: string, definition_string: string) => {
 	const formatted_definition_string = definition_string.trim().replace(/\s+/g, ' ')
@@ -105,7 +105,9 @@ export const transformOptionString = (option_string: string): QemmetStringOption
 const parseMetadata = (qemmet_string: string) => {
 	const preprocessed_qemmet_string = preprocessString(qemmet_string.trim())
 
-	const [a, b, c, d = '', option_string = ''] = preprocessed_qemmet_string.toLowerCase().split(';')
+	const [a = '', b = '', c = '', d = '', option_string = ''] = preprocessed_qemmet_string
+		.toLowerCase()
+		.split(';')
 
 	const [qr_string, cr_string, raw_gate_string, definition_string] = [a, b, c, d].map((s) =>
 		s?.trim()
@@ -117,9 +119,6 @@ const parseMetadata = (qemmet_string: string) => {
 	if (Number.isNaN(qubit_count)) throw new Error('Quantum register is not a number.')
 
 	if (Number.isNaN(bit_count)) throw new Error('Classical register is not a number.')
-
-	if (!raw_gate_string)
-		throw new Error('`gates_string` part does not found. Required at least 1 gate.')
 
 	const gate_string = substituteDefinition(raw_gate_string, definition_string)
 
@@ -195,6 +194,7 @@ export const ensureParameterizedGate = (gate_info: QemmetGateInfo[]): QemmetGate
 export const ensureInstruction = (gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
 	return gate_info.map(({ gate_name, control_count, ...rest }) => {
 		switch (gate_name) {
+			case 'r':
 			case 'b':
 			case 'm':
 				return {
