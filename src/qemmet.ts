@@ -74,21 +74,26 @@ export const generateRange = (start: string, end: string) => {
 	return range_string
 }
 
-export const expandRangeSyntax = (range_string: string): string => {
+const _expandRangeSyntax = (range_string: string): string => {
 	const expanded_text = range_string.replace(/(\d+)-(\d+)/g, (_, start, end) =>
 		generateRange(start, end)
 	)
-	return expanded_text !== range_string ? expandRangeSyntax(expanded_text) : expanded_text
+	return expanded_text !== range_string
+		? expandRangeSyntax(expanded_text)
+		: expanded_text.replace(/-/g, '')
 }
 
-const expandMeasureArrowSyntax = (qemmet_string: string): string =>
-	qemmet_string
-		.replace(/m([\d\s]*?)->(\d+)/g, (_, qubits, bit) => `m[${bit}]${qubits}`)
-		.replace(/-/g, '')
-		.replace(/>/g, '')
+export const expandRangeSyntax = (range_string: string): string => {
+	// preserve `->`
+	const escaped_arrow = range_string.replace(/->/g, '\uE000')
+	// execute syntax
+	const expanded_range_string = _expandRangeSyntax(escaped_arrow)
+	// rollback `->`
+	return expanded_range_string.replace(/\uE000/g, '->')
+}
 
 const preprocessString = (string: string): string =>
-	pipe(expandRepeatSyntax, expandRangeSyntax, expandMeasureArrowSyntax)(string)
+	pipe(expandRepeatSyntax, expandRangeSyntax)(string)
 
 export const transformOptionString = (option_string: string): QemmetStringOptions => {
 	const formatted_option_string = option_string.padEnd(2, ' ').slice(0, 2)
@@ -130,7 +135,7 @@ const parseMetadata = (qemmet_string: string) => {
 const tokenizeGateString = (gate_string: string) => [
 	...gate_string.matchAll(
 		new RegExp(
-			`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[((?:[\\d\\s,+\\-*/]|pi|euler)*?)\\])*([\\d\\s]*)`,
+			`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[((?:[\\d\\s,+\\-*/]|pi|euler)*?)\\])?([\\d\\s]*)(?:->(\\d+))?`,
 			'g'
 		)
 	),
@@ -165,7 +170,6 @@ export const ensureParameterizedGate = (gate_info: QemmetGateInfo[]): QemmetGate
 		let formatted_params: string[] = []
 
 		switch (gate_name) {
-			case 'm':
 			case 'p':
 			case 'rx':
 			case 'ry':
@@ -261,23 +265,31 @@ const parseGateParams = (gate_params: string | undefined) => {
 	return ''
 }
 
-const formatMeasureParam = (measure_params: string, register: number) => {
-	if (!measure_params) return `${register}`
-	const shifted_params = +measure_params.split(',')[0] - 1
-	return `${shifted_params < 1 ? 0 : shifted_params}`
+const formatTargetBit = (
+	target_bit: number | null,
+	register: number,
+	options: QemmetStringOptions
+) => {
+	if (target_bit == null) return register
+	const shifted_params = options.start_from_one ? target_bit - 1 : target_bit
+	return shifted_params
 }
 
-const formatMeasure = (gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
+const formatMeasure = (
+	gate_info: QemmetGateInfo[],
+	options: QemmetStringOptions
+): QemmetGateInfo[] => {
 	return gate_info
-		.map(({ control_count, gate_name, gate_params, gate_registers }) =>
+		.map(({ control_count, gate_name, gate_params, gate_registers, target_bit }) =>
 			gate_name === 'm'
 				? gate_registers.map((reg) => ({
 						control_count,
 						gate_name,
-						gate_params: formatMeasureParam(gate_params, reg),
+						gate_params,
 						gate_registers: [reg],
+						target_bit: formatTargetBit(target_bit, reg, options),
 				  }))
-				: { control_count, gate_name, gate_params, gate_registers }
+				: { control_count, gate_name, gate_params, gate_registers, target_bit }
 		)
 		.flat()
 }
@@ -288,18 +300,24 @@ const parseGateToken = (
 	options: QemmetStringOptions
 ): QemmetGateInfo[] => {
 	const structured_data = gate_token.map(
-		([, control_string, gate_name, gate_params, gate_register_string]) => {
+		([, control_string, gate_name, _gate_params, _gate_registers, _target_bit]) => {
 			const control_count = control_string.length + +(gate_name === 'sw')
+			const gate_params = parseGateParams(_gate_params)
+			const gate_registers = parseRegister(_gate_registers, qubit_count, control_count, options)
+			const target_bit_num = +_target_bit
+			const target_bit = gate_name === 'm' ? (isNaN(target_bit_num) ? null : target_bit_num) : null
+
 			return {
 				control_count,
 				gate_name,
-				gate_params: parseGateParams(gate_params),
-				gate_registers: parseRegister(gate_register_string, qubit_count, control_count, options),
+				gate_params,
+				gate_registers,
+				target_bit,
 			}
 		}
 	)
 
-	return formatMeasure(structured_data)
+	return formatMeasure(structured_data, options)
 }
 
 const getMaxRegister = (register_count: number, gate_info: QemmetGateInfo[]) =>
@@ -310,8 +328,8 @@ const getMaxRegister = (register_count: number, gate_info: QemmetGateInfo[]) =>
 const getMaxBitRegister = (bit_count: number, gate_info: QemmetGateInfo[]) =>
 	gate_info
 		.filter(({ gate_name }) => gate_name === 'm')
-		.reduce((max, { gate_params }) => {
-			return Math.max(max, +gate_params)
+		.reduce((max, { target_bit }) => {
+			return Math.max(max, target_bit ?? -Infinity)
 		}, bit_count - 1) + 1
 
 export const normalizeAdjacentGate = (raw_gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {

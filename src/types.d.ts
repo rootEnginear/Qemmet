@@ -8,6 +8,7 @@ export interface QemmetGateInfo {
 	gate_name: string
 	gate_params: string
 	gate_registers: number[]
+	target_bit: number | null
 }
 
 export interface QemmetParserOutput {
