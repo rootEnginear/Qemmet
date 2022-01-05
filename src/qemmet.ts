@@ -5,7 +5,7 @@ const _pipe = (a: (fn_arg: any) => any, b: (fn_arg: any) => any) => (arg: any) =
 export const pipe = (...ops: ((fn_arg: any) => any)[]) => ops.reduce(_pipe)
 
 // Parser
-const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[bxyzhpstmi]', 'g')
+const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[xyzhstpibmr]', 'g')
 
 const substituteDefinition = (raw_string: string, definition_string: string) => {
 	const formatted_definition_string = definition_string.trim().replace(/\s+/g, ' ')
@@ -78,18 +78,22 @@ export const expandRangeSyntax = (range_string: string): string => {
 	const expanded_text = range_string.replace(/(\d+)-(\d+)/g, (_, start, end) =>
 		generateRange(start, end)
 	)
-	return expanded_text !== range_string
-		? expandRangeSyntax(expanded_text)
-		: expanded_text.replace(/-/g, '')
+	return expanded_text !== range_string ? expandRangeSyntax(expanded_text) : expanded_text
 }
 
-const preprocessString = (string: string): string =>
-	pipe(expandRepeatSyntax, expandRangeSyntax)(string)
+const expandMeasureArrowSyntax = (qemmet_string: string): string =>
+	qemmet_string
+		.replace(/m([\d\s]*?)->(\d+)/g, (_, qubits, bit) => `m[${bit}]${qubits}`)
+		.replace(/-/g, '')
+		.replace(/>/g, '')
 
-const transformOptionString = (option_string: string): QemmetStringOptions => {
+const preprocessString = (string: string): string =>
+	pipe(expandRepeatSyntax, expandRangeSyntax, expandMeasureArrowSyntax)(string)
+
+export const transformOptionString = (option_string: string): QemmetStringOptions => {
 	const formatted_option_string = option_string.padEnd(2, ' ').slice(0, 2)
 	const option_array = [...formatted_option_string].map((c) =>
-		['0', '1'].includes(c) ? !!c : null
+		['0', '1'].includes(c) ? !!+c : null
 	)
 
 	return {
@@ -101,7 +105,9 @@ const transformOptionString = (option_string: string): QemmetStringOptions => {
 const parseMetadata = (qemmet_string: string) => {
 	const preprocessed_qemmet_string = preprocessString(qemmet_string.trim())
 
-	const [a, b, c, d = '', option_string = ''] = preprocessed_qemmet_string.toLowerCase().split(';')
+	const [a = '', b = '', c = '', d = '', option_string = ''] = preprocessed_qemmet_string
+		.toLowerCase()
+		.split(';')
 
 	const [qr_string, cr_string, raw_gate_string, definition_string] = [a, b, c, d].map((s) =>
 		s?.trim()
@@ -113,9 +119,6 @@ const parseMetadata = (qemmet_string: string) => {
 	if (Number.isNaN(qubit_count)) throw new Error('Quantum register is not a number.')
 
 	if (Number.isNaN(bit_count)) throw new Error('Classical register is not a number.')
-
-	if (!raw_gate_string)
-		throw new Error('`gates_string` part does not found. Required at least 1 gate.')
 
 	const gate_string = substituteDefinition(raw_gate_string, definition_string)
 
@@ -162,6 +165,7 @@ export const ensureParameterizedGate = (gate_info: QemmetGateInfo[]): QemmetGate
 		let formatted_params: string[] = []
 
 		switch (gate_name) {
+			case 'm':
 			case 'p':
 			case 'rx':
 			case 'ry':
@@ -190,6 +194,7 @@ export const ensureParameterizedGate = (gate_info: QemmetGateInfo[]): QemmetGate
 export const ensureInstruction = (gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
 	return gate_info.map(({ gate_name, control_count, ...rest }) => {
 		switch (gate_name) {
+			case 'r':
 			case 'b':
 			case 'm':
 				return {
@@ -256,20 +261,45 @@ const parseGateParams = (gate_params: string | undefined) => {
 	return ''
 }
 
+const formatMeasureParam = (measure_params: string, register: number) => {
+	if (!measure_params) return `${register}`
+	const shifted_params = +measure_params.split(',')[0] - 1
+	return `${shifted_params < 1 ? 0 : shifted_params}`
+}
+
+const formatMeasure = (gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
+	return gate_info
+		.map(({ control_count, gate_name, gate_params, gate_registers }) =>
+			gate_name === 'm'
+				? gate_registers.map((reg) => ({
+						control_count,
+						gate_name,
+						gate_params: formatMeasureParam(gate_params, reg),
+						gate_registers: [reg],
+				  }))
+				: { control_count, gate_name, gate_params, gate_registers }
+		)
+		.flat()
+}
+
 const parseGateToken = (
 	gate_token: RegExpMatchArray[],
 	qubit_count: number,
 	options: QemmetStringOptions
 ): QemmetGateInfo[] => {
-	return gate_token.map(([, control_string, gate_name, gate_params, gate_register_string]) => {
-		const control_count = control_string.length + +(gate_name === 'sw')
-		return {
-			control_count,
-			gate_name,
-			gate_params: parseGateParams(gate_params),
-			gate_registers: parseRegister(gate_register_string, qubit_count, control_count, options),
+	const structured_data = gate_token.map(
+		([, control_string, gate_name, gate_params, gate_register_string]) => {
+			const control_count = control_string.length + +(gate_name === 'sw')
+			return {
+				control_count,
+				gate_name,
+				gate_params: parseGateParams(gate_params),
+				gate_registers: parseRegister(gate_register_string, qubit_count, control_count, options),
+			}
 		}
-	})
+	)
+
+	return formatMeasure(structured_data)
 }
 
 const getMaxRegister = (register_count: number, gate_info: QemmetGateInfo[]) =>
@@ -278,10 +308,11 @@ const getMaxRegister = (register_count: number, gate_info: QemmetGateInfo[]) =>
 	}, register_count - 1) + 1
 
 const getMaxBitRegister = (bit_count: number, gate_info: QemmetGateInfo[]) =>
-	getMaxRegister(
-		bit_count,
-		gate_info.filter(({ gate_name }) => gate_name === 'm')
-	)
+	gate_info
+		.filter(({ gate_name }) => gate_name === 'm')
+		.reduce((max, { gate_params }) => {
+			return Math.max(max, +gate_params)
+		}, bit_count - 1) + 1
 
 export const normalizeAdjacentGate = (raw_gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
 	let gate_info = JSON.parse(JSON.stringify(raw_gate_info)) as QemmetGateInfo[]
@@ -290,6 +321,9 @@ export const normalizeAdjacentGate = (raw_gate_info: QemmetGateInfo[]): QemmetGa
 	for (let i = 0; i + 1 < gate_info_len; i++) {
 		const curr_gate = gate_info[i]
 		const next_gate = gate_info[i + 1]
+
+		// measure don't collapse
+		if (curr_gate.gate_name === 'm' || next_gate.gate_name === 'm') continue
 
 		if (curr_gate.control_count !== next_gate.control_count || curr_gate.control_count !== 0)
 			continue

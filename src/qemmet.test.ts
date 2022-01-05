@@ -11,6 +11,7 @@ import {
 	expandRangeSyntax,
 	ensureParameterizedGate,
 	ensureInstruction,
+	transformOptionString,
 } from './qemmet'
 
 describe('Qemmet', function () {
@@ -246,5 +247,24 @@ describe('Qemmet', function () {
 		test(generate_input('b', 1), 0)
 		test(generate_input('m', 0), 0)
 		test(generate_input('m', 1), 0)
+	})
+
+	describe('transformOptionString', function () {
+		function test(input: string, output: QemmetStringOptions) {
+			return it(`should transform "${input}" to "${output}"`, function () {
+				const expanded = transformOptionString(input)
+				deepEqual(expanded, output)
+			})
+		}
+
+		test('00', { start_from_one: false, normalize_adjacent_gates: false })
+		test('01', { start_from_one: false, normalize_adjacent_gates: true })
+		test('0 ', { start_from_one: false, normalize_adjacent_gates: true /* default */ })
+		test('10', { start_from_one: true, normalize_adjacent_gates: false })
+		test('11', { start_from_one: true, normalize_adjacent_gates: true })
+		test('1 ', { start_from_one: true, normalize_adjacent_gates: true /* default */ })
+		test(' 0', { start_from_one: true /* default */, normalize_adjacent_gates: false })
+		test(' 1', { start_from_one: true /* default */, normalize_adjacent_gates: true })
+		test('  ', { start_from_one: true /* default */, normalize_adjacent_gates: true /* default */ })
 	})
 })

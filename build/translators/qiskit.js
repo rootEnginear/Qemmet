@@ -23,9 +23,7 @@ export const translateQemmetString = ({ qubit_count, bit_count, gate_info, }) =>
         const gate_name = getQiskitGateName(original_gate_name);
         // special measure instruction
         if (gate_name === 'm')
-            return `${gate_registers
-                .map((register) => `qc.measure(${register}, ${register})`)
-                .join('\n')}\n`;
+            return `qc.measure(${gate_registers[0]}, ${gate_params})\n`;
         // special barrier instruction
         if (gate_name === 'b')
             return `qc.barrier(${gate_registers.join(', ')})\n`;
