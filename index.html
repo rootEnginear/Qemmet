@@ -58,7 +58,7 @@
       <label for="raw_string">Input Qemmet string:</label>
       <input id="raw_string" type="text" v-model.trim="raw_string"
         style="width:100%;box-sizing:border-box">
-      <label for="svg-preview">Circuit Diagram (download <a
+      <label for="svg-preview">Circuit Diagram (Download <a
           @click="downloadSvg" style="cursor:pointer">SVG</a>/<a
           @click="downloadPng" style="cursor:pointer">PNG</a>):</label>
       <div v-html="svg" class="svg-container" id="svg-preview"
