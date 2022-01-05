@@ -27,10 +27,14 @@ export const translateQemmetString = ({
 			// translate gate name
 			const gate_name = getQiskitGateName(original_gate_name)
 
-			// special measure instruction
+			// measure instruction
 			if (gate_name === 'm') return `qc.measure(${gate_registers[0]}, ${gate_params})\n`
 
-			// special barrier instruction
+			// reset instruction
+			if (gate_name === 'r')
+				return `${gate_registers.map((register) => `qc.reset(${register})`).join('\n')}\n`
+
+			// barrier instruction
 			if (gate_name === 'b') return `qc.barrier(${gate_registers.join(', ')})\n`
 
 			// parameterized gate
