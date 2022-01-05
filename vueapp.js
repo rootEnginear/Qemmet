@@ -57,6 +57,7 @@ new Vue({
 	data: {
 		EXAMPLES,
 		raw_string: "4;3;x4 h 'ccx134 h1-3 x1-3 ccz3-1 x1-3 h1-3'*2 m1-3",
+		// raw_string: ';;x2h2EEFFEEFFEEFF;E=rm,F=rhcxhm',
 		// raw_string: '4;;h4p814p424p234h3p413p223h2p2h1sw14sw23;p8=cp[pi/8],p4=cp[pi/4],p2=cp[pi/2]',
 		target_lang: 'qiskit03',
 		// target_lang: 'openqasm3',
