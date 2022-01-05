@@ -90,7 +90,7 @@ const parseMetadata = (qemmet_string) => {
     return { qubit_count, bit_count, gate_string, definition_string, options };
 };
 const tokenizeGateString = (gate_string) => [
-    ...gate_string.matchAll(new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[((?:[\\d\\s,+\\-*/]|pi|euler)*?)\\])?([\\d\\s]*)(?:->(\\d+))?`, 'g')),
+    ...gate_string.matchAll(new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[((?:[\\d\\s,+\\-*/]|pi|euler)*?)\\])?([\\d\\s]*)(?:->(\\d+))?(?:\\?(\\d+)(?:=(\\d+))?)?`, 'g')),
 ];
 const ensureMultipleRegister = (registers, gate_control_length) => {
     // it's fine if it has no controls OR registers length are enough for the controls and the gate
@@ -213,30 +213,36 @@ const formatTargetBit = (target_bit, register, options) => {
 };
 const formatMeasure = (gate_info, options) => {
     return gate_info
-        .map(({ control_count, gate_name, gate_params, gate_registers, target_bit }) => gate_name === 'm'
+        .map(({ control_count, gate_name, gate_params, gate_registers, target_bit, condition }) => gate_name === 'm'
         ? gate_registers.map((reg) => ({
             control_count,
             gate_name,
             gate_params,
             gate_registers: [reg],
             target_bit: formatTargetBit(target_bit, reg, options),
+            condition,
         }))
-        : { control_count, gate_name, gate_params, gate_registers, target_bit })
+        : { control_count, gate_name, gate_params, gate_registers, target_bit, condition })
         .flat();
 };
 const parseGateToken = (gate_token, qubit_count, options) => {
-    const structured_data = gate_token.map(([, control_string, gate_name, _gate_params, _gate_registers, _target_bit]) => {
+    const structured_data = gate_token.map(([, control_string, gate_name, _gate_params, _gate_registers, _target_bit, _condition_bit, _condition_value,]) => {
         const control_count = control_string.length + +(gate_name === 'sw');
         const gate_params = parseGateParams(_gate_params);
         const gate_registers = parseRegister(_gate_registers, qubit_count, control_count, options);
         const target_bit_num = +_target_bit;
         const target_bit = gate_name === 'm' ? (isNaN(target_bit_num) ? null : target_bit_num) : null;
+        const condition_value = +_condition_value;
+        const condition = _condition_bit
+            ? [+_condition_bit - +options.start_from_one, isNaN(condition_value) ? 1 : condition_value]
+            : null;
         return {
             control_count,
             gate_name,
             gate_params,
             gate_registers,
             target_bit,
+            condition,
         };
     });
     return formatMeasure(structured_data, options);

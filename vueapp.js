@@ -56,6 +56,7 @@ new Vue({
 	el: '#app',
 	data: {
 		EXAMPLES,
+		// raw_string: ';;h2cx23cxh1m12x3?2=1z3?1=1',
 		// raw_string: '2;;m->1',
 		raw_string: "4;3;x4 h 'ccx134 h1-3 x1-3 ccz3-1 x1-3 h1-3'*2 m1-3",
 		// raw_string: ';;x2h2EEFFEEFFEEFF;E=rm,F=rhcxhm',
