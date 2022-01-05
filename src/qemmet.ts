@@ -194,9 +194,9 @@ export const ensureParameterizedGate = (gate_info: QemmetGateInfo[]): QemmetGate
 	})
 }
 
-// instructions should not have any controls
+// instructions should not have any controls or classical condition
 export const ensureInstruction = (gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
-	return gate_info.map(({ gate_name, control_count, ...rest }) => {
+	return gate_info.map(({ gate_name, control_count, condition, ...rest }) => {
 		switch (gate_name) {
 			case 'r':
 			case 'b':
@@ -205,6 +205,7 @@ export const ensureInstruction = (gate_info: QemmetGateInfo[]): QemmetGateInfo[]
 					...rest,
 					gate_name,
 					control_count: 0,
+					condition: null, // m & r in the future might be condition-able
 				}
 		}
 
@@ -212,6 +213,7 @@ export const ensureInstruction = (gate_info: QemmetGateInfo[]): QemmetGateInfo[]
 			...rest,
 			gate_name,
 			control_count,
+			condition,
 		}
 	})
 }
