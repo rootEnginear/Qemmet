@@ -11,12 +11,12 @@ const getQASMGateName = (gate_name) => {
 };
 export const translateQemmetString = ({ qubit_count, bit_count, gate_info, }) => {
     const qasm_string = gate_info
-        .map(({ control_count, gate_name: original_gate_name, gate_params, gate_registers }) => {
+        .map(({ control_count, gate_name: original_gate_name, gate_params, gate_registers, target_bit, }) => {
         // translate gate name
         const gate_name = getQASMGateName(original_gate_name);
         // measure instruction
         if (gate_name === 'm')
-            return `cr[${gate_params}] = measure qr[${gate_registers[0]}]\n`;
+            return `cr[${target_bit ?? gate_registers[0]}] = measure qr[${gate_registers[0]}]\n`;
         // reset instruction
         if (gate_name === 'r')
             return `${gate_registers.map((register) => `reset qr[${register}]`).join('\n')}\n`;
@@ -48,7 +48,9 @@ export const translateQemmetString = ({ qubit_count, bit_count, gate_info, }) =>
         }
         // normal gate
         if (control_count === 0)
-            return `${gate_registers.map((register) => `${gate_name} qr[${register}]`).join(';\n')};\n`;
+            return `${gate_registers
+                .map((register) => `${gate_name} qr[${register}]`)
+                .join(';\n')};\n`;
         // controlled gate
         const control_operation_string = control_count === 1 ? 'control @' : `control(${control_count}) @`;
         return `${control_operation_string} ${gate_name} ${gate_registers

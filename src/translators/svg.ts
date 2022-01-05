@@ -225,9 +225,14 @@ export const translateQemmetString = (
 	applyOptions(options)
 
 	const gates = gate_info
-		.map(({ gate_name, control_count, gate_registers, gate_params }, column) => {
+		.map(({ gate_name, control_count, gate_registers, gate_params, target_bit }, column) => {
 			if (gate_name === 'm')
-				return generateMeasure(gate_registers[0], +gate_params, qubit_count, column)
+				return generateMeasure(
+					gate_registers[0],
+					target_bit ?? gate_registers[0],
+					qubit_count,
+					column
+				)
 			if (gate_name === 'b') return generateVerticalLine(gate_registers, column, true)
 
 			const [control_qb, gate_qb] = control_count
