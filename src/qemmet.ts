@@ -267,6 +267,36 @@ const parseGateParams = (gate_params: string | undefined) => {
 	return ''
 }
 
+const formatTargetBit = (
+	target_bit: number | null,
+	register: number,
+	options: QemmetStringOptions
+) => {
+	if (target_bit == null) return register
+	const shifted_params = options.start_from_one ? target_bit - 1 : target_bit
+	return shifted_params
+}
+
+const formatMeasure = (
+	gate_info: QemmetGateInfo[],
+	options: QemmetStringOptions
+): QemmetGateInfo[] => {
+	return gate_info
+		.map(({ control_count, gate_name, gate_params, gate_registers, target_bit, condition }) =>
+			gate_name === 'm'
+				? gate_registers.map((reg) => ({
+						control_count,
+						gate_name,
+						gate_params,
+						gate_registers: [reg],
+						target_bit: formatTargetBit(target_bit, reg, options),
+						condition,
+				  }))
+				: { control_count, gate_name, gate_params, gate_registers, target_bit, condition }
+		)
+		.flat()
+}
+
 const parseGateToken = (
 	gate_token: RegExpMatchArray[],
 	qubit_count: number,
@@ -286,15 +316,8 @@ const parseGateToken = (
 			const control_count = control_string.length + +(gate_name === 'sw')
 			const gate_params = parseGateParams(_gate_params)
 			const gate_registers = parseRegister(_gate_registers, qubit_count, control_count, options)
-
 			const target_bit_num = +_target_bit
-			const target_bit =
-				gate_name === 'm'
-					? isNaN(target_bit_num)
-						? null
-						: target_bit_num - +options.start_from_one
-					: null
-
+			const target_bit = gate_name === 'm' ? (isNaN(target_bit_num) ? null : target_bit_num) : null
 			const condition_value = +_condition_value
 			const condition: [number, number] | null = _condition_bit
 				? [+_condition_bit - +options.start_from_one, isNaN(condition_value) ? 1 : condition_value]
@@ -311,7 +334,7 @@ const parseGateToken = (
 		}
 	)
 
-	return structured_data
+	return formatMeasure(structured_data, options)
 }
 
 const getMaxRegister = (register_count: number, gate_info: QemmetGateInfo[]) =>
@@ -332,19 +355,18 @@ export const normalizeAdjacentGate = (raw_gate_info: QemmetGateInfo[]): QemmetGa
 		const curr_gate = gate_info[i]
 		const next_gate = gate_info[i + 1]
 
-		// any gates with control will not get merge
+		// measure don't collapse
+		if (curr_gate.gate_name === 'm' || next_gate.gate_name === 'm') continue
+
 		if (curr_gate.control_count !== next_gate.control_count || curr_gate.control_count !== 0)
 			continue
 
-		const isSameName = curr_gate.gate_name === next_gate.gate_name
-		const isSameParam = curr_gate.gate_params === next_gate.gate_params
-		const isRegNotOverlap =
+		if (
+			curr_gate.gate_name === next_gate.gate_name &&
+			curr_gate.gate_params === next_gate.gate_params &&
 			curr_gate.gate_registers.filter((value) => next_gate.gate_registers.includes(value))
 				.length === 0
-		const isSameCondition =
-			JSON.stringify(curr_gate.condition) === JSON.stringify(next_gate.condition)
-
-		if (isSameName && isSameParam && isRegNotOverlap && isSameCondition) {
+		) {
 			gate_info[i].gate_registers = curr_gate.gate_registers.concat(next_gate.gate_registers)
 			gate_info.splice(i + 1, 1)
 			i--
