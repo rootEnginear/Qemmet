@@ -207,33 +207,17 @@ const parseGateParams = (gate_params) => {
     }
     return '';
 };
-const formatTargetBit = (target_bit, register, options) => {
-    if (target_bit == null)
-        return register;
-    const shifted_params = options.start_from_one ? target_bit - 1 : target_bit;
-    return shifted_params;
-};
-const formatMeasure = (gate_info, options) => {
-    return gate_info
-        .map(({ control_count, gate_name, gate_params, gate_registers, target_bit, condition }) => gate_name === 'm'
-        ? gate_registers.map((reg) => ({
-            control_count,
-            gate_name,
-            gate_params,
-            gate_registers: [reg],
-            target_bit: formatTargetBit(target_bit, reg, options),
-            condition,
-        }))
-        : { control_count, gate_name, gate_params, gate_registers, target_bit, condition })
-        .flat();
-};
 const parseGateToken = (gate_token, qubit_count, options) => {
     const structured_data = gate_token.map(([, control_string, gate_name, _gate_params, _gate_registers, _target_bit, _condition_bit, _condition_value,]) => {
         const control_count = control_string.length + +(gate_name === 'sw');
         const gate_params = parseGateParams(_gate_params);
         const gate_registers = parseRegister(_gate_registers, qubit_count, control_count, options);
         const target_bit_num = +_target_bit;
-        const target_bit = gate_name === 'm' ? (isNaN(target_bit_num) ? null : target_bit_num) : null;
+        const target_bit = gate_name === 'm'
+            ? isNaN(target_bit_num)
+                ? null
+                : target_bit_num - +options.start_from_one
+            : null;
         const condition_value = +_condition_value;
         const condition = _condition_bit
             ? [+_condition_bit - +options.start_from_one, isNaN(condition_value) ? 1 : condition_value]
@@ -247,7 +231,7 @@ const parseGateToken = (gate_token, qubit_count, options) => {
             condition,
         };
     });
-    return formatMeasure(structured_data, options);
+    return structured_data;
 };
 const getMaxRegister = (register_count, gate_info) => gate_info.reduce((max, { gate_registers }) => {
     return Math.max(max, ...gate_registers);
@@ -263,15 +247,15 @@ export const normalizeAdjacentGate = (raw_gate_info) => {
     for (let i = 0; i + 1 < gate_info_len; i++) {
         const curr_gate = gate_info[i];
         const next_gate = gate_info[i + 1];
-        // measure don't collapse
-        if (curr_gate.gate_name === 'm' || next_gate.gate_name === 'm')
-            continue;
+        // any gates with control will not get merge
         if (curr_gate.control_count !== next_gate.control_count || curr_gate.control_count !== 0)
             continue;
-        if (curr_gate.gate_name === next_gate.gate_name &&
-            curr_gate.gate_params === next_gate.gate_params &&
-            curr_gate.gate_registers.filter((value) => next_gate.gate_registers.includes(value))
-                .length === 0) {
+        const isSameName = curr_gate.gate_name === next_gate.gate_name;
+        const isSameParam = curr_gate.gate_params === next_gate.gate_params;
+        const isRegNotOverlap = curr_gate.gate_registers.filter((value) => next_gate.gate_registers.includes(value))
+            .length === 0;
+        const isSameCondition = JSON.stringify(curr_gate.condition) === JSON.stringify(next_gate.condition);
+        if (isSameName && isSameParam && isRegNotOverlap && isSameCondition) {
             gate_info[i].gate_registers = curr_gate.gate_registers.concat(next_gate.gate_registers);
             gate_info.splice(i + 1, 1);
             i--;
