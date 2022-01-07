@@ -95,8 +95,8 @@ new Vue({
 			const [qemmet_info, error] = this.qemmet_info
 			if (error) return error
 
-			// console.log(qemmet_info)
-			console.log('Expanded string:', getQemmetString(qemmet_info))
+			console.log(qemmet_info)
+			// console.log('Expanded string:', getQemmetString(qemmet_info))
 			switch (this.target_lang) {
 				case 'openqasm3':
 					return getQASMString(qemmet_info)

@@ -267,20 +267,7 @@ const parseGateParams = (gate_params: string | undefined) => {
 	return ''
 }
 
-const formatTargetBit = (
-	target_bit: number | null,
-	register: number,
-	options: QemmetStringOptions
-) => {
-	if (target_bit == null) return register
-	const shifted_params = options.start_from_one ? target_bit - 1 : target_bit
-	return shifted_params
-}
-
-const formatMeasure = (
-	gate_info: QemmetGateInfo[],
-	options: QemmetStringOptions
-): QemmetGateInfo[] => {
+const formatMeasure = (gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
 	return gate_info
 		.map(({ control_count, gate_name, gate_params, gate_registers, target_bit, condition }) =>
 			gate_name === 'm'
@@ -289,7 +276,7 @@ const formatMeasure = (
 						gate_name,
 						gate_params,
 						gate_registers: [reg],
-						target_bit: formatTargetBit(target_bit, reg, options),
+						target_bit: target_bit == null ? reg : target_bit,
 						condition,
 				  }))
 				: { control_count, gate_name, gate_params, gate_registers, target_bit, condition }
@@ -316,8 +303,15 @@ const parseGateToken = (
 			const control_count = control_string.length + +(gate_name === 'sw')
 			const gate_params = parseGateParams(_gate_params)
 			const gate_registers = parseRegister(_gate_registers, qubit_count, control_count, options)
+
 			const target_bit_num = +_target_bit
-			const target_bit = gate_name === 'm' ? (isNaN(target_bit_num) ? null : target_bit_num) : null
+			const target_bit =
+				gate_name === 'm'
+					? isNaN(target_bit_num)
+						? null
+						: target_bit_num - +options.start_from_one
+					: null
+
 			const condition_value = +_condition_value
 			const condition: [number, number] | null = _condition_bit
 				? [+_condition_bit - +options.start_from_one, isNaN(condition_value) ? 1 : condition_value]
@@ -334,7 +328,7 @@ const parseGateToken = (
 		}
 	)
 
-	return formatMeasure(structured_data, options)
+	return formatMeasure(structured_data)
 }
 
 const getMaxRegister = (register_count: number, gate_info: QemmetGateInfo[]) =>
