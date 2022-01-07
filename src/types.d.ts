@@ -8,7 +8,10 @@ export interface QemmetGateInfo {
 	gate_name: string
 	gate_params: string
 	gate_registers: number[]
-	target_bit: number | null
+	// target bit always = gate_registers for 1-1 matching, `[]` for other gates.
+	target_bit: number[]
+	// [bit, on equal] | don't have a condition
+	// eg: [1, 0] means do when bit 1 == 0
 	condition: [number, number] | null
 }
 

@@ -291,9 +291,9 @@ const parseGateToken = (
 			const target_bit =
 				gate_name === 'm'
 					? isNaN(target_bit_num)
-						? null
-						: target_bit_num - +options.start_from_one
-					: null
+						? gate_registers
+						: new Array(gate_registers.length).fill(target_bit_num - +options.start_from_one)
+					: []
 
 			const condition_value = +_condition_value
 			const condition: [number, number] | null = _condition_bit
@@ -321,7 +321,7 @@ const getMaxRegister = (register_count: number, gate_info: QemmetGateInfo[]) =>
 
 const getMaxBitRegister = (bit_count: number, gate_info: QemmetGateInfo[]) =>
 	gate_info.reduce((max, { target_bit, condition }) => {
-		return Math.max(max, target_bit ?? max, condition?.[0] ?? max)
+		return Math.max(max, ...target_bit, condition?.[0] ?? max)
 	}, bit_count - 1) + 1
 
 export const normalizeAdjacentGate = (raw_gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
@@ -332,19 +332,18 @@ export const normalizeAdjacentGate = (raw_gate_info: QemmetGateInfo[]): QemmetGa
 		const curr_gate = gate_info[i]
 		const next_gate = gate_info[i + 1]
 
-		// any gates with control will not get merge
+		// measure don't collapse
+		if (curr_gate.gate_name === 'm' || next_gate.gate_name === 'm') continue
+
 		if (curr_gate.control_count !== next_gate.control_count || curr_gate.control_count !== 0)
 			continue
 
-		const isSameName = curr_gate.gate_name === next_gate.gate_name
-		const isSameParam = curr_gate.gate_params === next_gate.gate_params
-		const isRegNotOverlap =
+		if (
+			curr_gate.gate_name === next_gate.gate_name &&
+			curr_gate.gate_params === next_gate.gate_params &&
 			curr_gate.gate_registers.filter((value) => next_gate.gate_registers.includes(value))
 				.length === 0
-		const isSameCondition =
-			JSON.stringify(curr_gate.condition) === JSON.stringify(next_gate.condition)
-
-		if (isSameName && isSameParam && isRegNotOverlap && isSameCondition) {
+		) {
 			gate_info[i].gate_registers = curr_gate.gate_registers.concat(next_gate.gate_registers)
 			gate_info.splice(i + 1, 1)
 			i--
