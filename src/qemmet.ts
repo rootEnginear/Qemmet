@@ -267,23 +267,6 @@ const parseGateParams = (gate_params: string | undefined) => {
 	return ''
 }
 
-const formatMeasure = (gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
-	return gate_info
-		.map(({ control_count, gate_name, gate_params, gate_registers, target_bit, condition }) =>
-			gate_name === 'm'
-				? gate_registers.map((reg) => ({
-						control_count,
-						gate_name,
-						gate_params,
-						gate_registers: [reg],
-						target_bit: target_bit == null ? reg : target_bit,
-						condition,
-				  }))
-				: { control_count, gate_name, gate_params, gate_registers, target_bit, condition }
-		)
-		.flat()
-}
-
 const parseGateToken = (
 	gate_token: RegExpMatchArray[],
 	qubit_count: number,
@@ -308,9 +291,9 @@ const parseGateToken = (
 			const target_bit =
 				gate_name === 'm'
 					? isNaN(target_bit_num)
-						? null
-						: target_bit_num - +options.start_from_one
-					: null
+						? gate_registers
+						: new Array(gate_registers.length).fill(target_bit_num - +options.start_from_one)
+					: []
 
 			const condition_value = +_condition_value
 			const condition: [number, number] | null = _condition_bit
@@ -328,7 +311,7 @@ const parseGateToken = (
 		}
 	)
 
-	return formatMeasure(structured_data)
+	return structured_data
 }
 
 const getMaxRegister = (register_count: number, gate_info: QemmetGateInfo[]) =>
@@ -338,7 +321,7 @@ const getMaxRegister = (register_count: number, gate_info: QemmetGateInfo[]) =>
 
 const getMaxBitRegister = (bit_count: number, gate_info: QemmetGateInfo[]) =>
 	gate_info.reduce((max, { target_bit, condition }) => {
-		return Math.max(max, target_bit ?? max, condition?.[0] ?? max)
+		return Math.max(max, ...target_bit, condition?.[0] ?? max)
 	}, bit_count - 1) + 1
 
 export const normalizeAdjacentGate = (raw_gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
