@@ -207,20 +207,6 @@ const parseGateParams = (gate_params) => {
     }
     return '';
 };
-const formatMeasure = (gate_info) => {
-    return gate_info
-        .map(({ control_count, gate_name, gate_params, gate_registers, target_bit, condition }) => gate_name === 'm'
-        ? gate_registers.map((reg) => ({
-            control_count,
-            gate_name,
-            gate_params,
-            gate_registers: [reg],
-            target_bit: target_bit == null ? reg : target_bit,
-            condition,
-        }))
-        : { control_count, gate_name, gate_params, gate_registers, target_bit, condition })
-        .flat();
-};
 const parseGateToken = (gate_token, qubit_count, options) => {
     const structured_data = gate_token.map(([, control_string, gate_name, _gate_params, _gate_registers, _target_bit, _condition_bit, _condition_value,]) => {
         const control_count = control_string.length + +(gate_name === 'sw');
@@ -229,9 +215,9 @@ const parseGateToken = (gate_token, qubit_count, options) => {
         const target_bit_num = +_target_bit;
         const target_bit = gate_name === 'm'
             ? isNaN(target_bit_num)
-                ? null
-                : target_bit_num - +options.start_from_one
-            : null;
+                ? gate_registers
+                : new Array(gate_registers.length).fill(target_bit_num - +options.start_from_one)
+            : [];
         const condition_value = +_condition_value;
         const condition = _condition_bit
             ? [+_condition_bit - +options.start_from_one, isNaN(condition_value) ? 1 : condition_value]
@@ -245,13 +231,13 @@ const parseGateToken = (gate_token, qubit_count, options) => {
             condition,
         };
     });
-    return formatMeasure(structured_data);
+    return structured_data;
 };
 const getMaxRegister = (register_count, gate_info) => gate_info.reduce((max, { gate_registers }) => {
     return Math.max(max, ...gate_registers);
 }, register_count - 1) + 1;
 const getMaxBitRegister = (bit_count, gate_info) => gate_info.reduce((max, { target_bit, condition }) => {
-    return Math.max(max, target_bit ?? max, condition?.[0] ?? max);
+    return Math.max(max, ...target_bit, condition?.[0] ?? max);
 }, bit_count - 1) + 1;
 export const normalizeAdjacentGate = (raw_gate_info) => {
     let gate_info = JSON.parse(JSON.stringify(raw_gate_info));
