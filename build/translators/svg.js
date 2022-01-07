@@ -86,7 +86,7 @@ const generateGate = (gate_name, gate_params) => {
                 return `<use href="#${gate_name}" x="${gate_x}" y="${gate_y}" width="32" height="32"></use>`;
             case '/x':
             case 'sx':
-                return `<use href="#sqrt_x" x="${gate_x}" y="${gate_y}" width="32" height="32"></use>`;
+                return `<use href="#sx" x="${gate_x}" y="${gate_y}" width="32" height="32"></use>`;
             case 'r':
                 return `<use href="#reset" x="${gate_x}" y="${gate_y}" width="32" height="32"></use>`;
         }
@@ -114,14 +114,34 @@ const generateGateCol = (gate_name, gate_registers, gate_params, column) => {
     })
         .join('');
 };
-const generateVerticalLine = (qubits, column, isBarrier = false) => {
+const generateVerticalLine = (qubits, column, options = {}) => {
+    const default_options = Object.seal({ is_barrier: false, x_shift: 0 });
+    const applied_options = Object.assign(default_options, options);
     const max = Math.max(...qubits);
     const min = Math.min(...qubits);
-    const barrier_modifier = +isBarrier * (RENDER_STYLE.HALF_GATE - 1);
-    const x = (column + 1) * RENDER_STYLE.HORZ_BOX + RENDER_STYLE.KET_MARGIN + RENDER_STYLE.HALF_GATE;
+    const barrier_modifier = +applied_options.is_barrier * (RENDER_STYLE.HALF_GATE - 1);
+    const x = (column + 1) * RENDER_STYLE.HORZ_BOX +
+        RENDER_STYLE.KET_MARGIN +
+        RENDER_STYLE.HALF_GATE +
+        applied_options.x_shift;
     const y1 = min * RENDER_STYLE.VERT_BOX + RENDER_STYLE.HALF_GATE - barrier_modifier;
     const y2 = max * RENDER_STYLE.VERT_BOX + RENDER_STYLE.HALF_GATE + barrier_modifier;
-    return `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="var(--line-color)" stroke-width="1" ${isBarrier ? `stroke-dasharray="4"` : ''}/>`;
+    return `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="var(--line-color)" stroke-width="1" ${applied_options.is_barrier ? `stroke-dasharray="4"` : ''}/>`;
+};
+const generateConditionLine = (qubit, bit, value, qubit_count, column) => {
+    const left_line = generateVerticalLine([qubit, qubit_count + bit], column, {
+        x_shift: -RENDER_STYLE.HALF_LINE_SPACE,
+    });
+    const right_line = generateVerticalLine([qubit, qubit_count + bit], column, {
+        x_shift: RENDER_STYLE.HALF_LINE_SPACE,
+    });
+    const dot = generateControls([qubit_count + bit], column);
+    const gate_x = (column + 1) * RENDER_STYLE.HORZ_BOX + RENDER_STYLE.KET_MARGIN;
+    const gate_y = (qubit_count + bit) * RENDER_STYLE.VERT_BOX;
+    const text_x = gate_x + RENDER_STYLE.HALF_GATE;
+    const text_y = gate_y + RENDER_STYLE.GATE_SIZE + RENDER_STYLE.PARAM_Y_SHIFT;
+    const text = `<text class="params" x="${text_x}" y="${text_y}" dominant-baseline="middle" text-anchor="middle">=${value}</text>`;
+    return left_line + right_line + dot + text;
 };
 const generateControls = (qubits, column) => {
     return qubits
@@ -143,28 +163,61 @@ const applyOptions = (options = {
     const { style } = options;
     Object.assign(RENDER_STYLE, style);
 };
+const expandMeasurements = (gate_info) => {
+    return gate_info
+        .map(({ control_count, gate_name, gate_params, gate_registers, target_bit, condition }) => gate_name === 'm'
+        ? gate_registers.map((reg, index) => ({
+            control_count,
+            gate_name,
+            gate_params,
+            gate_registers: [reg],
+            target_bit: [target_bit?.[index] ?? reg],
+            condition,
+        }))
+        : { control_count, gate_name, gate_params, gate_registers, target_bit, condition })
+        .flat();
+};
+const expandMultipleConditions = (gate_info) => {
+    return gate_info
+        .map(({ control_count, gate_name, gate_params, gate_registers, target_bit, condition }) => condition && gate_registers.length > 1 && !control_count
+        ? gate_registers.map((reg) => ({
+            control_count,
+            gate_name,
+            gate_params,
+            gate_registers: [reg],
+            target_bit,
+            condition,
+        }))
+        : { control_count, gate_name, gate_params, gate_registers, target_bit, condition })
+        .flat();
+};
 export const translateQemmetString = ({ qubit_count, bit_count, gate_info }, options = {
     style: DEFAULT_OPTIONS,
 }) => {
     applyOptions(options);
-    const gates = gate_info
-        .map(({ gate_name, control_count, gate_registers, gate_params, target_bit }, column) => {
+    const expanded_gate_info = expandMultipleConditions(expandMeasurements(gate_info));
+    const gates = expanded_gate_info
+        .map(({ gate_name, control_count, gate_registers, gate_params, target_bit, condition }, column) => {
         if (gate_name === 'm')
-            return generateMeasure(gate_registers[0], target_bit ?? gate_registers[0], qubit_count, column);
+            // they will always have 1 reg and 1 target (because of the expansion)
+            return generateMeasure(gate_registers[0], target_bit?.[0] ?? gate_registers[0], qubit_count, column);
         if (gate_name === 'b')
-            return generateVerticalLine(gate_registers, column, true);
+            return generateVerticalLine(gate_registers, column, { is_barrier: true });
         const [control_qb, gate_qb] = control_count
             ? splitControlledQubits(gate_registers, gate_name === 'sw')
             : [[], gate_registers];
         const lines = control_count ? generateVerticalLine(gate_registers, column) : '';
         const controls = control_qb.length ? generateControls(control_qb, column) : '';
+        const condition_elements = condition
+            ? generateConditionLine(Math.max(...gate_registers), condition[0], condition[1], qubit_count, column)
+            : '';
         const gates = gate_name === 'x' && control_count
-            ? `<use href="#x_gate" x="${(column + 1) * RENDER_STYLE.HORZ_BOX + RENDER_STYLE.KET_MARGIN}" y="${RENDER_STYLE.VERT_BOX * gate_qb[0]}" width="32" height="32"></use>`
+            ? `<use href="#target" x="${(column + 1) * RENDER_STYLE.HORZ_BOX + RENDER_STYLE.KET_MARGIN}" y="${RENDER_STYLE.VERT_BOX * gate_qb[0]}" width="32" height="32"></use>`
             : generateGateCol(gate_name, gate_qb, gate_params, column);
-        return lines + controls + gates;
+        return lines + controls + condition_elements + gates;
     })
         .join('\n  ');
-    const svg_width = (gate_info.length + 1) * RENDER_STYLE.HORZ_BOX +
+    const svg_width = (expanded_gate_info.length + 1) * RENDER_STYLE.HORZ_BOX +
         RENDER_STYLE.KET_MARGIN +
         RENDER_STYLE.LINE_TRAIL_RIGHT -
         RENDER_STYLE.X_MARGIN;
@@ -191,8 +244,8 @@ export const translateQemmetString = ({ qubit_count, bit_count, gate_info }, opt
     }
   </style>
 
-  ${generateQubits(qubit_count, gate_info.length)}
-  ${generateBits(bit_count, qubit_count, gate_info.length)}
+  ${generateQubits(qubit_count, expanded_gate_info.length)}
+  ${generateBits(bit_count, qubit_count, expanded_gate_info.length)}
   ${gates}
 
   <symbol id="gate" width="32" height="32" viewBox="0 0 32 32">
@@ -225,12 +278,12 @@ export const translateQemmetString = ({ qubit_count, bit_count, gate_info }, opt
     <path d="M0 0L5 8L10 0H0Z" fill="var(--line-color)"/>
   </symbol>
 
-  <symbol id="x_gate" width="32" height="32" viewBox="0 0 32 32">
-    <circle cx="16" cy="16" r="11.5" fill="none" stroke="var(--line-color)"/>
+  <symbol id="target" width="32" height="32" viewBox="0 0 32 32">
+    <circle cx="16" cy="16" r="11.5" fill="var(--gate-background-color)" stroke="var(--line-color)"/>
     <path d="M16 4V28M28 16H4" stroke="var(--line-color)"/>
   </symbol>
 
-  <symbol id="sqrt_x" width="32" height="32" viewBox="0 0 32 32">
+  <symbol id="sx" width="32" height="32" viewBox="0 0 32 32">
     <use href="#gate" x="0" y="0" width="32" height="32"></use>
     <path d="M9.82662 20.838L7.69534 16.1274C7.61057 15.9337 7.55002 15.9337 7.51369 15.9337C7.50158 15.9337 7.44104 15.9337 7.30783 16.0306L6.15742 16.9024C6 17.0235 6 17.0599 6 17.0962C6 17.1567 6.03633 17.2294 6.1211 17.2294C6.19375 17.2294 6.39962 17.0599 6.53282 16.963C6.60548 16.9024 6.78712 16.7692 6.92033 16.6724L9.30591 21.9158C9.39067 22.1095 9.45122 22.1095 9.56021 22.1095C9.74185 22.1095 9.77818 22.0369 9.86295 21.8674L15.3607 10.4844C15.4454 10.3148 15.4454 10.2664 15.4454 10.2422C15.4454 10.1211 15.3486 10 15.2033 10C15.1064 10 15.0216 10.0605 14.9247 10.2543L9.82662 20.838Z" fill="var(--font-color)"/>
     <path d="M26 10H15.2073V10.4844H26V10Z" fill="var(--font-color)"/>
