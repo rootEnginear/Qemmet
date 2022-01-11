@@ -90,7 +90,7 @@ const parseMetadata = (qemmet_string) => {
     return { qubit_count, bit_count, gate_string, definition_string, options };
 };
 const tokenizeGateString = (gate_string) => [
-    ...gate_string.matchAll(new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[((?:[\\d\\s,+\\-*/]|pi|euler)*?)\\])?([\\d\\s]*)(?:->(\\d+))?`, 'g')),
+    ...gate_string.matchAll(new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[((?:[\\d\\s,+\\-*/]|pi|euler)*?)\\])?([\\d\\s]*)(?:->(\\d+))?(?:\\?(\\d+)(?:=(\\d+))?)?`, 'g')),
 ];
 const ensureMultipleRegister = (registers, gate_control_length) => {
     // it's fine if it has no controls OR registers length are enough for the controls and the gate
@@ -143,9 +143,9 @@ export const ensureParameterizedGate = (gate_info) => {
         };
     });
 };
-// instructions should not have any controls
+// instructions should not have any controls or classical condition
 export const ensureInstruction = (gate_info) => {
-    return gate_info.map(({ gate_name, control_count, ...rest }) => {
+    return gate_info.map(({ gate_name, control_count, condition, ...rest }) => {
         switch (gate_name) {
             case 'r':
             case 'b':
@@ -154,12 +154,14 @@ export const ensureInstruction = (gate_info) => {
                     ...rest,
                     gate_name,
                     control_count: 0,
+                    condition: null, // m & r in the future might be condition-able
                 };
         }
         return {
             ...rest,
             gate_name,
             control_count,
+            condition,
         };
     });
 };
@@ -205,49 +207,37 @@ const parseGateParams = (gate_params) => {
     }
     return '';
 };
-const formatTargetBit = (target_bit, register, options) => {
-    if (target_bit == null)
-        return register;
-    const shifted_params = options.start_from_one ? target_bit - 1 : target_bit;
-    return shifted_params;
-};
-const formatMeasure = (gate_info, options) => {
-    return gate_info
-        .map(({ control_count, gate_name, gate_params, gate_registers, target_bit }) => gate_name === 'm'
-        ? gate_registers.map((reg) => ({
-            control_count,
-            gate_name,
-            gate_params,
-            gate_registers: [reg],
-            target_bit: formatTargetBit(target_bit, reg, options),
-        }))
-        : { control_count, gate_name, gate_params, gate_registers, target_bit })
-        .flat();
-};
 const parseGateToken = (gate_token, qubit_count, options) => {
-    const structured_data = gate_token.map(([, control_string, gate_name, _gate_params, _gate_registers, _target_bit]) => {
+    const structured_data = gate_token.map(([, control_string, gate_name, _gate_params, _gate_registers, _target_bit, _condition_bit, _condition_value,]) => {
         const control_count = control_string.length + +(gate_name === 'sw');
         const gate_params = parseGateParams(_gate_params);
         const gate_registers = parseRegister(_gate_registers, qubit_count, control_count, options);
         const target_bit_num = +_target_bit;
-        const target_bit = gate_name === 'm' ? (isNaN(target_bit_num) ? null : target_bit_num) : null;
+        const target_bit = gate_name === 'm'
+            ? isNaN(target_bit_num)
+                ? gate_registers
+                : new Array(gate_registers.length).fill(target_bit_num - +options.start_from_one)
+            : [];
+        const condition_value = +_condition_value;
+        const condition = _condition_bit
+            ? [+_condition_bit - +options.start_from_one, isNaN(condition_value) ? 1 : condition_value]
+            : null;
         return {
             control_count,
             gate_name,
             gate_params,
             gate_registers,
             target_bit,
+            condition,
         };
     });
-    return formatMeasure(structured_data, options);
+    return structured_data;
 };
 const getMaxRegister = (register_count, gate_info) => gate_info.reduce((max, { gate_registers }) => {
     return Math.max(max, ...gate_registers);
 }, register_count - 1) + 1;
-const getMaxBitRegister = (bit_count, gate_info) => gate_info
-    .filter(({ gate_name }) => gate_name === 'm')
-    .reduce((max, { target_bit }) => {
-    return Math.max(max, target_bit ?? -Infinity);
+const getMaxBitRegister = (bit_count, gate_info) => gate_info.reduce((max, { target_bit, condition }) => {
+    return Math.max(max, ...target_bit, condition?.[0] ?? max);
 }, bit_count - 1) + 1;
 export const normalizeAdjacentGate = (raw_gate_info) => {
     let gate_info = JSON.parse(JSON.stringify(raw_gate_info));
