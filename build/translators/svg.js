@@ -5,7 +5,6 @@ const DEFAULT_OPTIONS = Object.freeze({
     LINE_TRAIL_LEFT: 12,
     LINE_TRAIL_RIGHT: 12,
     LINE_SPACE: 3,
-    PARAM_Y_SHIFT: -1,
     SVG_MARGIN: 8,
     BACKGROUND_COLOR: '#fff',
     LINE_COLOR: '#222',
@@ -90,18 +89,20 @@ const generateGate = (gate_name, gate_params) => {
             case 'r':
                 return `<use href="#reset" x="${gate_x}" y="${gate_y}" width="32" height="32"></use>`;
         }
-        const text_x = gate_x + RENDER_STYLE.HALF_GATE - 1; // -1 -> center slant
+        const text_x = gate_x + RENDER_STYLE.HALF_GATE;
         const text_y = gate_y + RENDER_STYLE.HALF_GATE + 2; // +2 -> center capital letter
-        const param_y = gate_y + RENDER_STYLE.GATE_SIZE + RENDER_STYLE.Y_MARGIN / 2 + RENDER_STYLE.PARAM_Y_SHIFT;
+        const param_y = gate_y + RENDER_STYLE.GATE_SIZE + RENDER_STYLE.Y_MARGIN / 2;
         const formatted_params = gate_params
             .replace(/pi/g, 'π')
             .replace(/euler/g, 'e')
+            .replace(/\*/g, '')
             .replace(/\s/g, '');
         const params_str = gate_params
-            ? `<text class="params" x="${text_x}" y="${param_y}" dominant-baseline="middle" text-anchor="middle">(${formatted_params})</text>`
+            ? `<text class="params" x="${text_x}" y="${param_y}" dominant-baseline="middle" text-anchor="middle" stroke="white" stroke-width="3">(${formatted_params})</text><text class="params" x="${text_x}" y="${param_y}" dominant-baseline="middle" text-anchor="middle">(${formatted_params})</text>`
             : '';
         // No param
-        return (`<use href="#gate" x="${gate_x}" y="${gate_y}" width="32" height="32"></use><text x="${text_x}" y="${text_y}" dominant-baseline="middle" text-anchor="middle">${gate_name.toUpperCase()}</text>` +
+        // text_x - 1 -> center slant
+        return (`<use href="#gate" x="${gate_x}" y="${gate_y}" width="32" height="32"></use><text x="${text_x - 1}" y="${text_y}" dominant-baseline="middle" text-anchor="middle">${gate_name.toUpperCase()}</text>` +
             params_str);
     };
 };
@@ -139,7 +140,7 @@ const generateConditionLine = (qubit, bit, value, qubit_count, column) => {
     const gate_x = (column + 1) * RENDER_STYLE.HORZ_BOX + RENDER_STYLE.KET_MARGIN;
     const gate_y = (qubit_count + bit) * RENDER_STYLE.VERT_BOX;
     const text_x = gate_x + RENDER_STYLE.HALF_GATE;
-    const text_y = gate_y + RENDER_STYLE.GATE_SIZE + RENDER_STYLE.PARAM_Y_SHIFT;
+    const text_y = gate_y + RENDER_STYLE.GATE_SIZE * 0.875;
     const text = `<text class="params" x="${text_x}" y="${text_y}" dominant-baseline="middle" text-anchor="middle">=${value}</text>`;
     return left_line + right_line + dot + text;
 };
