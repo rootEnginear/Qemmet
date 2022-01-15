@@ -79,7 +79,9 @@ export const translateQemmetString = ({
 
 				// measure instruction
 				if (gate_name === 'm')
-					return `qc.measure(${gate_registers[0]}, ${target_bit ?? gate_registers[0]})\n`
+					return gate_registers
+						.map((reg, i) => `qc.measure(${reg}, ${target_bit[i] ?? reg})\n`)
+						.join('')
 
 				// reset instruction
 				if (gate_name === 'r')
