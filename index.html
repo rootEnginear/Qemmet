@@ -6,76 +6,66 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- SEO -->
+  <!-- HTML Meta Tags -->
+  <title>Qemmet — Shorthand notation for generating a quantum circuit</title>
+  <meta name="description"
+    content="Generate a quantum circuit diagram and a circuit using our online tool. Convert Qemmet shorthand notation into Qiskit, QASM3, SVG, and PNG easily.">
+
+  <!-- Facebook Meta Tags -->
+  <meta property="og:url" content="https://rootenginear.github.io/Qemmet/">
+  <meta property="og:type" content="website">
+  <meta property="og:title"
+    content="Qemmet — Shorthand notation for generating a quantum circuit">
+  <meta property="og:description"
+    content="Generate a quantum circuit diagram and a circuit using our online tool. Convert Qemmet shorthand notation into Qiskit, QASM3, SVG, and PNG easily.">
+  <meta property="og:image" content="https://rootenginear.github.io/Qemmet/social.jpg">
+
+  <!-- Twitter Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta property="twitter:domain" content="rootenginear.github.io">
+  <meta property="twitter:url" content="https://rootenginear.github.io/Qemmet/">
+  <meta name="twitter:title"
+    content="Qemmet — Shorthand notation for generating a quantum circuit">
+  <meta name="twitter:description"
+    content="Generate a quantum circuit diagram and a circuit using our online tool. Convert Qemmet shorthand notation into Qiskit, QASM3, SVG, and PNG easily.">
+  <meta name="twitter:image" content="https://rootenginear.github.io/Qemmet/social.jpg">
+
+  <!-- Meta Tags Generated via https://www.opengraph.xyz -->
+
+  <!-- Favicon -->
+  <meta name="theme-color" content="#202B38">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
+  <link rel="manifest" href="./site.webmanifest">
+
+  <!-- Styles -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
 
-  <link rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css">
+
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&display=swap"
+    rel="stylesheet">
+
   <link rel="stylesheet"
     href="https://cdn.jsdelivr.net/gh/rootEnginear/Qemmet/fonts/fonts.css">
 
-  <style>
-    .row {
-      display: flex;
-    }
-
-    .col {
-      flex: 1 1 0;
-      margin-left: 0.5rem;
-      margin-right: 0.5rem;
-    }
-
-    .col:first-child {
-      margin-left: 0;
-    }
-
-    .col+.col {
-      margin-right: 0;
-    }
-
-    body {
-      overflow-y: scroll
-    }
-
-    input,
-    select {
-      width: 100%;
-      box-sizing: border-box
-    }
-
-    input[type="color"] {
-      padding: 4px
-    }
-
-    a {
-      cursor: pointer;
-    }
-
-    .svg-container {
-      overflow: scroll hidden;
-      text-align: center;
-
-      border-radius: 6px;
-      background: var(--background-alt);
-
-      max-height: 40vh
-    }
-
-    .svg-container>svg {
-      max-height: inherit;
-      width: auto;
-    }
-  </style>
-
-  <title>Qemmet</title>
-  <meta name="description" content="A way to generate a Qiskit 0.3X or OpenQASM 3.0 code with a shorthand
-  notation.">
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
   <main id="app">
     <header>
-      <h1>Qemmet</h1>
+      <h1 class="row" style="align-items:center">
+        <img src="1f6f8.svg" alt="" decoding="async" width="36"
+          height="36" style="width:36px;margin-right:.5ch">
+        Qemmet
+      </h1>
       <p>A shorthand notation for generating a quantum circuit.</p>
       <details>
         <summary>A shorthand notation?</summary>
@@ -83,16 +73,16 @@
           Well, I was creating some random circuits in Qiskit and I'm kind of lazy. So I
           thought, "It would be cool if we had something like Emmet, but in Quantum". So I
           create a new syntax that can hold enough information about a circuit and, yeah,
-          this
-          is it. Now I can write a simple Bell's state in a syntax of <code>h1cx12</code>
-          instead of a lengthy <code>qc.h(0)</code> and <code>qc.cx(0,1)</code>.
+          this is it. Now I can write a simple Bell's state in a syntax of
+          <code>h1cx12</code> instead of a lengthy <code>qc.h(0)</code> and
+          <code>qc.cx(0,1)</code>.
         </p>
         <h2>How does this work?</h2>
         <p>
           Good question! Since writing all of the rules here are going to be pretty long
-          and
-          boring, I suggest you to look up <a
-            href="https://github.com/rootEnginear/Qemmet/wiki">our wiki</a> to learn more
+          and boring, I suggest you to look up <a
+            href="https://github.com/rootEnginear/Qemmet/wiki" target="_blank"
+            rel="noopener nofollow noreferrer">our wiki</a> to learn more
           about the syntax and mechanics behind Qemmet.
         </p>
         <h2>Example circuits:</h2>
@@ -101,7 +91,7 @@
           <li v-for="({code, name}) in EXAMPLES" :key="code">
             <a @click="setQemmet(code)">
               <code>{{code}}</code>
-            </a>: {{name}}.
+            </a>: <span v-html="name"></span>.
           </li>
         </ul>
       </details>
@@ -109,12 +99,13 @@
     <hr>
     <section>
       <label for="raw_string" class="row">
-        <span class="col">Input Qemmet string:</span>
-        <a @click="demonstration">Show me step by step</a>
+        <span class="col">Qemmet String:</span>
+        <!-- <a @click="demonstration">Show me step by step</a> -->
       </label>
-      <input id="raw_string" type="text" v-model.trim="raw_string">
+      <input id="raw_string" type="text" v-model.trim="raw_string"
+        style="font-family:monospace;font-size:.9rem">
       <label for="svg-preview" class="row">
-        <span class="col">Circuit Diagram:</span>
+        <span class="col">Quantum Circuit Diagram:</span>
         <span>
           Download <a @click="downloadSvg">SVG</a>/<a
             @click="downloadPng">PNG</a>
@@ -146,12 +137,7 @@
         </div>
         <div class="row">
           <div class="col">
-            <label class="row">
-              <span class="col">Background color</span>
-              <a @click="makeBackgroundTransparent"
-                style="white-space:nowrap">Make
-                Transparent</a>
-            </label>
+            <label for="background_color">Background color</label>
             <input type="color" id="background_color" v-model="background_color_input">
             <label for="line_color">Line color</label>
             <input type="color" id="line_color" v-model="line_color_input">
@@ -165,7 +151,9 @@
           </div>
         </div>
       </details>
-      <pre><code style="overflow:scroll;height:40vh">{{transpiled_code}}</code></pre>
+      <div style="margin:-10px 0 0">Generated Source Code:</div>
+      <pre
+        style="margin:4px 0"><code style="overflow:scroll;height:40vh">{{transpiled_code}}</code></pre>
       <div class="row" style="align-items:flex-end">
         <div class="col">
           <label for="target_lang">Target Language:</label>
@@ -191,9 +179,14 @@
           href="https://github.com/rootEnginear" target="_blank"
           rel="noopener nofollow noreferrer">rootEnginear</a> All right reserved.
       </div>
-      <small>
+      <small style="margin-bottom:1rem">
         MIT License | <a href="https://github.com/rootEnginear/Qemmet" target="_blank"
-          rel="noopener nofollow noreferrer">GitHub</a>
+          rel="noopener nofollow noreferrer">GitHub Repository</a>
+      </small>
+      <small>
+        If you love this webpage design, please check out <a
+          href="https://watercss.kognise.dev/" target="_blank"
+          rel="noopener nofollow noreferrer">Water.css</a>.
       </small>
     </footer>
 
