@@ -16,7 +16,7 @@ const getGateString = (gate_info) => {
     const expanded_gate_info = expandMeasurements(gate_info);
     const processed_qemmet_string = expanded_gate_info
         .map(({ control_count, gate_name, gate_params, gate_registers, target_bit, condition }) => {
-        const control_string = 'c'.repeat(control_count);
+        const control_string = 'c'.repeat(control_count - +(gate_name === 'sw'));
         const param_string = gate_params ? `[${gate_params}]` : '';
         const measure_target = target_bit.length ? `->${target_bit}` : '';
         const condition_string = condition
