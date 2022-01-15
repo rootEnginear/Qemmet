@@ -23,57 +23,68 @@ export const translateQemmetString = ({
 	gate_info,
 }: QemmetParserOutput) => {
 	const qiskit_string = gate_info
-		.map(({ control_count, gate_name: original_gate_name, gate_params, gate_registers }) => {
-			// translate gate name
-			const gate_name = getQiskitGateName(original_gate_name)
+		.map(
+			({
+				control_count,
+				gate_name: original_gate_name,
+				gate_params,
+				gate_registers,
+				target_bit,
+			}) => {
+				// translate gate name
+				const gate_name = getQiskitGateName(original_gate_name)
 
-			// measure instruction
-			if (gate_name === 'm') return `qc.measure(${gate_registers[0]}, ${gate_params})\n`
+				// measure instruction
+				if (gate_name === 'm')
+					return `qc.measure(${gate_registers[0]}, ${target_bit ?? gate_registers[0]})\n`
 
-			// reset instruction
-			if (gate_name === 'r')
-				return `${gate_registers.map((register) => `qc.reset(${register})`).join('\n')}\n`
+				// reset instruction
+				if (gate_name === 'r')
+					return `${gate_registers.map((register) => `qc.reset(${register})`).join('\n')}\n`
 
-			// barrier instruction
-			if (gate_name === 'b') return `qc.barrier(${gate_registers.join(', ')})\n`
+				// barrier instruction
+				if (gate_name === 'b') return `qc.barrier(${gate_registers.join(', ')})\n`
 
-			// parameterized gate
-			if (gate_params) {
+				// parameterized gate
+				if (gate_params) {
+					if (control_count === 0)
+						return `${gate_registers
+							.map((register) => `qc.${gate_name}(${gate_params}, [${register}])`)
+							.join('\n')}\n`
+
+					// controlled gate
+					return `qc.append(${getQiskitLibGateName(
+						gate_name
+					)}Gate(${gate_params}).control(${control_count}), [${gate_registers.join(', ')}])\n`
+				}
+
+				// swap gate
+				if (gate_name === 'swap') {
+					if (control_count === 1) return `qc.swap(${gate_registers.join(', ')})\n`
+					return `qc.append(${getQiskitLibGateName(gate_name)}Gate().control(${
+						control_count - 1
+					}), [${gate_registers.join(', ')}])\n`
+				}
+
+				// normal gate
 				if (control_count === 0)
-					return `${gate_registers
-						.map((register) => `qc.${gate_name}(${gate_params}, [${register}])`)
-						.join('\n')}\n`
+					return `${gate_registers.map((register) => `qc.${gate_name}(${register})`).join('\n')}\n`
 
 				// controlled gate
 				return `qc.append(${getQiskitLibGateName(
 					gate_name
-				)}Gate(${gate_params}).control(${control_count}), [${gate_registers.join(', ')}])\n`
+				)}Gate().control(${control_count}), [${gate_registers.join(', ')}])\n`
 			}
-
-			// swap gate
-			if (gate_name === 'swap') {
-				if (control_count === 1) return `qc.swap(${gate_registers.join(', ')})\n`
-				return `qc.append(${getQiskitLibGateName(gate_name)}Gate().control(${
-					control_count - 1
-				}), [${gate_registers.join(', ')}])\n`
-			}
-
-			// normal gate
-			if (control_count === 0)
-				return `${gate_registers.map((register) => `qc.${gate_name}(${register})`).join('\n')}\n`
-
-			// controlled gate
-			return `qc.append(${getQiskitLibGateName(
-				gate_name
-			)}Gate().control(${control_count}), [${gate_registers.join(', ')}])\n`
-		})
+		)
 		.join('')
 
 	return `from numpy import pi, e as euler
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit.library.standard_gates import SdgGate, TdgGate, SXGate, RXGate, RYGate, RZGate, U1Gate, U2Gate, U3Gate, SwapGate, XGate, YGate, ZGate, HGate, PhaseGate, SGate, TGate
 
-qc = QuantumCircuit(${qubit_count}${bit_count ? `, ${bit_count}` : ''})
+qr = QuantumRegister(${qubit_count})
+cr = ClassicalRegister(${bit_count})
+qc = QuantumCircuit(qr, cr)
 
 ${qiskit_string}`
 }

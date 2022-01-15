@@ -39,7 +39,6 @@ const DEFAULT_OPTIONS = {
 	LINE_TRAIL_LEFT: 12,
 	LINE_TRAIL_RIGHT: 12,
 	LINE_SPACE: 3,
-	PARAM_Y_SHIFT: -1,
 	SVG_MARGIN: 8,
 	BACKGROUND_COLOR: '#ffffff',
 	LINE_COLOR: '#222222',
@@ -56,10 +55,12 @@ new Vue({
 	el: '#app',
 	data: {
 		EXAMPLES,
-		// raw_string: '2;;m->1',
-		raw_string: "4;3;x4 h 'ccx134 h1-3 x1-3 ccz3-1 x1-3 h1-3'*2 m1-3",
-		// raw_string: ';;x2h2EEFFEEFFEEFF;E=rm,F=rhcxhm',
+		// raw_string: "4;3;x4 h 'ccx134 h1-3 x1-3 ccz3-1 x1-3 h1-3'*2 m1-3",
 		// raw_string: '4;;h4p814p424p234h3p413p223h2p2h1sw14sw23;p8=cp[pi/8],p4=cp[pi/4],p2=cp[pi/2]',
+		// raw_string: '2;;m->1',
+		// raw_string: ';;x2h2EEFFEEFFEEFF;E=rm,F=rhcxhm',
+		// raw_string: ';;h2cx23cxh1m12x3?2z3?1',
+		raw_string: '2;;xx?1x1?1x12?1cx?1cx2?1p[]?1rx[]1?1ry[]12?1crz[]?1cu1[]2?1cu2[]?1cu3[]2?1',
 		target_lang: 'qiskit03',
 		// target_lang: 'openqasm3',
 		x_margin: DEFAULT_OPTIONS.X_MARGIN,
@@ -68,7 +69,6 @@ new Vue({
 		line_trail_left: DEFAULT_OPTIONS.LINE_TRAIL_LEFT,
 		line_trail_right: DEFAULT_OPTIONS.LINE_TRAIL_RIGHT,
 		line_space: DEFAULT_OPTIONS.LINE_SPACE,
-		param_y_shift: DEFAULT_OPTIONS.PARAM_Y_SHIFT,
 		svg_margin: DEFAULT_OPTIONS.SVG_MARGIN,
 
 		background_color_input: DEFAULT_OPTIONS.BACKGROUND_COLOR,
@@ -93,7 +93,8 @@ new Vue({
 			const [qemmet_info, error] = this.qemmet_info
 			if (error) return error
 
-			// console.log(qemmet_info)
+			console.log(qemmet_info.gate_info)
+			// console.log(JSON.stringify(qemmet_info.gate_info, null, 2))
 			console.log('Expanded string:', getQemmetString(qemmet_info))
 			switch (this.target_lang) {
 				case 'openqasm3':
@@ -113,7 +114,6 @@ new Vue({
 					LINE_TRAIL_LEFT: this.line_trail_left,
 					LINE_TRAIL_RIGHT: this.line_trail_right,
 					LINE_SPACE: this.line_space,
-					PARAM_Y_SHIFT: this.param_y_shift,
 					SVG_MARGIN: this.svg_margin,
 					BACKGROUND_COLOR: this.background_color,
 					LINE_COLOR: this.line_color,

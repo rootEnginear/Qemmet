@@ -1,4 +1,9 @@
-import { QemmetGateInfo, QemmetParserOutput, QemmetStringOptions } from './types'
+import {
+	QemmetGateInfo,
+	QemmetParserOutput,
+	QemmetStringOptions,
+	ClassicalBitCondition,
+} from './types'
 
 // Utils
 const _pipe = (a: (fn_arg: any) => any, b: (fn_arg: any) => any) => (arg: any) => b(a(arg))
@@ -135,7 +140,7 @@ const parseMetadata = (qemmet_string: string) => {
 const tokenizeGateString = (gate_string: string) => [
 	...gate_string.matchAll(
 		new RegExp(
-			`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[((?:[\\d\\s,+\\-*/]|pi|euler)*?)\\])?([\\d\\s]*)(?:->(\\d+))?`,
+			`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[((?:[\\d\\s,+\\-*/]|pi|euler)*?)\\])?([\\d\\s]*)(?:->(\\d+))?(?:\\?([01.]+))?`,
 			'g'
 		)
 	),
@@ -194,9 +199,9 @@ export const ensureParameterizedGate = (gate_info: QemmetGateInfo[]): QemmetGate
 	})
 }
 
-// instructions should not have any controls
+// instructions should not have any controls or classical condition
 export const ensureInstruction = (gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
-	return gate_info.map(({ gate_name, control_count, ...rest }) => {
+	return gate_info.map(({ gate_name, control_count, condition, ...rest }) => {
 		switch (gate_name) {
 			case 'r':
 			case 'b':
@@ -212,6 +217,7 @@ export const ensureInstruction = (gate_info: QemmetGateInfo[]): QemmetGateInfo[]
 			...rest,
 			gate_name,
 			control_count,
+			condition,
 		}
 	})
 }
@@ -265,47 +271,42 @@ const parseGateParams = (gate_params: string | undefined) => {
 	return ''
 }
 
-const formatTargetBit = (
-	target_bit: number | null,
-	register: number,
-	options: QemmetStringOptions
-) => {
-	if (target_bit == null) return register
-	const shifted_params = options.start_from_one ? target_bit - 1 : target_bit
-	return shifted_params
-}
+const is0or1 = (n: number): n is Exclude<ClassicalBitCondition, null> => n === 0 || n === 1
 
-const formatMeasure = (
-	gate_info: QemmetGateInfo[],
-	options: QemmetStringOptions
-): QemmetGateInfo[] => {
-	return gate_info
-		.map(({ control_count, gate_name, gate_params, gate_registers, target_bit }) =>
-			gate_name === 'm'
-				? gate_registers.map((reg) => ({
-						control_count,
-						gate_name,
-						gate_params,
-						gate_registers: [reg],
-						target_bit: formatTargetBit(target_bit, reg, options),
-				  }))
-				: { control_count, gate_name, gate_params, gate_registers, target_bit }
-		)
-		.flat()
-}
+const parseClassicalCondition = (
+	condition: string,
+	bit_count: number
+): QemmetGateInfo['condition'] =>
+	[...condition.padEnd(bit_count, '.').replace(/\.+$/g, '')].map((b) => {
+		// fun fact: +"." || +"-." will return NaN,
+		// but +".0" || +"-.0" will return 0
+		const b_num = +b
+		return is0or1(b_num) ? b_num : null
+	})
 
 const parseGateToken = (
 	gate_token: RegExpMatchArray[],
 	qubit_count: number,
+	bit_count: number,
 	options: QemmetStringOptions
 ): QemmetGateInfo[] => {
 	const structured_data = gate_token.map(
-		([, control_string, gate_name, _gate_params, _gate_registers, _target_bit]) => {
+		([, control_string, gate_name, _gate_params, _gate_registers, _target_bit, _condition]) => {
 			const control_count = control_string.length + +(gate_name === 'sw')
 			const gate_params = parseGateParams(_gate_params)
 			const gate_registers = parseRegister(_gate_registers, qubit_count, control_count, options)
+
 			const target_bit_num = +_target_bit
-			const target_bit = gate_name === 'm' ? (isNaN(target_bit_num) ? null : target_bit_num) : null
+			const target_bit =
+				gate_name === 'm'
+					? isNaN(target_bit_num)
+						? gate_registers
+						: new Array(gate_registers.length).fill(target_bit_num - +options.start_from_one)
+					: []
+
+			const condition: QemmetGateInfo['condition'] = _condition
+				? parseClassicalCondition(_condition, bit_count)
+				: undefined
 
 			return {
 				control_count,
@@ -313,11 +314,12 @@ const parseGateToken = (
 				gate_params,
 				gate_registers,
 				target_bit,
+				condition,
 			}
 		}
 	)
 
-	return formatMeasure(structured_data, options)
+	return structured_data
 }
 
 const getMaxRegister = (register_count: number, gate_info: QemmetGateInfo[]) =>
@@ -326,11 +328,9 @@ const getMaxRegister = (register_count: number, gate_info: QemmetGateInfo[]) =>
 	}, register_count - 1) + 1
 
 const getMaxBitRegister = (bit_count: number, gate_info: QemmetGateInfo[]) =>
-	gate_info
-		.filter(({ gate_name }) => gate_name === 'm')
-		.reduce((max, { target_bit }) => {
-			return Math.max(max, target_bit ?? -Infinity)
-		}, bit_count - 1) + 1
+	gate_info.reduce((max, { target_bit, condition }) => {
+		return Math.max(max, ...target_bit, (condition ?? []).length - 1 ?? max)
+	}, bit_count - 1) + 1
 
 export const normalizeAdjacentGate = (raw_gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
 	let gate_info = JSON.parse(JSON.stringify(raw_gate_info)) as QemmetGateInfo[]
@@ -371,7 +371,7 @@ export const parseQemmetString = (qemmet_string: string): QemmetParserOutput => 
 		options,
 	} = parseMetadata(qemmet_string)
 	const gate_token = tokenizeGateString(gate_string)
-	const raw_gate_info = parseGateToken(gate_token, raw_qubit_count, options)
+	const raw_gate_info = parseGateToken(gate_token, raw_qubit_count, raw_bit_count, options)
 
 	// Failsafe
 	const safe_gate_info = failsafePipeline(raw_gate_info)

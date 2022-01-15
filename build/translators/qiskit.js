@@ -18,12 +18,12 @@ const getQiskitLibGateName = (gate_name) => {
 };
 export const translateQemmetString = ({ qubit_count, bit_count, gate_info, }) => {
     const qiskit_string = gate_info
-        .map(({ control_count, gate_name: original_gate_name, gate_params, gate_registers }) => {
+        .map(({ control_count, gate_name: original_gate_name, gate_params, gate_registers, target_bit, }) => {
         // translate gate name
         const gate_name = getQiskitGateName(original_gate_name);
         // measure instruction
         if (gate_name === 'm')
-            return `qc.measure(${gate_registers[0]}, ${gate_params})\n`;
+            return `qc.measure(${gate_registers[0]}, ${target_bit ?? gate_registers[0]})\n`;
         // reset instruction
         if (gate_name === 'r')
             return `${gate_registers.map((register) => `qc.reset(${register})`).join('\n')}\n`;
@@ -53,10 +53,12 @@ export const translateQemmetString = ({ qubit_count, bit_count, gate_info, }) =>
     })
         .join('');
     return `from numpy import pi, e as euler
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit.library.standard_gates import SdgGate, TdgGate, SXGate, RXGate, RYGate, RZGate, U1Gate, U2Gate, U3Gate, SwapGate, XGate, YGate, ZGate, HGate, PhaseGate, SGate, TGate
 
-qc = QuantumCircuit(${qubit_count}${bit_count ? `, ${bit_count}` : ''})
+qr = QuantumRegister(${qubit_count})
+cr = ClassicalRegister(${bit_count})
+qc = QuantumCircuit(qr, cr)
 
 ${qiskit_string}`;
 };
