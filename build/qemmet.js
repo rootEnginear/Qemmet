@@ -207,12 +207,18 @@ const parseGateParams = (gate_params) => {
     return '';
 };
 const is0or1 = (n) => n === 0 || n === 1;
-const parseClassicalCondition = (condition, bit_count) => [...condition.padEnd(bit_count, '.').replace(/\.+$/g, '')].map((b) => {
-    // fun fact: +"." || +"-." will return NaN,
-    // but +".0" || +"-.0" will return 0
-    const b_num = +b;
-    return is0or1(b_num) ? b_num : null;
-});
+const parseClassicalCondition = (condition, bit_count) => {
+    // condition is [01.]+
+    const formatted_condition = condition.padEnd(bit_count, '.').replace(/\.+$/g, '');
+    if (!formatted_condition.length)
+        return undefined;
+    return [...formatted_condition].map((b) => {
+        // fun fact: +"." || +"-." will return NaN,
+        // but +".0" || +"-.0" will return 0
+        const b_num = +b;
+        return is0or1(b_num) ? b_num : null;
+    });
+};
 const parseGateToken = (gate_token, qubit_count, bit_count, options) => {
     const structured_data = gate_token.map(([, control_string, gate_name, _gate_params, _gate_registers, _target_bit, _condition]) => {
         const control_count = control_string.length + +(gate_name === 'sw');
