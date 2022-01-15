@@ -1,0 +1,50 @@
+.row {
+	display: flex;
+}
+
+.col {
+	flex: 1 1 0;
+	margin-left: 0.5rem;
+	margin-right: 0.5rem;
+}
+
+.col:first-child {
+	margin-left: 0;
+}
+
+.col + .col {
+	margin-right: 0;
+}
+
+body {
+	overflow-y: scroll;
+}
+
+input,
+select {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+input[type='color'] {
+	padding: 4px;
+}
+
+a {
+	cursor: pointer;
+}
+
+.svg-container {
+	overflow: scroll hidden;
+	text-align: center;
+
+	border-radius: 6px;
+	background: var(--background-alt);
+
+	max-height: 40vh;
+}
+
+.svg-container > svg {
+	max-height: inherit;
+	width: auto;
+}

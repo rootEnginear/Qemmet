@@ -6,76 +6,36 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- SEO -->
+  <title>Qemmet</title>
+  <meta name="description"
+    content="A shorthand notation for generating a quantum circuit.">
+
+  <!-- Favicon -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+
+  <!-- Styles -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 
-  <link rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css">
   <link rel="stylesheet"
     href="https://cdn.jsdelivr.net/gh/rootEnginear/Qemmet/fonts/fonts.css">
 
-  <style>
-    .row {
-      display: flex;
-    }
-
-    .col {
-      flex: 1 1 0;
-      margin-left: 0.5rem;
-      margin-right: 0.5rem;
-    }
-
-    .col:first-child {
-      margin-left: 0;
-    }
-
-    .col+.col {
-      margin-right: 0;
-    }
-
-    body {
-      overflow-y: scroll
-    }
-
-    input,
-    select {
-      width: 100%;
-      box-sizing: border-box
-    }
-
-    input[type="color"] {
-      padding: 4px
-    }
-
-    a {
-      cursor: pointer;
-    }
-
-    .svg-container {
-      overflow: scroll hidden;
-      text-align: center;
-
-      border-radius: 6px;
-      background: var(--background-alt);
-
-      max-height: 40vh
-    }
-
-    .svg-container>svg {
-      max-height: inherit;
-      width: auto;
-    }
-  </style>
-
-  <title>Qemmet</title>
-  <meta name="description" content="A way to generate a Qiskit 0.3X or OpenQASM 3.0 code with a shorthand
-  notation.">
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
   <main id="app">
     <header>
-      <h1>Qemmet</h1>
+      <h1 class="row" style="align-items:center">
+        <img src="1f6f8.svg" alt="" decoding="async" width="36"
+          height="36" style="width:36px;margin-right:.5ch">
+        Qemmet
+      </h1>
       <p>A shorthand notation for generating a quantum circuit.</p>
       <details>
         <summary>A shorthand notation?</summary>
@@ -92,7 +52,8 @@
           Good question! Since writing all of the rules here are going to be pretty long
           and
           boring, I suggest you to look up <a
-            href="https://github.com/rootEnginear/Qemmet/wiki">our wiki</a> to learn more
+            href="https://github.com/rootEnginear/Qemmet/wiki" target="_blank"
+            rel="noopener nofollow noreferrer">our wiki</a> to learn more
           about the syntax and mechanics behind Qemmet.
         </p>
         <h2>Example circuits:</h2>
@@ -110,9 +71,10 @@
     <section>
       <label for="raw_string" class="row">
         <span class="col">Input Qemmet string:</span>
-        <a @click="demonstration">Show me step by step</a>
+        <!-- <a @click="demonstration">Show me step by step</a> -->
       </label>
-      <input id="raw_string" type="text" v-model.trim="raw_string">
+      <input id="raw_string" type="text" v-model.trim="raw_string"
+        style="font-family:monospace;font-size:.9rem">
       <label for="svg-preview" class="row">
         <span class="col">Circuit Diagram:</span>
         <span>
@@ -146,12 +108,7 @@
         </div>
         <div class="row">
           <div class="col">
-            <label class="row">
-              <span class="col">Background color</span>
-              <a @click="makeBackgroundTransparent"
-                style="white-space:nowrap">Make
-                Transparent</a>
-            </label>
+            <label for="background_color">Background color</label>
             <input type="color" id="background_color" v-model="background_color_input">
             <label for="line_color">Line color</label>
             <input type="color" id="line_color" v-model="line_color_input">

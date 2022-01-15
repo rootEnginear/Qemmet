@@ -15,7 +15,7 @@ const EXAMPLES = [
 		name: '2-bit randomizer',
 	},
 	{
-		code: "4;3;x4 h 'ccx134 h1-3 x1-3 ccz3-1 x1-3 h1-3'*2 m1-3",
+		code: "4;3;x4h'ccx134h1-3x1-3ccz3-1x1-3h1-3'*2m1-3",
 		name: "Grover's search",
 	},
 	{
@@ -25,6 +25,10 @@ const EXAMPLES = [
 	{
 		code: '3;;h2cx23cxh1m12cx23cz13',
 		name: 'Quantum teleportation',
+	},
+	{
+		code: '3;;h2cx23cxh1m12x3?.1z3?1',
+		name: 'Quantum teleportation using classical condition',
 	},
 	{
 		code: '4;;h4p814p424p234h3p413p223h2p2h1sw14sw23;p8=cp[pi/8],p4=cp[pi/4],p2=cp[pi/2]',
@@ -55,12 +59,13 @@ new Vue({
 	el: '#app',
 	data: {
 		EXAMPLES,
-		// raw_string: "4;3;x4 h 'ccx134 h1-3 x1-3 ccz3-1 x1-3 h1-3'*2 m1-3",
+		raw_string: "4;3;x4 h 'ccx134 h1-3 x1-3 ccz3-1 x1-3 h1-3'*2 m1-3",
 		// raw_string: '4;;h4p814p424p234h3p413p223h2p2h1sw14sw23;p8=cp[pi/8],p4=cp[pi/4],p2=cp[pi/2]',
 		// raw_string: '2;;m->1',
 		// raw_string: ';;x2h2EEFFEEFFEEFF;E=rm,F=rhcxhm',
 		// raw_string: ';;h2cx23cxh1m12x3?2z3?1',
-		raw_string: '2;;xx?1x1?1x12?1cx?1cx2?1p[]?1rx[]1?1ry[]12?1crz[]?1cu1[]2?1cu2[]?1cu3[]2?1',
+		// raw_string:
+		// 	'3;;xx?1x1?1x12?1cx?1cx2?1p[]?1rx[]1?1ry[]12?1crz[]?1cu1[]2?1cu2[]?.1cu3[]2?1.101csw2?.10',
 		target_lang: 'qiskit03',
 		// target_lang: 'openqasm3',
 		x_margin: DEFAULT_OPTIONS.X_MARGIN,
@@ -93,7 +98,7 @@ new Vue({
 			const [qemmet_info, error] = this.qemmet_info
 			if (error) return error
 
-			console.log(qemmet_info.gate_info)
+			// console.log(qemmet_info.gate_info)
 			// console.log(JSON.stringify(qemmet_info.gate_info, null, 2))
 			console.log('Expanded string:', getQemmetString(qemmet_info))
 			switch (this.target_lang) {
@@ -182,9 +187,6 @@ new Vue({
 			}
 
 			img.src = url
-		},
-		makeBackgroundTransparent: function () {
-			this.background_color = 'transparent'
 		},
 	},
 	watch: {
