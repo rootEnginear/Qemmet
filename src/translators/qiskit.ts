@@ -1,4 +1,4 @@
-import { QemmetParserOutput } from '../types'
+import { QemmetGateInfo, QemmetParserOutput } from '../types'
 
 const getQiskitGateName = (gate_name: string) => {
 	if (gate_name === '/x') return 'sx'
@@ -17,12 +17,54 @@ const getQiskitLibGateName = (gate_name: string) => {
 	return capitalize(gate_name)
 }
 
+const generateConditionPermutation = (
+	condition: Exclude<QemmetGateInfo['condition'], undefined>
+): QemmetGateInfo['condition'][] => {
+	let permutation: Exclude<QemmetGateInfo['condition'], undefined>[] = []
+	condition.forEach((c, i) => {
+		if (c == null) {
+			if (i === 0) {
+				permutation = [[0], [1]]
+				return
+			} // continue
+			permutation = [...permutation.map((p) => p.concat(0)), ...permutation.map((p) => p.concat(1))]
+		} else {
+			if (i === 0) {
+				permutation = [[c]]
+				return
+			} // continue
+			permutation = [...permutation.map((p) => p.concat(c))]
+		}
+	})
+	return permutation
+}
+
+const expandClassicalConditions = (
+	gate_info: QemmetGateInfo[],
+	bit_count: number
+): QemmetGateInfo[] => {
+	return gate_info
+		.map(({ condition, ...rest }) => {
+			if (condition) {
+				const filled_condition = new Array(bit_count).fill(null).map((_, i) => condition[i])
+				return generateConditionPermutation(filled_condition).map((new_condition) => ({
+					...rest,
+					condition: new_condition,
+				}))
+			}
+			return { ...rest, condition }
+		})
+		.flat()
+}
+
 export const translateQemmetString = ({
 	qubit_count,
 	bit_count,
 	gate_info,
 }: QemmetParserOutput) => {
-	const qiskit_string = gate_info
+	const expanded_gate_info = expandClassicalConditions(gate_info, bit_count)
+
+	const qiskit_string = expanded_gate_info
 		.map(
 			({
 				control_count,
@@ -30,6 +72,7 @@ export const translateQemmetString = ({
 				gate_params,
 				gate_registers,
 				target_bit,
+				condition,
 			}) => {
 				// translate gate name
 				const gate_name = getQiskitGateName(original_gate_name)
@@ -45,35 +88,47 @@ export const translateQemmetString = ({
 				// barrier instruction
 				if (gate_name === 'b') return `qc.barrier(${gate_registers.join(', ')})\n`
 
+				// condition string
+				const condition_string = condition
+					? `.c_if(cr, ${parseInt(condition.reverse().join(''), 2)})`
+					: ''
+
 				// parameterized gate
 				if (gate_params) {
 					if (control_count === 0)
 						return `${gate_registers
-							.map((register) => `qc.${gate_name}(${gate_params}, [${register}])`)
+							.map(
+								(register) => `qc.${gate_name}(${gate_params}, [${register}])${condition_string}`
+							)
 							.join('\n')}\n`
 
 					// controlled gate
 					return `qc.append(${getQiskitLibGateName(
 						gate_name
-					)}Gate(${gate_params}).control(${control_count}), [${gate_registers.join(', ')}])\n`
+					)}Gate(${gate_params}).control(${control_count}), [${gate_registers.join(
+						', '
+					)}])${condition_string}\n`
 				}
 
 				// swap gate
 				if (gate_name === 'swap') {
-					if (control_count === 1) return `qc.swap(${gate_registers.join(', ')})\n`
+					if (control_count === 1)
+						return `qc.swap(${gate_registers.join(', ')})${condition_string}\n`
 					return `qc.append(${getQiskitLibGateName(gate_name)}Gate().control(${
 						control_count - 1
-					}), [${gate_registers.join(', ')}])\n`
+					}), [${gate_registers.join(', ')}])${condition_string}\n`
 				}
 
 				// normal gate
 				if (control_count === 0)
-					return `${gate_registers.map((register) => `qc.${gate_name}(${register})`).join('\n')}\n`
+					return `${gate_registers
+						.map((register) => `qc.${gate_name}(${register})${condition_string}`)
+						.join('\n')}\n`
 
 				// controlled gate
 				return `qc.append(${getQiskitLibGateName(
 					gate_name
-				)}Gate().control(${control_count}), [${gate_registers.join(', ')}])\n`
+				)}Gate().control(${control_count}), [${gate_registers.join(', ')}])${condition_string}\n`
 			}
 		)
 		.join('')
