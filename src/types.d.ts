@@ -3,6 +3,8 @@ export interface QemmetStringOptions {
 	normalize_adjacent_gates: boolean
 }
 
+export type ClassicalBitCondition = 0 | 1 | null
+
 export interface QemmetGateInfo {
 	control_count: number
 	gate_name: string
@@ -10,9 +12,11 @@ export interface QemmetGateInfo {
 	gate_registers: number[]
 	// target bit always = gate_registers for 1-1 matching, `[]` for other gates.
 	target_bit: number[]
-	// [bit, on equal] | don't have a condition
-	// eg: [1, 0] means do when bit 1 == 0
-	condition: [number, number] | null
+	// [0] is for equal to 0
+	// [1] is for equal to 1
+	// [null] is for optional (either 0 or 1 is fine)
+	// length equals to bit_count
+	condition?: ClassicalBitCondition[]
 }
 
 export interface QemmetParserOutput {

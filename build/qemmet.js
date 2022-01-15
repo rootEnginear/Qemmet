@@ -90,7 +90,7 @@ const parseMetadata = (qemmet_string) => {
     return { qubit_count, bit_count, gate_string, definition_string, options };
 };
 const tokenizeGateString = (gate_string) => [
-    ...gate_string.matchAll(new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[((?:[\\d\\s,+\\-*/]|pi|euler)*?)\\])?([\\d\\s]*)(?:->(\\d+))?(?:\\?(\\d+)(?:=(\\d+))?)?`, 'g')),
+    ...gate_string.matchAll(new RegExp(`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[((?:[\\d\\s,+\\-*/]|pi|euler)*?)\\])?([\\d\\s]*)(?:->(\\d+))?(?:\\?([01.]+))?`, 'g')),
 ];
 const ensureMultipleRegister = (registers, gate_control_length) => {
     // it's fine if it has no controls OR registers length are enough for the controls and the gate
@@ -154,7 +154,6 @@ export const ensureInstruction = (gate_info) => {
                     ...rest,
                     gate_name,
                     control_count: 0,
-                    condition: null, // m & r in the future might be condition-able
                 };
         }
         return {
@@ -207,8 +206,15 @@ const parseGateParams = (gate_params) => {
     }
     return '';
 };
-const parseGateToken = (gate_token, qubit_count, options) => {
-    const structured_data = gate_token.map(([, control_string, gate_name, _gate_params, _gate_registers, _target_bit, _condition_bit, _condition_value,]) => {
+const is0or1 = (n) => n === 0 || n === 1;
+const parseClassicalCondition = (condition, bit_count) => [...condition.padEnd(bit_count, '.').replace(/\.+$/g, '')].map((b) => {
+    // fun fact: +"." || +"-." will return NaN,
+    // but +".0" || +"-.0" will return 0
+    const b_num = +b;
+    return is0or1(b_num) ? b_num : null;
+});
+const parseGateToken = (gate_token, qubit_count, bit_count, options) => {
+    const structured_data = gate_token.map(([, control_string, gate_name, _gate_params, _gate_registers, _target_bit, _condition]) => {
         const control_count = control_string.length + +(gate_name === 'sw');
         const gate_params = parseGateParams(_gate_params);
         const gate_registers = parseRegister(_gate_registers, qubit_count, control_count, options);
@@ -218,10 +224,9 @@ const parseGateToken = (gate_token, qubit_count, options) => {
                 ? gate_registers
                 : new Array(gate_registers.length).fill(target_bit_num - +options.start_from_one)
             : [];
-        const condition_value = +_condition_value;
-        const condition = _condition_bit
-            ? [+_condition_bit - +options.start_from_one, isNaN(condition_value) ? 1 : condition_value]
-            : null;
+        const condition = _condition
+            ? parseClassicalCondition(_condition, bit_count)
+            : undefined;
         return {
             control_count,
             gate_name,
@@ -237,7 +242,7 @@ const getMaxRegister = (register_count, gate_info) => gate_info.reduce((max, { g
     return Math.max(max, ...gate_registers);
 }, register_count - 1) + 1;
 const getMaxBitRegister = (bit_count, gate_info) => gate_info.reduce((max, { target_bit, condition }) => {
-    return Math.max(max, ...target_bit, condition?.[0] ?? max);
+    return Math.max(max, ...target_bit, (condition ?? []).length - 1 ?? max);
 }, bit_count - 1) + 1;
 export const normalizeAdjacentGate = (raw_gate_info) => {
     let gate_info = JSON.parse(JSON.stringify(raw_gate_info));
@@ -265,7 +270,7 @@ export const normalizeAdjacentGate = (raw_gate_info) => {
 export const parseQemmetString = (qemmet_string) => {
     const { qubit_count: raw_qubit_count, bit_count: raw_bit_count, gate_string, definition_string, options, } = parseMetadata(qemmet_string);
     const gate_token = tokenizeGateString(gate_string);
-    const raw_gate_info = parseGateToken(gate_token, raw_qubit_count, options);
+    const raw_gate_info = parseGateToken(gate_token, raw_qubit_count, raw_bit_count, options);
     // Failsafe
     const safe_gate_info = failsafePipeline(raw_gate_info);
     // Normalize Adjacent Gate
