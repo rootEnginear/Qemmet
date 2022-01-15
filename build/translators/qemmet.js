@@ -19,7 +19,9 @@ const getGateString = (gate_info) => {
         const control_string = 'c'.repeat(control_count);
         const param_string = gate_params ? `[${gate_params}]` : '';
         const measure_target = target_bit.length ? `->${target_bit}` : '';
-        const condition_string = condition ? `?${condition[0]}=${condition[1]}` : '';
+        const condition_string = condition
+            ? `?${condition.map((c) => (c == null ? '.' : c)).join('')}`
+            : '';
         return `${control_string}${gate_name}${param_string}${gate_registers.join(' ')}${measure_target}${condition_string}`;
     })
         .join('');
