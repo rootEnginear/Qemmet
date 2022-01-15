@@ -145,7 +145,7 @@ const generateGate = (
 			.replace(/\*/g, '')
 			.replace(/\s/g, '')
 		const params_str = gate_params
-			? `<text class="params" x="${text_x}" y="${param_y}" dominant-baseline="middle" text-anchor="middle" stroke="white" stroke-width="3">(${formatted_params})</text><text class="params" x="${text_x}" y="${param_y}" dominant-baseline="middle" text-anchor="middle">(${formatted_params})</text>`
+			? `<text class="params" x="${text_x}" y="${param_y}" dominant-baseline="middle" text-anchor="middle" stroke-width="3">(${formatted_params})</text><text class="params" x="${text_x}" y="${param_y}" dominant-baseline="middle" text-anchor="middle">(${formatted_params})</text>`
 			: ''
 
 		// No param
@@ -197,40 +197,41 @@ const generateVerticalLine = (qubits: number[], column: number, options = {}) =>
 	}/>`
 }
 
-const generateConditionLine = (
-	qubit: number,
-	bit: number,
-	value: number,
-	qubit_count: number,
-	column: number
-) => {
-	const left_line = generateVerticalLine([qubit, qubit_count + bit], column, {
-		x_shift: -RENDER_STYLE.HALF_LINE_SPACE,
-	})
-	const right_line = generateVerticalLine([qubit, qubit_count + bit], column, {
-		x_shift: RENDER_STYLE.HALF_LINE_SPACE,
-	})
-	const dot = generateControls([qubit_count + bit], column)
-
-	const gate_x = (column + 1) * RENDER_STYLE.HORZ_BOX + RENDER_STYLE.KET_MARGIN
-	const gate_y = (qubit_count + bit) * RENDER_STYLE.VERT_BOX
-	const text_x = gate_x + RENDER_STYLE.HALF_GATE
-	const text_y = gate_y + RENDER_STYLE.GATE_SIZE * 0.875
-
-	const text = `<text class="params" x="${text_x}" y="${text_y}" dominant-baseline="middle" text-anchor="middle">=${value}</text>`
-
-	return left_line + right_line + dot + text
-}
-
-const generateControls = (qubits: number[], column: number) => {
+const generateControls = (qubits: number[], column: number, isNegative = false) => {
 	return qubits
 		.map((qubit) => {
 			const x = (column + 1) * RENDER_STYLE.HORZ_BOX + RENDER_STYLE.KET_MARGIN
 			const y = qubit * RENDER_STYLE.VERT_BOX
 
-			return `<use href="#control" x="${x}" y="${y}" width="32" height="32"></use>`
+			return `<use href="${
+				isNegative ? '#neg_control' : '#control'
+			}" x="${x}" y="${y}" width="32" height="32"></use>`
 		})
 		.join('')
+}
+
+const generateConditionLine = (
+	qubit: number,
+	values: Exclude<QemmetGateInfo['condition'], undefined>,
+	qubit_count: number,
+	column: number
+) => {
+	const max_bit = values.length - 1
+
+	const left_line = generateVerticalLine([qubit, qubit_count + max_bit], column, {
+		x_shift: -RENDER_STYLE.HALF_LINE_SPACE,
+	})
+	const right_line = generateVerticalLine([qubit, qubit_count + max_bit], column, {
+		x_shift: RENDER_STYLE.HALF_LINE_SPACE,
+	})
+
+	const dot = values
+		.map((value, bit) =>
+			value == null ? '' : generateControls([qubit_count + bit], column, !value)
+		)
+		.join('')
+
+	return left_line + right_line + dot
 }
 
 const splitControlledQubits = (qubits: number[], isSwapGate = false): [number[], number[]] => {
@@ -318,13 +319,7 @@ export const translateQemmetString = (
 				const controls = control_qb.length ? generateControls(control_qb, column) : ''
 
 				const condition_elements = condition
-					? generateConditionLine(
-							Math.max(...gate_registers),
-							condition[0],
-							condition[1],
-							qubit_count,
-							column
-					  )
+					? generateConditionLine(Math.max(...gate_registers), condition, qubit_count, column)
 					: ''
 
 				const gates =
@@ -359,6 +354,7 @@ export const translateQemmetString = (
     :root {
       --line-color: ${RENDER_STYLE.LINE_COLOR};
       --font-color: ${RENDER_STYLE.FONT_COLOR};
+      --background-color: ${RENDER_STYLE.BACKGROUND_COLOR};
       --gate-background-color: ${RENDER_STYLE.GATE_BACKGROUND_COLOR};
     }
 
@@ -372,6 +368,10 @@ export const translateQemmetString = (
       font-size: 0.625rem;
       font-style: normal;
     }
+
+    text[stroke-width] {
+			stroke: var(--background-color);
+		}
   </style>
 
   ${generateQubits(qubit_count, expanded_gate_info.length)}
@@ -404,12 +404,16 @@ export const translateQemmetString = (
     <circle cx="16" cy="16" r="4" fill="var(--line-color)"/>
   </symbol>
 
+  <symbol id="neg_control" width="32" height="32" viewBox="0 0 32 32">
+    <circle cx="16" cy="16" r="3.5" fill="var(--background-color)" stroke="var(--line-color)"/>
+  </symbol>
+
   <symbol id="arrow" width="10" height="8" viewBox="0 0 10 8">
     <path d="M0 0L5 8L10 0H0Z" fill="var(--line-color)"/>
   </symbol>
 
   <symbol id="target" width="32" height="32" viewBox="0 0 32 32">
-    <circle cx="16" cy="16" r="11.5" fill="var(--gate-background-color)" stroke="var(--line-color)"/>
+    <circle cx="16" cy="16" r="11.5" fill="var(--background-color)" stroke="var(--line-color)"/>
     <path d="M16 4V28M28 16H4" stroke="var(--line-color)"/>
   </symbol>
 
