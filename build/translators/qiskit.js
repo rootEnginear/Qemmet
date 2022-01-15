@@ -53,10 +53,12 @@ export const translateQemmetString = ({ qubit_count, bit_count, gate_info, }) =>
     })
         .join('');
     return `from numpy import pi, e as euler
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit.library.standard_gates import SdgGate, TdgGate, SXGate, RXGate, RYGate, RZGate, U1Gate, U2Gate, U3Gate, SwapGate, XGate, YGate, ZGate, HGate, PhaseGate, SGate, TGate
 
-qc = QuantumCircuit(${qubit_count}${bit_count ? `, ${bit_count}` : ''})
+qr = QuantumRegister(${qubit_count})
+cr = ClassicalRegister(${bit_count})
+qc = QuantumCircuit(qr, cr)
 
 ${qiskit_string}`;
 };
