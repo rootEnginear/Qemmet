@@ -21,6 +21,7 @@ export const translateQemmetString = ({
 				gate_params,
 				gate_registers,
 				target_bit,
+				condition,
 			}) => {
 				// translate gate name
 				const gate_name = getQASMGateName(original_gate_name)
@@ -37,18 +38,26 @@ export const translateQemmetString = ({
 				if (gate_name === 'b')
 					return `barrier ${gate_registers.map((register) => `qr[${register}]`).join(', ')};\n`
 
+				// condition string
+				const condition_string = condition
+					? `if (${condition
+							.map((value, bit) => (value == null ? '' : `cr[${bit}] == ${value}`))
+							.filter((s) => s)
+							.join(' && ')}) `
+					: ''
+
 				// parameterized gate
 				if (gate_params) {
 					if (control_count === 0)
 						return `${gate_registers
-							.map((register) => `${gate_name}(${gate_params}) qr[${register}]`)
+							.map((register) => `${condition_string}${gate_name}(${gate_params}) qr[${register}]`)
 							.join(';\n')};\n`
 
 					// controlled gate
 					const control_operation_string =
 						control_count === 1 ? 'control @' : `control(${control_count}) @`
 
-					return `${control_operation_string} ${gate_name}(${gate_params}) ${gate_registers
+					return `${condition_string}${control_operation_string} ${gate_name}(${gate_params}) ${gate_registers
 						.map((register) => `qr[${register}]`)
 						.join(', ')};\n`
 				}
@@ -62,7 +71,7 @@ export const translateQemmetString = ({
 							? 'control @ '
 							: `control(${control_count - 1}) @ `
 
-					return `${control_operation_string}${gate_name} ${gate_registers
+					return `${condition_string}${control_operation_string}${gate_name} ${gate_registers
 						.map((register) => `qr[${register}]`)
 						.join(', ')};\n`
 				}
@@ -70,14 +79,14 @@ export const translateQemmetString = ({
 				// normal gate
 				if (control_count === 0)
 					return `${gate_registers
-						.map((register) => `${gate_name} qr[${register}]`)
+						.map((register) => `${condition_string}${gate_name} qr[${register}]`)
 						.join(';\n')};\n`
 
 				// controlled gate
 				const control_operation_string =
 					control_count === 1 ? 'control @' : `control(${control_count}) @`
 
-				return `${control_operation_string} ${gate_name} ${gate_registers
+				return `${condition_string}${control_operation_string} ${gate_name} ${gate_registers
 					.map((register) => `qr[${register}]`)
 					.join(', ')};\n`
 			}
