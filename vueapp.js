@@ -20,7 +20,7 @@ const EXAMPLES = [
 	},
 	{
 		code: "3;;x4hh4'ccx134hxcczxh'*2m",
-		name: "Grover's search as above, just shorter by using the failsafe mechanisms",
+		name: "Grover's search as above, just shorter by using the <a href='https://github.com/rootEnginear/Qemmet/wiki/Failsafe-Mechanisms' target='_blank' rel='noopener nofollow noreferrer'>failsafe mechanisms</a>",
 	},
 	{
 		code: '3;;h2cx23cxh1m12cx23cz13',

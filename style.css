@@ -49,3 +49,7 @@ a {
 	max-height: inherit;
 	width: auto;
 }
+
+footer > * {
+	display: block;
+}

@@ -34,10 +34,11 @@
   <!-- Meta Tags Generated via https://www.opengraph.xyz -->
 
   <!-- Favicon -->
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#202B38">
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png">
+  <link rel="manifest" href="./site.webmanifest">
 
   <!-- Styles -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
@@ -72,15 +73,14 @@
           Well, I was creating some random circuits in Qiskit and I'm kind of lazy. So I
           thought, "It would be cool if we had something like Emmet, but in Quantum". So I
           create a new syntax that can hold enough information about a circuit and, yeah,
-          this
-          is it. Now I can write a simple Bell's state in a syntax of <code>h1cx12</code>
-          instead of a lengthy <code>qc.h(0)</code> and <code>qc.cx(0,1)</code>.
+          this is it. Now I can write a simple Bell's state in a syntax of
+          <code>h1cx12</code> instead of a lengthy <code>qc.h(0)</code> and
+          <code>qc.cx(0,1)</code>.
         </p>
         <h2>How does this work?</h2>
         <p>
           Good question! Since writing all of the rules here are going to be pretty long
-          and
-          boring, I suggest you to look up <a
+          and boring, I suggest you to look up <a
             href="https://github.com/rootEnginear/Qemmet/wiki" target="_blank"
             rel="noopener nofollow noreferrer">our wiki</a> to learn more
           about the syntax and mechanics behind Qemmet.
@@ -91,7 +91,7 @@
           <li v-for="({code, name}) in EXAMPLES" :key="code">
             <a @click="setQemmet(code)">
               <code>{{code}}</code>
-            </a>: {{name}}.
+            </a>: <span v-html="name"></span>.
           </li>
         </ul>
       </details>
@@ -99,13 +99,13 @@
     <hr>
     <section>
       <label for="raw_string" class="row">
-        <span class="col">Input Qemmet string:</span>
+        <span class="col">Qemmet String:</span>
         <!-- <a @click="demonstration">Show me step by step</a> -->
       </label>
       <input id="raw_string" type="text" v-model.trim="raw_string"
         style="font-family:monospace;font-size:.9rem">
       <label for="svg-preview" class="row">
-        <span class="col">Circuit Diagram:</span>
+        <span class="col">Quantum Circuit Diagram:</span>
         <span>
           Download <a @click="downloadSvg">SVG</a>/<a
             @click="downloadPng">PNG</a>
@@ -151,7 +151,9 @@
           </div>
         </div>
       </details>
-      <pre><code style="overflow:scroll;height:40vh">{{transpiled_code}}</code></pre>
+      <div style="margin:-10px 0 0">Generated Source Code:</div>
+      <pre
+        style="margin:4px 0"><code style="overflow:scroll;height:40vh">{{transpiled_code}}</code></pre>
       <div class="row" style="align-items:flex-end">
         <div class="col">
           <label for="target_lang">Target Language:</label>
@@ -177,9 +179,14 @@
           href="https://github.com/rootEnginear" target="_blank"
           rel="noopener nofollow noreferrer">rootEnginear</a> All right reserved.
       </div>
-      <small>
+      <small style="margin-bottom:1rem">
         MIT License | <a href="https://github.com/rootEnginear/Qemmet" target="_blank"
-          rel="noopener nofollow noreferrer">GitHub</a>
+          rel="noopener nofollow noreferrer">GitHub Repository</a>
+      </small>
+      <small>
+        If you love this webpage design, please check out <a
+          href="https://watercss.kognise.dev/" target="_blank"
+          rel="noopener nofollow noreferrer">Water.css</a>.
       </small>
     </footer>
 
