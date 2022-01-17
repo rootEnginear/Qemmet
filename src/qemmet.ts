@@ -32,18 +32,20 @@ const substituteDefinition = (raw_string: string, definition_string: string) => 
 }
 
 export const expandStringRepeatSyntax = (repeat_string: string): string => {
-	// replace ' with E000 and E000* with E001
-	const repl_quo = repeat_string.replace(/'/g, '\uE000').replace(/\uE000\*/g, '\uE001')
+	// replace `'` -> `\uE100` and `\uE100*` -> `\uE101`
+	const repl_quo = repeat_string.replace(/'/g, '\uE100').replace(/\uE100\*/g, '\uE101')
+
 	// expand
 	const expanded_text = repl_quo.replace(
-		/\uE000([^\uE000\uE001]*?)\uE001(\d+)/g,
+		/\uE100([^\uE100\uE101]*?)\uE101(\d+)/g,
 		(_, inner_text, repeat_count) => inner_text.repeat(+repeat_count)
 	)
+
 	// rollback
-	const final_text = expanded_text.replace(/\uE001/g, '\uE000*').replace(/\uE000/g, "'")
+	const final_text = expanded_text.replace(/\uE101/g, '\uE100*').replace(/\uE100/g, "'")
 	return final_text !== repeat_string
 		? expandStringRepeatSyntax(final_text)
-		: final_text.replace(/'/g, '')
+		: final_text.replace(/'/g, '') // remove remaining `'`
 }
 
 export const expandCharRepeatSyntax = (repeat_string: string): string => {
@@ -52,23 +54,11 @@ export const expandCharRepeatSyntax = (repeat_string: string): string => {
 	)
 	return expanded_text !== repeat_string
 		? expandCharRepeatSyntax(expanded_text)
-		: expanded_text.replace(/\*/g, '')
+		: expanded_text.replace(/\*/g, '') // remove remaining `*`
 }
 
-export const expandRepeatSyntax = (repeat_string: string): string => {
-	// preserve `*` inside `[...]`
-	const escaped_asterisk = repeat_string.replace(
-		/(?:\[(.*?)\])/g,
-		(_, inside) => `[${inside.replace(/\*/g, '\uE002')}]`
-	)
-	// execute syntax
-	const expanded_repeat_string = pipe(
-		expandStringRepeatSyntax,
-		expandCharRepeatSyntax
-	)(escaped_asterisk)
-	// rollback `*`
-	return expanded_repeat_string.replace(/\uE002/g, '*')
-}
+export const expandRepeatSyntax = (repeat_string: string): string =>
+	pipe(expandStringRepeatSyntax, expandCharRepeatSyntax)(repeat_string)
 
 export const generateRange = (start: string, end: string) => {
 	const max = Math.max(+start, +end)
@@ -79,26 +69,40 @@ export const generateRange = (start: string, end: string) => {
 	return range_string
 }
 
-const _expandRangeSyntax = (range_string: string): string => {
+const expandRangeSyntax = (range_string: string): string => {
 	const expanded_text = range_string.replace(/(\d+)-(\d+)/g, (_, start, end) =>
 		generateRange(start, end)
 	)
 	return expanded_text !== range_string
 		? expandRangeSyntax(expanded_text)
-		: expanded_text.replace(/-/g, '')
+		: expanded_text.replace(/-/g, '') // remove remaining `-`
 }
 
-export const expandRangeSyntax = (range_string: string): string => {
-	// preserve `->`
-	const escaped_arrow = range_string.replace(/->/g, '\uE000')
+const preprocessString = (string: string): string => {
+	// preserve `*` & `-` inside `[...]`
+	// `*` -> `\uE000`
+	// `-` -> `\uE001`
+	// preserve `->` everywhere
+	// `->` -> `\uE002`
+	const escaped = string
+		.replace(
+			/(?:\[(.*?)\])/g,
+			(_, inside) => `[${inside.replace(/\*/g, '\uE000').replace(/-/g, '\uE001')}]`
+		)
+		.replace(/->/g, '\uE002')
+
 	// execute syntax
-	const expanded_range_string = _expandRangeSyntax(escaped_arrow)
-	// rollback `->`
-	return expanded_range_string.replace(/\uE000/g, '->')
-}
+	const expanded = pipe(expandRepeatSyntax, expandRangeSyntax)(escaped)
 
-const preprocessString = (string: string): string =>
-	pipe(expandRepeatSyntax, expandRangeSyntax)(string)
+	// rollback
+	// `\uE000` -> `*`
+	// `\uE001` -> `-`
+	// `\uE002` -> `->`
+	return expanded
+		.replace(/\uE000/g, '*')
+		.replace(/\uE001/g, '-')
+		.replace(/\uE002/g, '->')
+}
 
 export const transformOptionString = (option_string: string): QemmetStringOptions => {
 	const formatted_option_string = option_string.padEnd(2, ' ').slice(0, 2)
