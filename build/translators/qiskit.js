@@ -58,7 +58,9 @@ export const translateQemmetString = ({ qubit_count, bit_count, gate_info, }) =>
         const gate_name = getQiskitGateName(original_gate_name);
         // measure instruction
         if (gate_name === 'm')
-            return `qc.measure(${gate_registers[0]}, ${target_bit ?? gate_registers[0]})\n`;
+            return gate_registers
+                .map((reg, i) => `qc.measure(${reg}, ${target_bit[i] ?? reg})\n`)
+                .join('');
         // reset instruction
         if (gate_name === 'r')
             return `${gate_registers.map((register) => `qc.reset(${register})`).join('\n')}\n`;

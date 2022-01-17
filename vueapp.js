@@ -28,7 +28,7 @@ const EXAMPLES = [
 	},
 	{
 		code: '3;;h2cx23cxh1m12x3?.1z3?1',
-		name: 'Quantum teleportation using classical condition',
+		name: "Quantum teleportation using <a href='https://github.com/rootEnginear/Qemmet/wiki/Classical-Condition' target='_blank' rel='noopener nofollow noreferrer'>classical condition</a>",
 	},
 	{
 		code: '4;;h4p814p424p234h3p413p223h2p2h1sw14sw23;p8=cp[pi/8],p4=cp[pi/4],p2=cp[pi/2]',

@@ -276,13 +276,17 @@ const is0or1 = (n: number): n is Exclude<ClassicalBitCondition, null> => n === 0
 const parseClassicalCondition = (
 	condition: string,
 	bit_count: number
-): QemmetGateInfo['condition'] =>
-	[...condition.padEnd(bit_count, '.').replace(/\.+$/g, '')].map((b) => {
+): QemmetGateInfo['condition'] => {
+	// condition is [01.]+
+	const formatted_condition = condition.padEnd(bit_count, '.').replace(/\.+$/g, '')
+	if (!formatted_condition.length) return undefined
+	return [...formatted_condition].map((b) => {
 		// fun fact: +"." || +"-." will return NaN,
 		// but +".0" || +"-.0" will return 0
 		const b_num = +b
 		return is0or1(b_num) ? b_num : null
 	})
+}
 
 const parseGateToken = (
 	gate_token: RegExpMatchArray[],
