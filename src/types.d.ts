@@ -8,7 +8,7 @@ export type ClassicalBitCondition = 0 | 1 | null
 export interface QemmetGateInfo {
 	control_count: number
 	gate_name: string
-	gate_params: string
+	gate_params: string[]
 	gate_registers: number[]
 	// target bit always = gate_registers for 1-1 matching, `[]` for other gates.
 	target_bit: number[]

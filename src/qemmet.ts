@@ -175,30 +175,36 @@ const formatParameter = (params: string[], count: number): string[] => {
 
 export const ensureParameterizedGate = (gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
 	return gate_info.map(({ gate_name, gate_params, ...rest }) => {
-		const params_arr = gate_params.split(',')
-		let formatted_params: string[] = []
-
 		switch (gate_name) {
 			case 'p':
 			case 'rx':
 			case 'ry':
 			case 'rz':
 			case 'u1':
-				formatted_params = formatParameter(params_arr, 1)
-				break
+				return {
+					...rest,
+					gate_name,
+					gate_params: formatParameter(gate_params, 1),
+				}
 			case 'u2':
-				formatted_params = formatParameter(params_arr, 2)
-				break
+				return {
+					...rest,
+					gate_name,
+					gate_params: formatParameter(gate_params, 2),
+				}
 			case 'u3':
-				formatted_params = formatParameter(params_arr, 3)
-				break
-			// If it's not a parameterized gate, it will remove any params attached
+				return {
+					...rest,
+					gate_name,
+					gate_params: formatParameter(gate_params, 3),
+				}
 		}
 
+		// If it's not a parameterized gate, it will remove any params attached
 		return {
 			...rest,
 			gate_name,
-			gate_params: formatted_params.join(', '),
+			gate_params: [],
 		}
 	})
 }
@@ -266,13 +272,17 @@ const parseRegister = (
 	return ensureMultipleRegister(register_arr, gate_control_length)
 }
 
-const parseGateParams = (gate_params: string | undefined) => {
+const parseGateParams = (gate_params: string | undefined): string[] => {
 	if (typeof gate_params === 'string') {
 		const trimmed_gate_params = gate_params.replace(/\s/g, '')
-		if (trimmed_gate_params === '') return '0'
-		return trimmed_gate_params.replace(/,,/g, ',0,').replace(/,$/, ',0').replace(/^,/, '0,')
+		if (trimmed_gate_params === '') return ['0'] // case []
+		return trimmed_gate_params
+			.replace(/,,/g, ',0,')
+			.replace(/,$/, ',0')
+			.replace(/^,/, '0,')
+			.split(',')
 	}
-	return ''
+	return []
 }
 
 const is0or1 = (n: number): n is Exclude<ClassicalBitCondition, null> => n === 0 || n === 1
