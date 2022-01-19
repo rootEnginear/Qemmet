@@ -28,11 +28,13 @@ export const translateQemmetString = ({
 
 				// measure instruction
 				if (gate_name === 'm')
-					return `cr[${target_bit ?? gate_registers[0]}] = measure qr[${gate_registers[0]}]\n`
+					return gate_registers
+						.map((reg, i) => `cr[${target_bit[i] ?? reg}] = measure qr[${reg}];\n`)
+						.join('')
 
 				// reset instruction
 				if (gate_name === 'r')
-					return `${gate_registers.map((register) => `reset qr[${register}]`).join('\n')}\n`
+					return gate_registers.map((register) => `reset qr[${register}];\n`).join('')
 
 				// barrier instruction
 				if (gate_name === 'b')

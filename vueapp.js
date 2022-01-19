@@ -28,11 +28,15 @@ const EXAMPLES = [
 	},
 	{
 		code: '3;;h2cx23cxh1m12x3?.1z3?1',
-		name: 'Quantum teleportation using classical condition',
+		name: "Quantum teleportation using <a href='https://github.com/rootEnginear/Qemmet/wiki/Classical-Condition' target='_blank' rel='noopener nofollow noreferrer'>classical condition</a>",
 	},
 	{
 		code: '4;;h4p814p424p234h3p413p223h2p2h1sw14sw23;p8=cp[pi/8],p4=cp[pi/4],p2=cp[pi/2]',
 		name: 'Quantum Fourier transform',
+	},
+	{
+		code: '4;;hbh1m1p22?1h2m2p43?1p23?.1h3m3p84?1p44?.1p24?..1h4m4;p2=p[-pi/2],p4=p[-pi/4],p8=p[-pi/8]',
+		name: 'Fourier sampling circuit',
 	},
 ]
 

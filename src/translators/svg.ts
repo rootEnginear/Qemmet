@@ -140,11 +140,11 @@ const generateGate = (
 		const param_y = gate_y + RENDER_STYLE.GATE_SIZE + RENDER_STYLE.Y_MARGIN / 2
 
 		const formatted_params = gate_params
+			.join(',')
 			.replace(/pi/g, 'π')
 			.replace(/euler/g, 'e')
 			.replace(/\*/g, '')
-			.replace(/\s/g, '')
-		const params_str = gate_params
+		const params_str = formatted_params
 			? `<text class="params" x="${text_x}" y="${param_y}" dominant-baseline="middle" text-anchor="middle" stroke-width="3">(${formatted_params})</text><text class="params" x="${text_x}" y="${param_y}" dominant-baseline="middle" text-anchor="middle">(${formatted_params})</text>`
 			: ''
 
