@@ -49,17 +49,21 @@ export const translateQemmetString = ({
 					: ''
 
 				// parameterized gate
-				if (gate_params) {
+				if (gate_params.length) {
+					const formatted_params = gate_params.join(', ')
+
 					if (control_count === 0)
 						return `${gate_registers
-							.map((register) => `${condition_string}${gate_name}(${gate_params}) qr[${register}]`)
+							.map(
+								(register) => `${condition_string}${gate_name}(${formatted_params}) qr[${register}]`
+							)
 							.join(';\n')};\n`
 
 					// controlled gate
 					const control_operation_string =
 						control_count === 1 ? 'control @' : `control(${control_count}) @`
 
-					return `${condition_string}${control_operation_string} ${gate_name}(${gate_params}) ${gate_registers
+					return `${condition_string}${control_operation_string} ${gate_name}(${formatted_params}) ${gate_registers
 						.map((register) => `qr[${register}]`)
 						.join(', ')};\n`
 				}
