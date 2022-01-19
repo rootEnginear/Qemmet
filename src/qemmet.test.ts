@@ -7,11 +7,9 @@ import {
 	expandStringRepeatSyntax,
 	expandCharRepeatSyntax,
 	expandRepeatSyntax,
-	generateRange,
+	generateRangeString,
 	expandRangeSyntax,
-	ensureParameterizedGate,
-	ensureInstruction,
-	transformOptionString,
+	parseOptionString,
 } from './qemmet'
 
 describe('Qemmet', function () {
@@ -19,17 +17,13 @@ describe('Qemmet', function () {
 		it('should parse ";;x" without error', function () {
 			parseQemmetString(';;x')
 		})
-		it('should parse ";;" with error', function () {
-			throws(function () {
-				parseQemmetString(';;')
-			}, new Error('`gates_string` part does not found. Required at least 1 gate.'))
-		})
 
 		it('shoud parse ";;ccx" as same as ";;ccx012"', function () {
 			const parsed = parseQemmetString(';;ccx')
 			const expected = parseQemmetString(';;ccx123')
 			deepEqual(parsed, expected)
 		})
+
 		it('shoud parse ";;ccx3" as same as ";;ccx312"', function () {
 			const parsed = parseQemmetString(';;ccx3')
 			const expected = parseQemmetString(';;ccx312')
@@ -102,25 +96,26 @@ describe('Qemmet', function () {
 		test(`'x*3y'*2`, `xxxyxxxy`)
 
 		// * as params
-		test(`'p[3*pi/2]'*2`, `p[3*pi/2]p[3*pi/2]`)
+		// test(`'p[3*pi/2]'*2`, `p[3*pi/2]p[3*pi/2]`)
+		// [!] This doesn't work now since all escaping process went to `preprocessString`
 	})
 
-	describe('generateRange', function () {
-		function test(start: string, end: string, output: string) {
+	describe('generateRangeString', function () {
+		function test(start: number, end: number, output: string) {
 			return it(`should generate "${output}" from (${start}, ${end})`, function () {
-				const expanded = generateRange(start, end)
+				const expanded = generateRangeString(start, end)
 				equal(expanded, output)
 			})
 		}
 
 		// Only check whole number because the input will
 		// always be a whole number (no minus sign, no dot)
-		test('1', '3', '1 2 3')
-		test('3', '1', '3 2 1')
-		test('3', '5', '3 4 5')
-		test('5', '3', '5 4 3')
-		test('9', '12', '9 10 11 12')
-		test('12', '9', '12 11 10 9')
+		test(1, 3, '1 2 3')
+		test(3, 1, '3 2 1')
+		test(3, 5, '3 4 5')
+		test(5, 3, '5 4 3')
+		test(9, 12, '9 10 11 12')
+		test(12, 9, '12 11 10 9')
 	})
 
 	describe('expandRangeSyntax', function () {
@@ -173,86 +168,10 @@ describe('Qemmet', function () {
 		test('12--9', '129')
 	})
 
-	describe('ensureParameterizedGate', function () {
-		function test(input: QemmetGateInfo, output: string) {
-			return it(`should fix "${input.gate_params}" of the gate "${input.gate_name}" into "${output}"`, function () {
-				const expanded = ensureParameterizedGate([input])[0].gate_params
-				equal(expanded, output)
-			})
-		}
-
-		function generate_input(gate_name: string, gate_params: string): QemmetGateInfo {
-			return { control_count: 0, gate_name, gate_params, gate_registers: [0] }
-		}
-
-		// 0 params required
-		test(generate_input('x', '0'), '')
-		test(generate_input('y', '0'), '')
-		test(generate_input('z', '0'), '')
-		test(generate_input('h', '0'), '')
-
-		// 1 param required
-		test(generate_input('p', ''), `0`)
-		test(generate_input('p', '1'), `1`)
-		test(generate_input('p', '1,2'), `1`)
-		test(generate_input('rx', ''), `0`)
-		test(generate_input('rx', '1'), `1`)
-		test(generate_input('rx', '1,2'), `1`)
-		test(generate_input('ry', ''), `0`)
-		test(generate_input('ry', '1'), `1`)
-		test(generate_input('ry', '1,2'), `1`)
-		test(generate_input('rz', ''), `0`)
-		test(generate_input('rz', '1'), `1`)
-		test(generate_input('rz', '1,2'), `1`)
-		test(generate_input('u1', ''), `0`)
-		test(generate_input('u1', '1'), `1`)
-		test(generate_input('u1', '1,2'), `1`)
-
-		// 2 params required
-		test(generate_input('u2', ''), `0, 0`)
-		test(generate_input('u2', '1'), `1, 0`)
-		test(generate_input('u2', '1,2'), `1, 2`)
-		test(generate_input('u2', '1,2,3'), `1, 2`)
-
-		// 3 params required
-		test(generate_input('u3', ''), `0, 0, 0`)
-		test(generate_input('u3', '1'), `1, 0, 0`)
-		test(generate_input('u3', '1,2'), `1, 2, 0`)
-		test(generate_input('u3', '1,2,3'), `1, 2, 3`)
-		test(generate_input('u3', '1,2,3,4'), `1, 2, 3`)
-	})
-
-	describe('ensureInstruction', function () {
-		function test(input: QemmetGateInfo, output: number) {
-			return it(`should fix "${input.control_count}" of the gate "${input.gate_name}" into "${output}"`, function () {
-				const expanded = ensureInstruction([input])[0].control_count
-				equal(expanded, output)
-			})
-		}
-
-		function generate_input(gate_name: string, control_count: number): QemmetGateInfo {
-			return { control_count, gate_name, gate_params: '', gate_registers: [0] }
-		}
-
-		test(generate_input('x', 0), 0)
-		test(generate_input('x', 1), 1)
-		test(generate_input('y', 0), 0)
-		test(generate_input('y', 1), 1)
-		test(generate_input('z', 0), 0)
-		test(generate_input('z', 1), 1)
-		test(generate_input('h', 0), 0)
-		test(generate_input('h', 1), 1)
-
-		test(generate_input('b', 0), 0)
-		test(generate_input('b', 1), 0)
-		test(generate_input('m', 0), 0)
-		test(generate_input('m', 1), 0)
-	})
-
 	describe('transformOptionString', function () {
 		function test(input: string, output: QemmetStringOptions) {
 			return it(`should transform "${input}" to "${output}"`, function () {
-				const expanded = transformOptionString(input)
+				const expanded = parseOptionString(input)
 				deepEqual(expanded, output)
 			})
 		}
