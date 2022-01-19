@@ -23,7 +23,7 @@ const getGateString = (gate_info: QemmetGateInfo[]): string => {
 	const processed_qemmet_string = expanded_gate_info
 		.map(({ control_count, gate_name, gate_params, gate_registers, target_bit, condition }) => {
 			const control_string = 'c'.repeat(control_count - +(gate_name === 'sw'))
-			const param_string = gate_params ? `[${gate_params}]` : ''
+			const param_string = gate_params.length ? `[${gate_params.join(',')}]` : ''
 			const measure_target = target_bit.length ? `->${target_bit}` : ''
 			const condition_string = condition
 				? `?${condition.map((c) => (c == null ? '.' : c)).join('')}`

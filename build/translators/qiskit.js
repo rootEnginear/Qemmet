@@ -72,13 +72,14 @@ export const translateQemmetString = ({ qubit_count, bit_count, gate_info, }) =>
             ? `.c_if(cr, ${parseInt(condition.reverse().join(''), 2)})`
             : '';
         // parameterized gate
-        if (gate_params) {
+        if (gate_params.length) {
+            const formatted_params = gate_params.join(', ');
             if (control_count === 0)
                 return `${gate_registers
-                    .map((register) => `qc.${gate_name}(${gate_params}, [${register}])${condition_string}`)
+                    .map((register) => `qc.${gate_name}(${formatted_params}, ${register})${condition_string}`)
                     .join('\n')}\n`;
             // controlled gate
-            return `qc.append(${getQiskitLibGateName(gate_name)}Gate(${gate_params}).control(${control_count}), [${gate_registers.join(', ')}])${condition_string}\n`;
+            return `qc.append(${getQiskitLibGateName(gate_name)}Gate(${formatted_params}).control(${control_count}), [${gate_registers.join(', ')}])${condition_string}\n`;
         }
         // swap gate
         if (gate_name === 'swap') {

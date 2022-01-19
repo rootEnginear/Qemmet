@@ -3,16 +3,104 @@ import {
 	QemmetParserOutput,
 	QemmetStringOptions,
 	ClassicalBitCondition,
+	QubitCount,
+	BitCount,
+	QubitIndex,
+	GateParameter,
+	GateName,
+	QemmetMetadata,
+	DefinitionString,
 } from './types'
 
-// Utils
+// -----------------------------------------------------------------------------
+// UTILITIES
+// -----------------------------------------------------------------------------
 const _pipe = (a: (fn_arg: any) => any, b: (fn_arg: any) => any) => (arg: any) => b(a(arg))
-export const pipe = (...ops: ((fn_arg: any) => any)[]) => ops.reduce(_pipe)
+const pipe = (...ops: ((fn_arg: any) => any)[]) => ops.reduce(_pipe)
 
-// Parser
-const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[xyzhstpibmr]', 'g')
+// -----------------------------------------------------------------------------
+// STRING PREPROCESSORS
+// -----------------------------------------------------------------------------
+export const expandStringRepeatSyntax = (repeat_string: string): string => {
+	// replace `'` -> `\uE100` and `\uE100*` -> `\uE101`
+	const repl_quo = repeat_string.replace(/'/g, '\uE100').replace(/\uE100\*/g, '\uE101')
 
-const substituteDefinition = (raw_string: string, definition_string: string) => {
+	// expand
+	const expanded_text = repl_quo.replace(
+		/\uE100([^\uE100\uE101]*?)\uE101(\d+)/g,
+		(_, inner_text, repeat_count) => inner_text.repeat(+repeat_count)
+	)
+
+	// rollback
+	const final_text = expanded_text.replace(/\uE101/g, '\uE100*').replace(/\uE100/g, "'")
+	return final_text !== repeat_string
+		? expandStringRepeatSyntax(final_text)
+		: final_text.replace(/'/g, '') // remove remaining `'`
+}
+
+export const expandCharRepeatSyntax = (repeat_string: string): string => {
+	const expanded_text = repeat_string.replace(/(.)\*(\d+)/g, (_, inner_text, repeat_count) =>
+		inner_text.repeat(+repeat_count)
+	)
+	return expanded_text !== repeat_string
+		? expandCharRepeatSyntax(expanded_text)
+		: expanded_text.replace(/\*/g, '') // remove remaining `*`
+}
+
+export const expandRepeatSyntax = (repeat_string: string): string =>
+	pipe(expandStringRepeatSyntax, expandCharRepeatSyntax)(repeat_string)
+
+/**
+ * Eg: generateRange(1, 3) -> '1 2 3'
+ */
+export const generateRangeString = (start: number, end: number): string => {
+	const max = Math.max(start, end)
+	const min = Math.min(start, end)
+	const sorted_range = Array.from({ length: max - min + 1 }, (_, i) => min + i)
+	const range_arr = start === min ? sorted_range : sorted_range.reverse()
+	const range_string = range_arr.join(' ')
+	return range_string
+}
+
+export const expandRangeSyntax = (range_string: string): string => {
+	const expanded_text = range_string.replace(/(\d+)-(\d+)/g, (_, start, end) =>
+		generateRangeString(+start, +end)
+	)
+	return expanded_text !== range_string
+		? expandRangeSyntax(expanded_text)
+		: expanded_text.replace(/-/g, '') // remove remaining `-`
+}
+
+const preprocessString = (string: string): string => {
+	// preserve `*` & `-` inside `[...]`
+	// `*` -> `\uE000`
+	// `-` -> `\uE001`
+	// preserve `->` everywhere
+	// `->` -> `\uE002`
+	const escaped = string
+		.replace(
+			/(?:\[(.*?)\])/g,
+			(_, inside) => `[${inside.replace(/\*/g, '\uE000').replace(/-/g, '\uE001')}]`
+		)
+		.replace(/->/g, '\uE002')
+
+	// execute syntax
+	const expanded = pipe(expandRepeatSyntax, expandRangeSyntax)(escaped)
+
+	// rollback
+	// `\uE000` -> `*`
+	// `\uE001` -> `-`
+	// `\uE002` -> `->`
+	return expanded
+		.replace(/\uE000/g, '*')
+		.replace(/\uE001/g, '-')
+		.replace(/\uE002/g, '->')
+}
+
+// -----------------------------------------------------------------------------
+// DEFINITION SUBSITUTIONS
+// -----------------------------------------------------------------------------
+const substituteDefinition = (raw_string: string, definition_string: DefinitionString): string => {
 	const formatted_definition_string = definition_string.trim().replace(/\s+/g, ' ')
 	if (formatted_definition_string === '') return raw_string
 	const definition = formatted_definition_string
@@ -31,76 +119,10 @@ const substituteDefinition = (raw_string: string, definition_string: string) => 
 	return processed_raw_string
 }
 
-export const expandStringRepeatSyntax = (repeat_string: string): string => {
-	// replace ' with E000 and E000* with E001
-	const repl_quo = repeat_string.replace(/'/g, '\uE000').replace(/\uE000\*/g, '\uE001')
-	// expand
-	const expanded_text = repl_quo.replace(
-		/\uE000([^\uE000\uE001]*?)\uE001(\d+)/g,
-		(_, inner_text, repeat_count) => inner_text.repeat(+repeat_count)
-	)
-	// rollback
-	const final_text = expanded_text.replace(/\uE001/g, '\uE000*').replace(/\uE000/g, "'")
-	return final_text !== repeat_string
-		? expandStringRepeatSyntax(final_text)
-		: final_text.replace(/'/g, '')
-}
-
-export const expandCharRepeatSyntax = (repeat_string: string): string => {
-	const expanded_text = repeat_string.replace(/(.)\*(\d+)/g, (_, inner_text, repeat_count) =>
-		inner_text.repeat(+repeat_count)
-	)
-	return expanded_text !== repeat_string
-		? expandCharRepeatSyntax(expanded_text)
-		: expanded_text.replace(/\*/g, '')
-}
-
-export const expandRepeatSyntax = (repeat_string: string): string => {
-	// preserve `*` inside `[...]`
-	const escaped_asterisk = repeat_string.replace(
-		/(?:\[(.*?)\])/g,
-		(_, inside) => `[${inside.replace(/\*/g, '\uE002')}]`
-	)
-	// execute syntax
-	const expanded_repeat_string = pipe(
-		expandStringRepeatSyntax,
-		expandCharRepeatSyntax
-	)(escaped_asterisk)
-	// rollback `*`
-	return expanded_repeat_string.replace(/\uE002/g, '*')
-}
-
-export const generateRange = (start: string, end: string) => {
-	const max = Math.max(+start, +end)
-	const min = Math.min(+start, +end)
-	const sorted_range = Array.from({ length: max - min + 1 }, (_, i) => min + i)
-	const range_arr = +start === min ? sorted_range : sorted_range.reverse()
-	const range_string = range_arr.join(' ')
-	return range_string
-}
-
-const _expandRangeSyntax = (range_string: string): string => {
-	const expanded_text = range_string.replace(/(\d+)-(\d+)/g, (_, start, end) =>
-		generateRange(start, end)
-	)
-	return expanded_text !== range_string
-		? expandRangeSyntax(expanded_text)
-		: expanded_text.replace(/-/g, '')
-}
-
-export const expandRangeSyntax = (range_string: string): string => {
-	// preserve `->`
-	const escaped_arrow = range_string.replace(/->/g, '\uE000')
-	// execute syntax
-	const expanded_range_string = _expandRangeSyntax(escaped_arrow)
-	// rollback `->`
-	return expanded_range_string.replace(/\uE000/g, '->')
-}
-
-const preprocessString = (string: string): string =>
-	pipe(expandRepeatSyntax, expandRangeSyntax)(string)
-
-export const transformOptionString = (option_string: string): QemmetStringOptions => {
+// -----------------------------------------------------------------------------
+// PARSE OPTION STRING
+// -----------------------------------------------------------------------------
+export const parseOptionString = (option_string: string): QemmetStringOptions => {
 	const formatted_option_string = option_string.padEnd(2, ' ').slice(0, 2)
 	const option_array = [...formatted_option_string].map((c) =>
 		['0', '1'].includes(c) ? !!+c : null
@@ -112,7 +134,10 @@ export const transformOptionString = (option_string: string): QemmetStringOption
 	}
 }
 
-const parseMetadata = (qemmet_string: string) => {
+// -----------------------------------------------------------------------------
+// METADATA PARSER
+// -----------------------------------------------------------------------------
+const parseMetadata = (qemmet_string: string): QemmetMetadata => {
 	const preprocessed_qemmet_string = preprocessString(qemmet_string.trim())
 
 	const [a = '', b = '', c = '', d = '', option_string = ''] = preprocessed_qemmet_string
@@ -123,21 +148,25 @@ const parseMetadata = (qemmet_string: string) => {
 		s?.trim()
 	)
 
-	const qubit_count = qr_string === '' ? 1 : +qr_string
-	const bit_count = +cr_string
+	const qubit_count: QubitCount = qr_string === '' ? 1 : +qr_string
+	const bit_count: BitCount = +cr_string
 
 	if (Number.isNaN(qubit_count)) throw new Error('Quantum register is not a number.')
-
 	if (Number.isNaN(bit_count)) throw new Error('Classical register is not a number.')
 
 	const gate_string = substituteDefinition(raw_gate_string, definition_string)
 
-	const options = transformOptionString(option_string)
+	const options: QemmetStringOptions = parseOptionString(option_string)
 
 	return { qubit_count, bit_count, gate_string, definition_string, options }
 }
 
-const tokenizeGateString = (gate_string: string) => [
+// -----------------------------------------------------------------------------
+// TOKENIZER
+// -----------------------------------------------------------------------------
+const AVAILABLE_GATES_REGEXP = new RegExp('[st]dg|[s/]x|r[xyz]|u[123]|sw|[xyzhstpibmr]', 'g')
+
+const tokenizeGateString = (gate_string: string): RegExpMatchArray[] => [
 	...gate_string.matchAll(
 		new RegExp(
 			`(c*?)(${AVAILABLE_GATES_REGEXP.source})(?:\\[((?:[\\d\\s,+\\-*/]|pi|euler)*?)\\])?([\\d\\s]*)(?:->(\\d+))?(?:\\?([01.]+))?`,
@@ -146,136 +175,124 @@ const tokenizeGateString = (gate_string: string) => [
 	),
 ]
 
-const ensureMultipleRegister = (registers: number[], gate_control_length: number) => {
-	// it's fine if it has no controls OR registers length are enough for the controls and the gate
-	if (!(gate_control_length - 1) || registers.length === gate_control_length) return registers
+// -----------------------------------------------------------------------------
+// QUANTUM REGISTER PARSING
+// -----------------------------------------------------------------------------
+/**
+ * Make sure that a controlled gate has a feasible number of quantum registers for the whole gate.
+ *
+ * Example 1: `cx1` does not have enough quantum registers. We need to fill in the missing quantum registers.
+ *
+ * Example 2: `cx123` has too much quantum registers. We need to remove the extra quantum registers.
+ */
+const ensureControlledGateRegisters = (
+	registers: QubitIndex[],
+	total_gate_length: number
+): QubitIndex[] => {
+	// it's fine if
+	// - it has no controls *OR*
+	// - registers length are enough for the controlled gate
+	if (!(total_gate_length - 1) || registers.length === total_gate_length) return registers
 	// if the reg is too much, slice off
-	if (registers.length > gate_control_length) return registers.slice(0, gate_control_length)
+	if (registers.length > total_gate_length) return registers.slice(0, total_gate_length)
 	// If not, it need to fill the registers as much as the gate + controls requires
 	// first, generate possible reg
-	const possible_reg = new Array(gate_control_length).fill(0).map((_, i) => i)
+	const possible_reg = new Array(total_gate_length).fill(0).map((_, i) => i)
 	// then, remove the regs that are already in the reg_arr
 	const filled_reg = [...new Set(registers.concat(possible_reg))]
 	// finally, trim the excess
-	return filled_reg.slice(0, gate_control_length)
+	return filled_reg.slice(0, total_gate_length)
 }
 
-const formatParameter = (params: string[], count: number): string[] => {
-	const fill_empty_str = params.map((p) => (p.trim() === '' ? '0' : p))
-	const params_count = fill_empty_str.length
-
-	if (params_count > count) return fill_empty_str.slice(0, count)
-	if (params_count < count) return fill_empty_str.concat(new Array(count - params_count).fill('0'))
-	return fill_empty_str
-}
-
-export const ensureParameterizedGate = (gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
-	return gate_info.map(({ gate_name, gate_params, ...rest }) => {
-		const params_arr = gate_params.split(',')
-		let formatted_params: string[] = []
-
-		switch (gate_name) {
-			case 'p':
-			case 'rx':
-			case 'ry':
-			case 'rz':
-			case 'u1':
-				formatted_params = formatParameter(params_arr, 1)
-				break
-			case 'u2':
-				formatted_params = formatParameter(params_arr, 2)
-				break
-			case 'u3':
-				formatted_params = formatParameter(params_arr, 3)
-				break
-			// If it's not a parameterized gate, it will remove any params attached
-		}
-
-		return {
-			...rest,
-			gate_name,
-			gate_params: formatted_params.join(', '),
-		}
-	})
-}
-
-// instructions should not have any controls or classical condition
-export const ensureInstruction = (gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
-	return gate_info.map(({ gate_name, control_count, condition, ...rest }) => {
-		switch (gate_name) {
-			case 'r':
-			case 'b':
-			case 'm':
-				return {
-					...rest,
-					gate_name,
-					control_count: 0,
-				}
-		}
-
-		return {
-			...rest,
-			gate_name,
-			control_count,
-			condition,
-		}
-	})
-}
-
-const failsafePipeline = (gate_info: QemmetGateInfo[]) =>
-	pipe(ensureParameterizedGate, ensureInstruction)(gate_info)
-
+/**
+ * Cases:
+ * 1. "" -> [""] -> Expand to qubits
+ * 2. "123" -> ["123"] -> Split
+ * 3. " 123" -> ["", "123"] -> Apply to 123
+ * 4. "12 34 56" -> ["12", "34", "56"] -> Apply to 12 34 56
+ * 5. " 12 34 56" -> ["", "12", "34", "56"] -> Apply to 12 34 56
+ */
 const parseRegister = (
 	gate_register_string: string,
-	qubit_count: number,
+	qubit_count: QubitCount,
 	control_count: number,
 	options: QemmetStringOptions
-) => {
+): QubitIndex[] => {
 	const { start_from_one: is_start_from_one } = options
 	const gate_register_array = gate_register_string.trimEnd().replace(/\s+/g, ' ').split(' ')
-	const gate_control_length = control_count + 1
-	/*
-		Cases:
-		1. "" -> [""] -> Expand to qubits
-		2. "123" -> ["123"] -> Split
-		3. " 123" -> ["", "123"] -> Apply to 123
-		4. "12 34 56" -> ["12", "34", "56"] -> Apply to 12 34 56
-		5. " 12 34 56" -> ["", "12", "34", "56"] -> Apply to 12 34 56
-	*/
+	const total_gate_length = control_count + 1
+
 	// Case 1 & 2
 	if (gate_register_array.length === 1) {
 		// Case 1
 		if (gate_register_array[0].length === 0) {
 			// if it is a controled gate: fill the registers as much as the gate requires
-			if (control_count) return new Array(gate_control_length).fill(0).map((_, i) => i)
+			if (control_count) return new Array(total_gate_length).fill(0).map((_, i) => i)
 			// if it's not a controlled gate: fill the gate into all registers
 			return new Array(qubit_count).fill(0).map((_, i) => i)
 		}
 		// Case 2
 		const register_arr = [...gate_register_array[0]].map((n) => (is_start_from_one ? +n - 1 : +n))
-		return ensureMultipleRegister(register_arr, gate_control_length)
+		return ensureControlledGateRegisters(register_arr, total_gate_length)
 	}
+
 	// Case 3 & 4 & 5
 	const register_arr = gate_register_array
 		.filter(Boolean)
 		.map((n) => (is_start_from_one ? +n - 1 : +n))
-	return ensureMultipleRegister(register_arr, gate_control_length)
+	return ensureControlledGateRegisters(register_arr, total_gate_length)
 }
 
-const parseGateParams = (gate_params: string | undefined) => {
-	if (typeof gate_params === 'string') {
-		const trimmed_gate_params = gate_params.replace(/\s/g, '')
-		if (trimmed_gate_params === '') return '0'
-		return trimmed_gate_params.replace(/,,/g, ',0,').replace(/,$/, ',0').replace(/^,/, '0,')
+// -----------------------------------------------------------------------------
+// PARSE GATE PARAMETERS
+// -----------------------------------------------------------------------------
+const ensureParameterCount = (params: GateParameter[], count: number): GateParameter[] => {
+	const params_count = params.length
+
+	if (params_count > count) return params.slice(0, count)
+	if (params_count < count) return params.concat(new Array(count - params_count).fill('0'))
+	return params
+}
+
+const parseGateParams = (gate_name: GateName, gate_params?: GateParameter): GateParameter[] => {
+	if (typeof gate_params !== 'string') return []
+
+	let param_count = 0
+	switch (gate_name) {
+		case 'p':
+		case 'rx':
+		case 'ry':
+		case 'rz':
+		case 'u1':
+			param_count = 1
+		case 'u2':
+			param_count = 2
+		case 'u3':
+			param_count = 3
+			const trimmed_gate_params = gate_params.replace(/\s/g, '')
+			const params = trimmed_gate_params
+				? ['0']
+				: trimmed_gate_params
+						.replace(/,,/g, ',0,')
+						.replace(/,$/, ',0')
+						.replace(/^,/, '0,')
+						.split(',')
+			// params now doesn't have to trim, because it's does not have any spaces
+			// all possible `''` between `,` is now not there because of replacing process
+			return ensureParameterCount(params, param_count)
 	}
-	return ''
+
+	return []
 }
 
+// -----------------------------------------------------------------------------
+// PARSE CLASSICAL CONDITION
+// -----------------------------------------------------------------------------
 const is0or1 = (n: number): n is Exclude<ClassicalBitCondition, null> => n === 0 || n === 1
 
 const parseClassicalCondition = (
 	condition: string,
-	bit_count: number
+	bit_count: BitCount
 ): QemmetGateInfo['condition'] => {
 	// condition is [01.]+
 	const formatted_condition = condition.padEnd(bit_count, '.').replace(/\.+$/g, '')
@@ -288,16 +305,27 @@ const parseClassicalCondition = (
 	})
 }
 
+// -----------------------------------------------------------------------------
+// PARSE GATE TOKEN
+// -----------------------------------------------------------------------------
+const INSTRUCTIONS = ['r', 'b', 'm']
+
 const parseGateToken = (
 	gate_token: RegExpMatchArray[],
-	qubit_count: number,
-	bit_count: number,
+	qubit_count: QubitCount,
+	bit_count: BitCount,
 	options: QemmetStringOptions
 ): QemmetGateInfo[] => {
 	const structured_data = gate_token.map(
 		([, control_string, gate_name, _gate_params, _gate_registers, _target_bit, _condition]) => {
-			const control_count = control_string.length + +(gate_name === 'sw')
-			const gate_params = parseGateParams(_gate_params)
+			// Instruction must not have any controls
+			const control_count = INSTRUCTIONS.includes(gate_name)
+				? 0
+				: control_string.length + +(gate_name === 'sw')
+
+			// ParamSafe is built in
+			const gate_params = parseGateParams(gate_name, _gate_params)
+
 			const gate_registers = parseRegister(_gate_registers, qubit_count, control_count, options)
 
 			const target_bit_num = +_target_bit
@@ -326,16 +354,9 @@ const parseGateToken = (
 	return structured_data
 }
 
-const getMaxRegister = (register_count: number, gate_info: QemmetGateInfo[]) =>
-	gate_info.reduce((max, { gate_registers }) => {
-		return Math.max(max, ...gate_registers)
-	}, register_count - 1) + 1
-
-const getMaxBitRegister = (bit_count: number, gate_info: QemmetGateInfo[]) =>
-	gate_info.reduce((max, { target_bit, condition }) => {
-		return Math.max(max, ...target_bit, (condition ?? []).length - 1 ?? max)
-	}, bit_count - 1) + 1
-
+// -----------------------------------------------------------------------------
+// NORMALIZE ADJACENT GATE
+// -----------------------------------------------------------------------------
 export const normalizeAdjacentGate = (raw_gate_info: QemmetGateInfo[]): QemmetGateInfo[] => {
 	let gate_info = JSON.parse(JSON.stringify(raw_gate_info)) as QemmetGateInfo[]
 	let gate_info_len = gate_info.length
@@ -366,6 +387,22 @@ export const normalizeAdjacentGate = (raw_gate_info: QemmetGateInfo[]): QemmetGa
 	return gate_info
 }
 
+// -----------------------------------------------------------------------------
+// BITSAFE
+// -----------------------------------------------------------------------------
+const getMaxQReg = (register_count: QubitCount, gate_info: QemmetGateInfo[]): QubitCount =>
+	gate_info.reduce((max, { gate_registers }) => {
+		return Math.max(max, ...gate_registers)
+	}, register_count - 1) + 1
+
+const getMaxClReg = (bit_count: BitCount, gate_info: QemmetGateInfo[]): BitCount =>
+	gate_info.reduce((max, { target_bit, condition }) => {
+		return Math.max(max, ...target_bit, (condition ?? []).length - 1 ?? max)
+	}, bit_count - 1) + 1
+
+// -----------------------------------------------------------------------------
+// PARSE QEMMET STRING
+// -----------------------------------------------------------------------------
 export const parseQemmetString = (qemmet_string: string): QemmetParserOutput => {
 	const {
 		qubit_count: raw_qubit_count,
@@ -377,17 +414,14 @@ export const parseQemmetString = (qemmet_string: string): QemmetParserOutput => 
 	const gate_token = tokenizeGateString(gate_string)
 	const raw_gate_info = parseGateToken(gate_token, raw_qubit_count, raw_bit_count, options)
 
-	// Failsafe
-	const safe_gate_info = failsafePipeline(raw_gate_info)
-
 	// Normalize Adjacent Gate
 	const gate_info = options.normalize_adjacent_gates
-		? normalizeAdjacentGate(safe_gate_info)
-		: safe_gate_info
+		? normalizeAdjacentGate(raw_gate_info)
+		: raw_gate_info
 
 	// BitSafe
-	const qubit_count = getMaxRegister(raw_qubit_count, gate_info)
-	const bit_count = getMaxBitRegister(raw_bit_count, gate_info)
+	const qubit_count = getMaxQReg(raw_qubit_count, gate_info)
+	const bit_count = getMaxClReg(raw_bit_count, gate_info)
 
 	return {
 		qubit_count,
