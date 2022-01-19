@@ -1,23 +1,34 @@
 {
 	"name": "qemmet",
 	"version": "1.0.0",
-	"description": "A way to generate a Qiskit 0.3 or OpenQASM 3.0 code with a shorthand",
-	"main": "index.js",
+	"description": "A shorthand notation for generating a quantum circuit",
+	"main": "",
 	"scripts": {
 		"dev": "tsc -w",
 		"build": "tsc",
 		"pretest": "tsc --project tsconfig.test.json",
 		"test": "mocha -R dot"
 	},
+	"dependencies": {
+		"typescript": "^4.5.3"
+	},
 	"devDependencies": {
 		"@types/mocha": "^9.0.0",
 		"@types/node": "^17.0.0",
 		"mocha": "^9.1.3"
 	},
-	"dependencies": {
-		"typescript": "^4.5.3"
-	},
 	"repository": "https://github.com/rootEnginear/Qemmet.git",
-	"author": "rootEnginear <suthep.chanchuphol@outlook.com>",
-	"license": "MIT"
+	"author": "rootEnginear",
+	"license": "MIT",
+	"keywords": [
+		"quantum",
+		"quantum-circuit",
+		"qiskit",
+		"qasm",
+		"quantum-circuit-diagram"
+	],
+	"bugs": {
+		"url": "https://github.com/rootEnginear/Qemmet/issues"
+	},
+	"homepage": "https://rootenginear.github.io/Qemmet/"
 }
