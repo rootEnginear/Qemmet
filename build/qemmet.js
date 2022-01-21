@@ -292,12 +292,14 @@ export const normalizeAdjacentGate = (raw_gate_info) => {
 // -----------------------------------------------------------------------------
 // BITSAFE
 // -----------------------------------------------------------------------------
-const bitSafe = (register_count, bit_count, gate_info) => gate_info.reduce(([max_qreg, max_clreg], { gate_registers, target_bit, condition }) => {
+const bitSafe = (register_count, bit_count, gate_info) => gate_info
+    .reduce(([max_qreg, max_clreg], { gate_registers, target_bit, condition }) => {
     return [
         Math.max(max_qreg, ...gate_registers),
         Math.max(max_clreg, ...target_bit, (condition ?? []).length - 1 ?? max_clreg),
     ];
-}, [register_count - 1, bit_count - 1]);
+}, [register_count - 1, bit_count - 1])
+    .map((value) => value + 1);
 // -----------------------------------------------------------------------------
 // PARSE QEMMET STRING
 // -----------------------------------------------------------------------------
