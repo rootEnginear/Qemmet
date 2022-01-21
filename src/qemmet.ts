@@ -373,7 +373,7 @@ export const normalizeAdjacentGate = (raw_gate_info: QemmetGateInfo[]): QemmetGa
 
 		if (
 			curr_gate.gate_name === next_gate.gate_name &&
-			curr_gate.gate_params === next_gate.gate_params &&
+			JSON.stringify(curr_gate.gate_params) === JSON.stringify(next_gate.gate_params) &&
 			curr_gate.gate_registers.filter((value) => next_gate.gate_registers.includes(value))
 				.length === 0
 		) {
