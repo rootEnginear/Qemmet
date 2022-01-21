@@ -395,15 +395,17 @@ const bitSafe = (
 	bit_count: BitCount,
 	gate_info: QemmetGateInfo[]
 ): [QubitCount, BitCount] =>
-	gate_info.reduce(
-		([max_qreg, max_clreg], { gate_registers, target_bit, condition }) => {
-			return [
-				Math.max(max_qreg, ...gate_registers),
-				Math.max(max_clreg, ...target_bit, (condition ?? []).length - 1 ?? max_clreg),
-			]
-		},
-		[register_count - 1, bit_count - 1]
-	)
+	gate_info
+		.reduce(
+			([max_qreg, max_clreg], { gate_registers, target_bit, condition }) => {
+				return [
+					Math.max(max_qreg, ...gate_registers),
+					Math.max(max_clreg, ...target_bit, (condition ?? []).length - 1 ?? max_clreg),
+				]
+			},
+			[register_count - 1, bit_count - 1]
+		)
+		.map((value) => value + 1) as [number, number]
 
 // -----------------------------------------------------------------------------
 // PARSE QEMMET STRING
