@@ -1,9 +1,9 @@
 const DEFAULT_OPTIONS = Object.freeze({
     X_MARGIN: 8,
     Y_MARGIN: 16,
-    KET_MARGIN: 8,
-    LINE_TRAIL_LEFT: 16,
-    LINE_TRAIL_RIGHT: 16,
+    KET_MARGIN: 4,
+    LINE_TRAIL_LEFT: 12,
+    LINE_TRAIL_RIGHT: 12,
     LINE_SPACE: 3,
     SVG_MARGIN: 8,
     BACKGROUND_COLOR: '#fff',
