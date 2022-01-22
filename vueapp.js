@@ -70,6 +70,7 @@ new Vue({
 		// raw_string: ';;h2cx23cxh1m12x3?2z3?1',
 		// raw_string:
 		// 	'3;;xx?1x1?1x12?1cx?1cx2?1p[]?1rx[]1?1ry[]12?1crz[]?1cu1[]2?1cu2[]?.1cu3[]2?1.101csw2?.10',
+		// raw_string: ';;ccpccu3',
 		target_lang: 'qiskit03',
 		// target_lang: 'openqasm3',
 		x_margin: DEFAULT_OPTIONS.X_MARGIN,

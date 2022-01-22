@@ -177,42 +177,43 @@ const parseRegister = (gate_register_string, qubit_count, control_count, options
 // -----------------------------------------------------------------------------
 // PARSE GATE PARAMETERS
 // -----------------------------------------------------------------------------
-const ensureParameterCount = (params, count) => {
-    const params_count = params.length;
-    if (params_count > count)
-        return params.slice(0, count);
-    if (params_count < count)
-        return params.concat(new Array(count - params_count).fill('0'));
-    return params;
-};
 const parseGateParams = (gate_name, gate_params) => {
-    if (typeof gate_params !== 'string')
-        return [];
-    let param_count = 0;
+    let required_params_length = 0;
     switch (gate_name) {
         case 'p':
         case 'rx':
         case 'ry':
         case 'rz':
         case 'u1':
-            param_count = 1;
+            required_params_length = 1;
+            break;
         case 'u2':
-            param_count = 2;
+            required_params_length = 2;
+            break;
         case 'u3':
-            param_count = 3;
-            const trimmed_gate_params = gate_params.replace(/\s/g, '');
-            const params = trimmed_gate_params
-                ? ['0']
-                : trimmed_gate_params
-                    .replace(/,,/g, ',0,')
-                    .replace(/,$/, ',0')
-                    .replace(/^,/, '0,')
-                    .split(',');
-            // params now doesn't have to trim, because it's does not have any spaces
-            // all possible `''` between `,` is now not there because of replacing process
-            return ensureParameterCount(params, param_count);
+            required_params_length = 3;
+            break;
+        default:
+            // if the gate cannot have parameters, return empty array
+            return [];
     }
-    return [];
+    const trimmed_gate_params = (gate_params ?? '').replace(/\s/g, '');
+    if (trimmed_gate_params) {
+        // if the gate has parameters, parse them and ensure the count
+        const parsed_params = trimmed_gate_params
+            .replace(/,,/g, ',0,')
+            .replace(/,$/, ',0')
+            .replace(/^,/, '0,')
+            .split(',');
+        const parsed_params_length = parsed_params.length;
+        if (parsed_params_length === required_params_length)
+            return parsed_params;
+        if (parsed_params_length > required_params_length)
+            return parsed_params.slice(0, required_params_length);
+        return parsed_params.concat(new Array(required_params_length - parsed_params_length).fill('0'));
+    }
+    // if not, return array filled with 0 up to the param_count
+    return new Array(required_params_length).fill('0');
 };
 // -----------------------------------------------------------------------------
 // PARSE CLASSICAL CONDITION
